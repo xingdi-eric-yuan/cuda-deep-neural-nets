@@ -1,6 +1,6 @@
 #cuda-deep-neural-net
 =====================
-##<UNFINISHED>
+##UNFINISHED
 Deep neural network framework (C/C++/CUDA).
 
 To run this code, you should have 
