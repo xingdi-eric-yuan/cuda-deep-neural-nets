@@ -20,9 +20,12 @@ vector3f divide(const vector3f&, const vector3f&);
 float sum(const vector3f&);
 vector3f sum(const Mat&);
 float max(const vector3f&);
-vector3f max(const Mat&);
 float min(const vector3f&);
+vector3f max(const Mat&);
 vector3f min(const Mat&);
+void max(const Mat&, vector3f&, vector3f&);
+void min(const Mat&, vector3f&, vector3f&);
+void minMaxLoc(const Mat&, vector3f&, vector3f&, vector3f&, vector3f&);
 
 Mat greaterThan(const Mat&, float);
 Mat lessThan(const Mat&, float);
@@ -50,16 +53,21 @@ Mat depadding(const Mat&, int);
 Mat repmat(const Mat&, int, int);
 Mat kron(const Mat&, const Mat&);
 
+Mat conv2(const Mat&, const Mat&);
+Mat conv2(const Mat&, const Mat&, int, int, int);
+Mat getRange(const Mat&, int, int, int, int);
+Mat downSample(const Mat&, int, int);
+
+Mat pooling_with_overlap(const Mat&, vector2i, int, int, std::vector<vector3f>&);
+Mat unpooling_with_overlap(const Mat&, vector2i, int, int, std::vector<vector3f>&, vector2i);
+
 
 /*
-Mat conv2(Mat&, Mat&, int, int, int);
-Mat Pooling_with_overlap(Mat&, Size2i, int, int, std::vector<std::vector<Point2i> >&);
 Mat Pooling_with_overlap_test(Mat&, Size2i, int, int);
 Mat Pooling(Mat&, int, int, std::vector<std::vector<Point2i> >&);
 Mat Pooling_test(Mat&, int, int);
 Mat UnPooling(Mat&, int, int, std::vector<std::vector<Point2i> >&, Size2i);
 Mat UnPooling_with_overlap(Mat&, Size2i, int, int, std::vector<std::vector<Point2i> >&, Size2i);
-
 */
 
 

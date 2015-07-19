@@ -102,6 +102,7 @@ vector3f vector3f::operator-(float a){
 	}
 	return tmp;
 }
+
 vector3f vector3f::operator*(float a){
 	vector3f tmp;
 	copyTo(tmp);
@@ -110,6 +111,34 @@ vector3f vector3f::operator*(float a){
 	}
 	return tmp;
 }
+
+vector3f vector3f::operator/(float a){
+	vector3f tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 3; ++i){
+		tmp.set(i, tmp.get(i) / a);
+	}
+	return tmp;
+}
+
+vector3f vector3f::divNoRem(float a){
+	vector3f tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 3; ++i){
+		tmp.set(i, (int)(tmp.get(i) / a));
+	}
+	return tmp;
+}
+
+vector3f vector3f::operator%(float a){
+	vector3f tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 3; ++i){
+		tmp.set(i, (float)((int)(tmp.get(i)) % (int)a));
+	}
+	return tmp;
+}
+
 vector3f vector3f::mul(const vector3f &v){
 	vector3f tmp;
 	copyTo(tmp);
@@ -118,6 +147,7 @@ vector3f vector3f::mul(const vector3f &v){
 	}
 	return tmp;
 }
+
 vector3f vector3f::mul(float a){
 	vector3f tmp;
 	copyTo(tmp);

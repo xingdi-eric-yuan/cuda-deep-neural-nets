@@ -54,6 +54,9 @@ public:
 	vector3f operator+(float);
 	vector3f operator-(float);
 	vector3f operator*(float);
+	vector3f operator/(float);
+	vector3f operator%(float);
+	vector3f divNoRem(float);
 	vector3f mul(const vector3f&);
 	vector3f mul(const float);
 	void print(const std::string&) const;
@@ -83,9 +86,13 @@ public:
 	void ones();
 	void randn();
 	void set(int, int, int, float);
+	void set(int, int, float);
+	void set(int, int, const vector3f&);
+	void set(int, const vector3f&);
 	void setAll(float);
 	void setAll(const vector3f&);
 	float get(int, int, int) const;
+	vector3f get(int, int) const;
 	int getLength() const;
 
 	void deviceToHost();

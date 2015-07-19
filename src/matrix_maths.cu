@@ -237,6 +237,41 @@ vector3f max(const Mat& src){
 	return res;
 }
 
+void max(const Mat& src, vector3f& max_val, vector3f& max_loc){
+	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	int tmp = src.rows * src.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		float *dev_maxVal = 0;
+		float *dev_minVal = 0;
+		int *dev_maxLoc = 0;
+		int *dev_minLoc = 0;
+		cudaMalloc((void**)&dev_maxVal, sizeof(float));
+		cudaMalloc((void**)&dev_minVal, sizeof(float));
+		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
+		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		cu_minMaxLoc<<<num_blocks, block_size>>>(src.devData + i * tmp, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, tmp);
+		float host_maxVal = 0;
+		float host_minVal = 0;
+		int host_maxLoc = 0;
+		int host_minLoc = 0;
+		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaFree(dev_maxVal);
+		cudaFree(dev_minVal);
+		cudaFree(dev_maxLoc);
+		cudaFree(dev_maxLoc);
+		max_val.set(i, host_maxVal);
+		max_loc.set(i, host_maxLoc);
+	}
+}
+
 float min(const vector3f &src){
 	float res = src.get(0);
 	for(int i = 1; i < 3; ++i){
@@ -279,6 +314,78 @@ vector3f min(const Mat& src){
 		res.set(i, host_minVal);
 	}
 	return res;
+}
+
+void min(const Mat& src, vector3f& min_val, vector3f& min_loc){
+	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	int tmp = src.rows * src.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		float *dev_maxVal = 0;
+		float *dev_minVal = 0;
+		int *dev_maxLoc = 0;
+		int *dev_minLoc = 0;
+		cudaMalloc((void**)&dev_maxVal, sizeof(float));
+		cudaMalloc((void**)&dev_minVal, sizeof(float));
+		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
+		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		cu_minMaxLoc<<<num_blocks, block_size>>>(src.devData + i * tmp, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, tmp);
+		float host_maxVal = 0;
+		float host_minVal = 0;
+		int host_maxLoc = 0;
+		int host_minLoc = 0;
+		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaFree(dev_maxVal);
+		cudaFree(dev_minVal);
+		cudaFree(dev_maxLoc);
+		cudaFree(dev_maxLoc);
+		min_val.set(i, host_minVal);
+		min_loc.set(i, host_minLoc);
+	}
+}
+
+void minMaxLoc(const Mat& src, vector3f& max_val, vector3f& max_loc, vector3f& min_val, vector3f& min_loc){
+	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	int tmp = src.rows * src.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		float *dev_maxVal = 0;
+		float *dev_minVal = 0;
+		int *dev_maxLoc = 0;
+		int *dev_minLoc = 0;
+		cudaMalloc((void**)&dev_maxVal, sizeof(float));
+		cudaMalloc((void**)&dev_minVal, sizeof(float));
+		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
+		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		cu_minMaxLoc<<<num_blocks, block_size>>>(src.devData + i * tmp, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, tmp);
+		float host_maxVal = 0;
+		float host_minVal = 0;
+		int host_maxLoc = 0;
+		int host_minLoc = 0;
+		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaFree(dev_maxVal);
+		cudaFree(dev_minVal);
+		cudaFree(dev_maxLoc);
+		cudaFree(dev_maxLoc);
+		max_val.set(i, host_maxVal);
+		max_loc.set(i, host_maxLoc);
+		min_val.set(i, host_minVal);
+		min_loc.set(i, host_minLoc);
+	}
 }
 
 Mat greaterThan(const Mat &src, float val){
@@ -487,6 +594,7 @@ Mat padding(const Mat &src, int pad){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	if(pad <= 0) return src;
 	Mat dst(src.rows + pad * 2, src.cols + pad * 2, src.channels);
 	int tmp1 = src.rows * src.cols;
 	int tmp2 = dst.rows * dst.cols;
@@ -504,6 +612,7 @@ Mat depadding(const Mat &src, int pad){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	if(pad <= 0) return src;
 	Mat dst(src.rows - pad * 2, src.cols - pad * 2, src.channels);
 	int tmp1 = src.rows * src.cols;
 	int tmp2 = dst.rows * dst.cols;
@@ -550,6 +659,202 @@ Mat kron(const Mat &a, const Mat &b){
 	dst.deviceToHost();
 	return dst;
 }
+
+Mat conv2(const Mat &m, const Mat &kernel){
+	if(NULL == m.hostData || NULL == m.devData || NULL == kernel.hostData || NULL == kernel.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat res(m.rows, m.cols, m.channels);
+    float *d_Data, *d_Kernel, *d_PaddedData, *d_PaddedKernel;
+    fComplex *d_DataSpectrum0, *d_KernelSpectrum0;
+    cufftHandle fftPlan;
+    float *host_result_tmp, *host_result;
+
+    const int kernelH = kernel.rows;
+    const int kernelW = kernel.cols;
+    const int kernelY = kernel.rows / 2;
+    const int kernelX = kernel.cols / 2;
+    const int dataH = m.rows;
+    const int dataW = m.cols;
+    const int fftH = snapTransformSize(dataH + kernelH - 1);
+    const int fftW = snapTransformSize(dataW + kernelW - 1);
+    host_result = (float *)malloc(dataH * dataW * sizeof(float));
+    host_result_tmp = (float *)malloc(fftH * fftW * sizeof(float));
+    cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float));
+    cudaMalloc((void **)&d_Kernel, kernelH * kernelW * sizeof(float));
+    cudaMalloc((void **)&d_PaddedData,   fftH * fftW * sizeof(float));
+    cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float));
+    cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex));
+    cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex));
+    // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
+    cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C);
+    for(int i = 0; i < m.channels; ++i){
+        cudaMemcpy(d_Data, m.devData + m.rows * m.cols * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(d_Kernel, kernel.devData + kernel.rows * kernel.cols * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice);
+        cudaMemset(d_PaddedData,   0, fftH * fftW * sizeof(float));
+        cudaMemset(d_PaddedKernel, 0, fftH * fftW * sizeof(float));
+        padDataClampToBorder(d_PaddedData, d_Data, fftH, fftW,
+        					dataH, dataW, kernelH, kernelW, kernelY, kernelX);
+        padKernel(d_PaddedKernel, d_Kernel, fftH, fftW,
+            kernelH, kernelW, kernelY, kernelX);
+        //CUFFT_INVERSE works just as well...
+        const int FFT_DIR = CUFFT_FORWARD;
+        //Not including kernel transformation into time measurement,
+        //since convolution kernel is not changed very frequently
+        // std::cout<<"...transforming convolution kernel"<<std::endl;
+        cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedKernel, (cufftComplex *)d_KernelSpectrum0, FFT_DIR);
+        // std::cout<<"...running GPU FFT convolution: "<<std::endl;
+        cudaDeviceSynchronize();
+        cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedData, (cufftComplex *)d_DataSpectrum0, FFT_DIR);
+        spProcess2D(d_DataSpectrum0, d_DataSpectrum0, d_KernelSpectrum0, fftH, fftW / 2, FFT_DIR);
+        cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR);
+        cudaDeviceSynchronize();
+        // std::cout<<"...reading back GPU FFT results"<<std::endl;
+        cudaMemcpy(host_result_tmp, d_PaddedData, fftH * fftW * sizeof(float), cudaMemcpyDeviceToHost);
+        for(int y = 0; y < dataH; y++){
+            for(int x = 0; x < dataW; x++){
+                host_result[y * dataW + x] = host_result_tmp[y * fftW  + x];
+            }
+        }
+        memcpy(res.hostData + i * res.rows * res.cols, host_result, res.rows * res.cols * sizeof(float));
+    }
+    res.hostToDevice();
+    cudaFree(d_KernelSpectrum0);
+    cudaFree(d_DataSpectrum0);
+    cudaFree(d_PaddedKernel);
+    cudaFree(d_PaddedData);
+    cudaFree(d_Kernel);
+    cudaFree(d_Data);
+    free(host_result);
+    free(host_result_tmp);
+    return res;
+}
+
+Mat conv2(const Mat &m, const Mat &kernel, int convtype, int pad, int stride){
+	if(NULL == m.hostData || NULL == m.devData || NULL == kernel.hostData || NULL == kernel.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat src = padding(m, pad);
+	Mat res = conv2(src, kernel);
+	if(CONV_VALID == convtype){
+        int tmpx = src.cols - kernel.cols + 1;
+        int tmpy = src.rows - kernel.rows + 1;
+        res = getRange(res, (src.cols - tmpx) / 2, src.cols - 1 - (src.cols - tmpx) / 2,
+        		 	 	    (src.rows - tmpy) / 2, src.rows - 1 - (src.rows - tmpy) / 2);
+	}
+	res = downSample(res, stride, stride);
+	return res;
+}
+
+Mat getRange(const Mat& src, int xstart, int xend, int ystart, int yend){
+	if(NULL == src.hostData || NULL == src.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	if(xstart < 0 || xstart > xend || xend >= src.cols ||
+	   ystart < 0 || ystart > yend || yend >= src.rows){
+		std::cout<<"invalid range..."<<std::endl;
+		exit(0);
+	}
+	Mat dst(yend - ystart + 1, xend - xstart + 1, src.channels);
+	int len = dst.rows * dst.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		cu_getRange<<<num_blocks, block_size>>>(src.devData + i * src.rows * src.cols, dst.devData + i * len, xstart, xend, ystart, yend, src.rows, len);
+	}
+	dst.deviceToHost();
+	return dst;
+}
+
+Mat downSample(const Mat& src, int y_stride, int x_stride){
+	if(NULL == src.hostData || NULL == src.devData || y_stride < 1 || x_stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	if(1 == y_stride && 1 == x_stride){
+		Mat res(src);
+		return res;
+	}
+	int dst_rows = src.rows / y_stride;
+	if(src.rows % y_stride > 0) ++dst_rows;
+	int dst_cols = src.cols / x_stride;
+	if(src.cols % x_stride > 0) ++dst_cols;
+	Mat res(dst_rows, dst_cols, src.channels);
+	int len = res.rows * res.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		cu_downSample<<<num_blocks, block_size>>>(src.devData + i * src.rows * src.cols, res.devData + i * len, y_stride, x_stride, src.rows, len);
+	}
+	res.deviceToHost();
+	return res;
+}
+
+// Pooling with overlap
+// Max pooling and stochastic pooling supported
+// output size = (input size - window size) / stride + 1
+Mat pooling_with_overlap(const Mat &src, vector2i window_size, int stride, int poolingMethod, std::vector<vector3f> &locat){
+	if(NULL == src.hostData || NULL == src.devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat tmpres(src.rows - window_size.get(1) + 1, src.cols - window_size.get(0) + 1, src.channels);
+	std::vector<vector3f> tmplocat;
+    for(int i = 0; i < tmpres.rows; ++i){
+        for(int j = 0; j < tmpres.cols; ++j){
+        	Mat tmp = getRange(src, j, j + window_size.get(0) - 1, i, i + window_size.get(1) - 1);
+        	vector3f val;
+        	vector3f loc;
+        	if(POOL_MAX == poolingMethod){
+        		max(tmp, val, loc);
+        	}
+        	vector3f tmpr = loc % window_size.get(1);
+        	vector3f tmpc = loc.divNoRem(window_size.get(1));
+        	tmpr = tmpr + i;
+        	tmpc = tmpc + j;
+        	loc = tmpc * src.rows + tmpr;
+            tmplocat.push_back(loc);
+            tmpres.set(i, j, val);
+        }
+    }
+    Mat dst = downSample(tmpres, stride, stride);
+    for(int i = 0; i < tmpres.cols; i++){
+        for(int j = 0; j < tmpres.rows; j++){
+            if(i % stride > 0 || j % stride > 0) continue;
+            locat.push_back(tmplocat[i * tmpres.rows + j]);
+        }
+    }
+    tmplocat.clear();
+    std::vector<vector3f>().swap(tmplocat);
+    return dst;
+}
+
+// Max pooling and stochastic pooling supported
+Mat unpooling_with_overlap(const Mat &src, vector2i window_size, int stride, int poolingMethod, std::vector<vector3f> &locat, vector2i up_size){
+	if(NULL == src.hostData || NULL == src.devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    if(1 == window_size.get(0) && 1 == window_size.get(1) && 1 == stride){
+        Mat res(src);
+        return res;
+    }
+    Mat res(up_size.get(1), up_size.get(0), src.channels);
+    for(int i = 0; i < src.rows; i++){
+        for(int j = 0; j < src.cols; j++){
+        	for(int ch = 0; ch < src.channels; ++ch){
+            	res.set(locat[i * src.cols + j].get(ch), ch, src.get(i, j, ch));
+        	}
+        }
+    }
+    return res;
+}
+
+
+
 
 
 

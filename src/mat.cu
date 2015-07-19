@@ -79,7 +79,49 @@ void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	hostData[IDX2C(pos_y, pos_x, cols) + pos_channel * (rows * cols)] = val;
+	hostData[IDX2C(pos_y, pos_x, rows) + pos_channel * (rows * cols)] = val;
+	hostToDevice();
+}
+
+void Mat::set(int pos_y, int pos_x, const vector3f& val){
+	if(channels != 3){
+		std::cout<<"this is not a 3 channel mat..."<<std::endl;
+		exit(0);
+	}
+	if(NULL == hostData || NULL == devData) {zeros();}
+	if(pos_x >= cols || pos_y >= rows){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	for(int i = 0; i < 3; ++i){
+		set(pos_y, pos_x, i, val.get(i));
+	}
+	hostToDevice();
+}
+
+void Mat::set(int pos, const vector3f& val){
+	if(channels != 3){
+		std::cout<<"this is not a 3 channel mat..."<<std::endl;
+		exit(0);
+	}
+	if(NULL == hostData || NULL == devData) {zeros();}
+	if(pos >= cols * rows){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	for(int i = 0; i < 3; ++i){
+		hostData[pos + i * (rows * cols)] = val.get(i);
+	}
+	hostToDevice();
+}
+
+void Mat::set(int pos, int pos_channel, float val){
+	if(NULL == hostData || NULL == devData) {zeros();}
+	if(pos >= cols * rows){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	hostData[pos + pos_channel * (rows * cols)] = val;
 	hostToDevice();
 }
 
@@ -115,7 +157,20 @@ float Mat::get(int pos_y, int pos_x, int pos_channel) const{
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	return hostData[IDX2C(pos_y, pos_x, cols) + pos_channel * (rows * cols)];
+	return hostData[IDX2C(pos_y, pos_x, rows) + pos_channel * (rows * cols)];
+}
+
+vector3f Mat::get(int pos_y, int pos_x) const{
+	if(NULL == hostData || NULL == devData||
+	   pos_x >= cols || pos_y >= rows || channels < 3){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	vector3f res;
+	for(int i = 0; i < 3; ++i){
+		res.set(i, hostData[IDX2C(pos_y, pos_x, rows) + i * (rows * cols)]);
+	}
+	return res;
 }
 
 int Mat::getLength() const{

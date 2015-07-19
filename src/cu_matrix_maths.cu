@@ -329,7 +329,6 @@ __global__ void cu_depadding(const float* src, float* dst, const int rows1, cons
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
 		int pad = (rows1 - rows2) / 2;
-		int cols2 = cols1 - pad * 2;
 		int r2 = tid % rows2;
 		int c2 = tid / rows2;
 		int r1 = r2 + pad;
@@ -342,8 +341,8 @@ __global__ void cu_depadding(const float* src, float* dst, const int rows1, cons
 __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	int scale_x = colsdst / colsa;
-	int scale_y = rowsdst / rowsa;
+	//int scale_x = colsdst / colsa;
+	//int scale_y = rowsdst / rowsa;
 	while(tid < n){
 		int r2 = tid % rowsdst;
 		int c2 = tid / rowsdst;
@@ -367,6 +366,35 @@ __global__ void cu_kron(const float *a, const float* b, float* dst, const int ro
 		int rb = r2 / rowsa;
 		int cb = c2 / colsa;
 		dst[tid] = a[ra + rowsa * ca] * b[rb + rowsb * cb];
+		tid += stride;
+	}
+}
+
+__global__ void cu_downSample(const float *src, float* dst, const int y_stride, const int x_stride, const int rowssrc, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	int rowsdst = rowssrc / y_stride;
+	if(rowssrc % y_stride > 0) ++rowsdst;
+	while(tid < n){
+		int rdst = tid % rowsdst;
+		int cdst = tid / rowsdst;
+		int rsrc = rdst * y_stride;
+		int csrc = cdst * x_stride;
+		dst[tid] = src[rsrc + rowssrc * csrc];
+		tid += stride;
+	}
+}
+
+__global__ void cu_getRange(const float *src, float* dst, const int xstart, const int xend, const int ystart, const int yend, const int rowssrc, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	int rowsdst = yend - ystart + 1;
+	while(tid < n){
+		int rdst = tid % rowsdst;
+		int cdst = tid / rowsdst;
+		int rsrc = rdst + ystart;
+		int csrc = cdst + xstart;
+		dst[tid] = src[rsrc + rowssrc * csrc];
 		tid += stride;
 	}
 }

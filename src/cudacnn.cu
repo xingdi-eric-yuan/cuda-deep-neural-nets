@@ -44,20 +44,29 @@ int main(void){
 
 	Mat i = rot90(h, 2);
 	i.printHost("9th print");
-/*
-	Mat j(3, 2, 1);
-	j.set(0, 0, 0, 0.5);
-	j.set(0, 1, 0, 1.0);
-	j.set(1, 0, 0, 2.0);
-	j.set(1, 1, 0, 3.0);
+
+	Mat j = repmat(i, 2, 2);
 	j.printHost("10th print");
 
-	Mat k = kron(i, j);
+	Mat k = conv2(j, h);
 	k.printHost("11th print");
-*/
-	Mat j = repmat(i, 2, 3);
-	j.printHost("10th print");
 
+	vector2i _size1(2, 3);
+	std::vector<vector3f> locat;
+
+	Mat l = pooling_with_overlap(k, _size1, 1, POOL_MAX, locat);
+	l.printHost("12th print");
+	/*
+	for(int counter = 0; counter < locat.size(); counter++){
+		string str = "locat_" + to_string(counter);
+		locat[counter].print(str);
+	}
+//*/
+	vector2i _size2(6, 6);
+	Mat m = unpooling_with_overlap(l, _size1, 1, POOL_MAX, locat, _size2);
+	m.printHost("13th print");
+
+//*/
 
 	return 0;
 }
