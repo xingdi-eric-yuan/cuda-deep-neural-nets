@@ -120,32 +120,24 @@ void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
 }
 
 void Mat::set(int pos_y, int pos_x, const vector3f& val){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == hostData || NULL == devData) {zeros();}
 	if(pos_x >= cols || pos_y >= rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < channels; ++i){
 		set(pos_y, pos_x, i, val.get(i));
 	}
 	hostToDevice();
 }
 
 void Mat::set(int pos, const vector3f& val){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == hostData || NULL == devData) {zeros();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < channels; ++i){
 		hostData[pos + i * (rows * cols)] = val.get(i);
 	}
 	hostToDevice();
@@ -172,10 +164,6 @@ void Mat::setAll(float val){
 }
 
 void Mat::setAll(const vector3f &v){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == hostData) {mallocHost();}
 	if(NULL == devData) {mallocDevice();}
 	int len = rows * cols;
@@ -248,7 +236,6 @@ void Mat::copyTo(cpuMat &m) const{
 	memcpy(m.Data, hostData, getLength() * sizeof(float));
 }
 
-// only changes devData (on GPU)
 Mat Mat::operator+(const Mat &m) const{
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||
@@ -291,10 +278,6 @@ Mat Mat::operator+(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	Mat tmpmat;
 	copyTo(tmpmat);
 	int len = rows * cols;
@@ -306,6 +289,56 @@ Mat Mat::operator+(const vector3f &v) const{
 	}
 	tmpmat.deviceToHost();
 	return tmpmat;
+}
+
+Mat& Mat::operator+=(const Mat &m){
+	if(NULL == hostData || NULL == devData ||
+	   NULL == m.hostData || NULL == m.devData||
+	   getLength() != m.getLength()){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	Mat tmpmat(m);
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	cublasSetVector (n, sizeof (float), hostData, 1, devData, 1); // cp x- >d_x
+	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	float alpha = 1.0;
+	// multiply the vector d_x by the scalar alpha and add to d_y
+	cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1);
+	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
+	cublasDestroy ( handle ); // destroy CUBLAS context
+	deviceToHost();
+    return *this;
+}
+
+Mat& Mat::operator+=(float val){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int len = getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_plus<<<num_blocks, block_size>>>(devData, val, len);
+	deviceToHost();
+	return *this;
+}
+
+Mat& Mat::operator+=(const vector3f &v){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int len = rows * cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	for(int i = 0; i < channels; ++i){
+		cu_plus<<<num_blocks, block_size>>>(devData + i * len, v.get(i), len);
+	}
+	deviceToHost();
+	return *this;
 }
 
 Mat Mat::operator-(const Mat &m) const{
@@ -352,10 +385,6 @@ Mat Mat::operator-(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	Mat tmpmat;
 	copyTo(tmpmat);
 	int len = rows * cols;
@@ -366,6 +395,56 @@ Mat Mat::operator-(const vector3f &v) const{
 	}
 	tmpmat.deviceToHost();
 	return tmpmat;
+}
+
+Mat& Mat::operator-=(const Mat &m){
+	if(NULL == hostData || NULL == devData ||
+	   NULL == m.hostData || NULL == m.devData||
+	   getLength() != m.getLength()){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	Mat tmpmat(m);
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	cublasSetVector (n, sizeof (float), hostData, 1, devData, 1); // cp x- >d_x
+	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	float alpha = -1.0;
+	// multiply the vector d_x by the scalar alpha and add to d_y
+	cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1);
+	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
+	cublasDestroy ( handle ); // destroy CUBLAS context
+	deviceToHost();
+    return *this;
+}
+
+Mat& Mat::operator-=(float val){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int len = getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_minus<<<num_blocks, block_size>>>(devData, val, len);
+	deviceToHost();
+	return *this;
+}
+
+Mat& Mat::operator-=(const vector3f &v){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int len = rows * cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	for(int i = 0; i < channels; ++i){
+		cu_minus<<<num_blocks, block_size>>>(devData + i * len, v.get(i), len);
+	}
+	deviceToHost();
+	return *this;
 }
 
 Mat Mat::operator*(const Mat &m) const{
@@ -412,10 +491,6 @@ Mat Mat::operator*(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
-		exit(0);
-	}
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
@@ -427,6 +502,36 @@ Mat Mat::operator*(const vector3f &v) const{
 	tmpmat.deviceToHost();
     cublasDestroy(handle);
 	return tmpmat;
+}
+
+Mat& Mat::operator*=(float val){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	cublasSscal(handle, n, &val, devData, 1);
+	deviceToHost();
+    cublasDestroy(handle);
+	return *this;
+}
+
+Mat& Mat::operator*=(const vector3f &v){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	for(int i = 0; i < channels; ++i){
+		float tmp = v.get(i);
+		cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1);
+	}
+	deviceToHost();
+    cublasDestroy(handle);
+	return *this;
 }
 
 Mat Mat::mul(const Mat &m) const{
@@ -465,10 +570,6 @@ Mat Mat::mul(float val) const{
 Mat Mat::mul(const vector3f &v) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
-		exit(0);
-	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel mat..."<<std::endl;
 		exit(0);
 	}
 	Mat tmpmat;

@@ -92,31 +92,23 @@ void cpuMat::set(int pos_y, int pos_x, int pos_channel, float val){
 }
 
 void cpuMat::set(int pos_y, int pos_x, const vector3f& val){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == Data ) {zeros();}
 	if(pos_x >= cols || pos_y >= rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < channels; ++i){
 		set(pos_y, pos_x, i, val.get(i));
 	}
 }
 
 void cpuMat::set(int pos, const vector3f& val){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == Data ) {zeros();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < channels; ++i){
 		Data[pos + i * (rows * cols)] = val.get(i);
 	}
 }
@@ -139,10 +131,6 @@ void cpuMat::setAll(float val){
 }
 
 void cpuMat::setAll(const vector3f &v){
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	if(NULL == Data) {mallocMat();}
 	int len = rows * cols;
 	for(int ch = 0; ch < channels; ++ch){
@@ -231,18 +219,52 @@ cpuMat cpuMat::operator+(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	int n = rows * cols;
 	cpuMat tmp(rows, cols, channels);
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < channels; ++ch){
 		for(int i = 0; i < n; ++i){
 			tmp.Data[i + n * ch] = Data[i + n * ch] + v.get(ch);
 		}
 	}
 	return tmp;
+}
+
+cpuMat& cpuMat::operator+=(const cpuMat &m){
+	if(NULL == Data  || NULL == m.Data|| getLength() != m.getLength()){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	for(int i = 0; i < n; ++i){
+		Data[i] += m.Data[i];
+	}
+	return *this;
+}
+
+cpuMat& cpuMat::operator+=(float val) {
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	for(int i = 0; i < n; ++i){
+		Data[i] += val;
+	}
+	return *this;
+}
+
+cpuMat& cpuMat::operator+=(const vector3f &v){
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = rows * cols;
+	for(int ch = 0; ch < channels; ++ch){
+		for(int i = 0; i < n; ++i){
+			Data[i + n * ch] += v.get(ch);
+		}
+	}
+	return *this;
 }
 
 cpuMat cpuMat::operator-(const cpuMat &m) const{
@@ -277,18 +299,52 @@ cpuMat cpuMat::operator-(const vector3f& v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	int n = rows * cols;
 	cpuMat tmp(rows, cols, channels);
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < channels; ++ch){
 		for(int i = 0; i < n; ++i){
 			tmp.Data[i + n * ch] = Data[i + n * ch] - v.get(ch);
 		}
 	}
 	return tmp;
+}
+
+cpuMat& cpuMat::operator-=(const cpuMat &m){
+	if(NULL == Data  || NULL == m.Data|| getLength() != m.getLength()){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	for(int i = 0; i < n; ++i){
+		Data[i] -= m.Data[i];
+	}
+	return *this;
+}
+
+cpuMat& cpuMat::operator-=(float val) {
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	for(int i = 0; i < n; ++i){
+		Data[i] -= val;
+	}
+	return *this;
+}
+
+cpuMat& cpuMat::operator-=(const vector3f &v){
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = rows * cols;
+	for(int ch = 0; ch < channels; ++ch){
+		for(int i = 0; i < n; ++i){
+			Data[i + n * ch] -= v.get(ch);
+		}
+	}
+	return *this;
 }
 /*
 cpuMat cpuMat::operator*(const cpuMat &m){
@@ -319,18 +375,40 @@ cpuMat cpuMat::operator*(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	int n = rows * cols;
 	cpuMat tmp(rows, cols, channels);
 	for(int ch = 0; ch < 3; ++ch){
-		for(int i = 0; i < n; ++i){
+		for(int i = 0; i < channels; ++i){
 			tmp.Data[i + n * ch] = Data[i + n * ch] * v.get(ch);
 		}
 	}
 	return tmp;
+}
+
+cpuMat& cpuMat::operator*=(float val) {
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	for(int i = 0; i < n; ++i){
+		Data[i] *= val;
+	}
+	return *this;
+}
+
+cpuMat& cpuMat::operator*=(const vector3f &v){
+	if(NULL == Data){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = rows * cols;
+	for(int ch = 0; ch < channels; ++ch){
+		for(int i = 0; i < n; ++i){
+			Data[i + n * ch] *= v.get(ch);
+		}
+	}
+	return *this;
 }
 
 cpuMat cpuMat::mul(const cpuMat &m) const{
@@ -364,13 +442,9 @@ cpuMat cpuMat::mul(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	if(channels != 3){
-		std::cout<<"this is not a 3 channel cpuMat..."<<std::endl;
-		exit(0);
-	}
 	int n = rows * cols;
 	cpuMat tmp(rows, cols, channels);
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < channels; ++ch){
 		for(int i = 0; i < n; ++i){
 			tmp.Data[i + n * ch] = Data[i + n * ch] * v.get(ch);
 		}

@@ -198,33 +198,6 @@ __global__ void cu_sum(const float* src, float* sum, const int n){
 		sum[blockIdx.x] = sdata[0];
 	}
 }
-/*
-__global__ void cu_stddev(const float* src, float* stddev, float avg, const int n){
-	extern __shared__ float sdata[];
-	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-	// load input into __shared__ memory
-	float x = 0;
-	if(tid < n){
-		x = src[tid];
-	}
-	sdata[threadIdx.x] = x;
-	__syncthreads();
-	// contiguous range pattern
-	for(int offset = blockDim.x / 2; offset > 0; offset >>= 1){
-		if(threadIdx.x < offset){
-			// add a partial sum upstream to our own
-			sdata[threadIdx.x] += sdata[threadIdx.x + offset];
-		}
-	    // wait until all threads in the block have
-	    // updated their partial sums
-		__syncthreads();
-	}
-	// thread 0 writes the final result
-	if(threadIdx.x == 0){
-		sum[blockIdx.x] = sdata[0];
-	}
-}
-*/
 
 __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue, int* minLoc, int* maxLoc, const int n){
 	__shared__ float minValCache[threadsPerBlock];
@@ -232,7 +205,7 @@ __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue,
 	__shared__ int minLocCache[threadsPerBlock];
 	__shared__ int maxLocCache[threadsPerBlock];
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int stride = blockDim.x * gridDim.x;
+	//int stride = blockDim.x * gridDim.x;
 
 	float val = src[0];
 	int loc = 0;
@@ -391,7 +364,7 @@ __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int
 __global__ void cu_kron(const float *a, const float* b, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	int colsb = colsdst / colsa;
+	//int colsb = colsdst / colsa;
 	int rowsb = rowsdst / rowsa;
 	while(tid < n){
 		int r2 = tid % rowsdst;
@@ -451,7 +424,7 @@ __global__ void cu_copyMakeBorder(const float *src, float* dst, const int rowssr
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	int rowsdst = rowssrc + up + down;
-	int colsdst = colssrc + left + right;
+	//int colsdst = colssrc + left + right;
 	while(tid < n){
 		int rsrc = tid % rowssrc;
 		int csrc = tid / rowssrc;

@@ -57,13 +57,13 @@ int vector2i::get(int pos) const{
 	elif(1 == pos) return val1;
 	else return 0;
 }
-void vector2i::copyTo(vector2i &v){
+void vector2i::copyTo(vector2i &v) const{
 	for(int i = 0; i < 2; ++i){
 		v.set(i, get(i));
 	}
 }
 
-vector2i vector2i::operator+(const vector2i &v){
+vector2i vector2i::operator+(const vector2i &v) const{
 	vector2i tmp;
 	copyTo(tmp);
 	for(int i = 0; i < 2; ++i){
@@ -71,24 +71,8 @@ vector2i vector2i::operator+(const vector2i &v){
 	}
 	return tmp;
 }
-vector2i vector2i::operator-(const vector2i &v){
-	vector2i tmp;
-	copyTo(tmp);
-	for(int i = 0; i < 2; ++i){
-		tmp.set(i, tmp.get(i) - v.get(i));
-	}
-	return tmp;
-}
-vector2i vector2i::operator*(const vector2i &v){
-	vector2i tmp;
-	copyTo(tmp);
-	for(int i = 0; i < 2; ++i){
-		tmp.set(i, tmp.get(i) * v.get(i));
-	}
-	return tmp;
-}
 
-vector2i vector2i::operator+(int a){
+vector2i vector2i::operator+(int a) const{
 	vector2i tmp;
 	copyTo(tmp);
 	for(int i = 0; i < 2; ++i){
@@ -97,7 +81,30 @@ vector2i vector2i::operator+(int a){
 	return tmp;
 }
 
-vector2i vector2i::operator-(int a){
+vector2i& vector2i::operator+=(const vector2i &v){
+	for(int i = 0; i < 2; ++i){
+		set(i, get(i) + v.get(i));
+	}
+	return *this;
+}
+
+vector2i& vector2i::operator+=(int a){
+	for(int i = 0; i < 2; ++i){
+		set(i, get(i) + a);
+	}
+	return *this;
+}
+
+vector2i vector2i::operator-(const vector2i &v) const{
+	vector2i tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 2; ++i){
+		tmp.set(i, tmp.get(i) - v.get(i));
+	}
+	return tmp;
+}
+
+vector2i vector2i::operator-(int a) const{
 	vector2i tmp;
 	copyTo(tmp);
 	for(int i = 0; i < 2; ++i){
@@ -105,15 +112,22 @@ vector2i vector2i::operator-(int a){
 	}
 	return tmp;
 }
-vector2i vector2i::operator*(int a){
-	vector2i tmp;
-	copyTo(tmp);
+
+vector2i& vector2i::operator-=(const vector2i &v){
 	for(int i = 0; i < 2; ++i){
-		tmp.set(i, tmp.get(i) * a);
+		set(i, get(i) - v.get(i));
 	}
-	return tmp;
+	return *this;
 }
-vector2i vector2i::mul(const vector2i &v){
+
+vector2i& vector2i::operator-=(int a){
+	for(int i = 0; i < 2; ++i){
+		set(i, get(i) - a);
+	}
+	return *this;
+}
+
+vector2i vector2i::operator*(const vector2i &v) const{
 	vector2i tmp;
 	copyTo(tmp);
 	for(int i = 0; i < 2; ++i){
@@ -121,7 +135,40 @@ vector2i vector2i::mul(const vector2i &v){
 	}
 	return tmp;
 }
-vector2i vector2i::mul(int a){
+
+vector2i vector2i::operator*(int a) const{
+	vector2i tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 2; ++i){
+		tmp.set(i, tmp.get(i) * a);
+	}
+	return tmp;
+}
+
+vector2i& vector2i::operator*=(const vector2i &v){
+	for(int i = 0; i < 2; ++i){
+		set(i, get(i) * v.get(i));
+	}
+	return *this;
+}
+
+vector2i& vector2i::operator*=(int a){
+	for(int i = 0; i < 2; ++i){
+		set(i, get(i) * a);
+	}
+	return *this;
+}
+
+vector2i vector2i::mul(const vector2i &v) const{
+	vector2i tmp;
+	copyTo(tmp);
+	for(int i = 0; i < 2; ++i){
+		tmp.set(i, tmp.get(i) * v.get(i));
+	}
+	return tmp;
+}
+
+vector2i vector2i::mul(int a) const{
 	vector2i tmp;
 	copyTo(tmp);
 	for(int i = 0; i < 2; ++i){

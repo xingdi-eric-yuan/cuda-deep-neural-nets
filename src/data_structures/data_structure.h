@@ -21,16 +21,24 @@ public:
 	void set(int, int);
 	void setAll(int);
 	int get(int) const;
-	void copyTo(vector2i&);
+	void copyTo(vector2i&) const;
 
-	vector2i operator+(const vector2i&);
-	vector2i operator-(const vector2i&);
-	vector2i operator*(const vector2i&);
-	vector2i operator+(int);
-	vector2i operator-(int);
-	vector2i operator*(int);
-	vector2i mul(const vector2i&);
-	vector2i mul(const int);
+	vector2i operator+(const vector2i&) const;
+	vector2i operator-(const vector2i&) const;
+	vector2i operator*(const vector2i&) const;
+	vector2i operator+(int) const;
+	vector2i operator-(int) const;
+	vector2i operator*(int) const;
+
+	vector2i& operator+=(const vector2i&);
+	vector2i& operator-=(const vector2i&);
+	vector2i& operator*=(const vector2i&);
+	vector2i& operator+=(int);
+	vector2i& operator-=(int);
+	vector2i& operator*=(int);
+
+	vector2i mul(const vector2i&) const;
+	vector2i mul(const int) const;
 	void print(const std::string&) const;
 
 	int val0;
@@ -50,19 +58,29 @@ public:
 	void set(int, float);
 	void setAll(float);
 	float get(int) const;
-	void copyTo(vector3f&);
+	void copyTo(vector3f&) const;
 
-	vector3f operator+(const vector3f&);
-	vector3f operator-(const vector3f&);
-	vector3f operator*(const vector3f&);
-	vector3f operator+(float);
-	vector3f operator-(float);
-	vector3f operator*(float);
-	vector3f operator/(float);
-	vector3f operator%(float);
-	vector3f divNoRem(float);
-	vector3f mul(const vector3f&);
-	vector3f mul(const float);
+	vector3f operator+(const vector3f&) const;
+	vector3f operator-(const vector3f&) const;
+	vector3f operator*(const vector3f&) const;
+	vector3f operator+(float) const;
+	vector3f operator-(float) const;
+	vector3f operator*(float) const;
+	vector3f operator/(float) const;
+	vector3f operator%(float) const;
+
+	vector3f& operator+=(const vector3f&);
+	vector3f& operator-=(const vector3f&);
+	vector3f& operator*=(const vector3f&);
+	vector3f& operator+=(const float);
+	vector3f& operator-=(const float);
+	vector3f& operator*=(const float);
+	vector3f& operator/=(const float);
+	vector3f& operator%=(const float);
+
+	vector3f divNoRem(float) const;
+	vector3f mul(const vector3f&) const;
+	vector3f mul(const float) const;
 	void print(const std::string&) const;
 
 	float val0;
@@ -116,6 +134,16 @@ public:
 	Mat operator+(const vector3f&) const;
 	Mat operator-(const vector3f&) const;
 	Mat operator*(const vector3f&) const;
+
+	Mat& operator+=(const Mat&);
+	Mat& operator-=(const Mat&);
+	Mat& operator+=(float);
+	Mat& operator-=(float);
+	Mat& operator*=(float);
+	Mat& operator+=(const vector3f&);
+	Mat& operator-=(const vector3f&);
+	Mat& operator*=(const vector3f&);
+
 	Mat mul(const Mat&) const;
 	Mat mul(float) const;
 	Mat mul(const vector3f&) const;
@@ -170,6 +198,16 @@ public:
 	cpuMat operator+(const vector3f&) const;
 	cpuMat operator-(const vector3f&) const;
 	cpuMat operator*(const vector3f&) const;
+
+	cpuMat& operator+=(const cpuMat&);
+	cpuMat& operator-=(const cpuMat&);
+	cpuMat& operator+=(float);
+	cpuMat& operator-=(float);
+	cpuMat& operator*=(float);
+	cpuMat& operator+=(const vector3f&);
+	cpuMat& operator-=(const vector3f&);
+	cpuMat& operator*=(const vector3f&);
+
 	cpuMat mul(const cpuMat&) const;
 	cpuMat mul(float) const;
 	cpuMat mul(const vector3f&) const;
