@@ -1,8 +1,12 @@
 #pragma once
-#include "general_settings.h"
+#include "../general_settings.h"
 
 using namespace std;
 
+class Mat;
+class cpuMat;
+class vector2i;
+class vector3f;
 // size/position
 class vector2i{
 public:
@@ -71,6 +75,7 @@ class Mat{
 public:
 	Mat();
 	Mat(const Mat&);
+	Mat(const cpuMat&);
 	Mat(int, int, int);
 	~Mat();
 	Mat& operator=(const Mat&);
@@ -82,6 +87,7 @@ public:
 	float *hostData;
 	float *devData;
 
+	void setSize(int, int, int);
 	void zeros();
 	void ones();
 	void randn();
@@ -97,26 +103,78 @@ public:
 
 	void deviceToHost();
 	void hostToDevice();
-	void copyTo(Mat&);
+	void copyTo(Mat&) const;
+	void copyTo(cpuMat&) const;
 
 	// only changes devData (on GPU)
-	Mat operator+(const Mat&);
-	Mat operator-(const Mat&);
-	Mat operator*(const Mat&);
-	Mat operator+(float);
-	Mat operator-(float);
-	Mat operator*(float);
-	Mat operator+(const vector3f&);
-	Mat operator-(const vector3f&);
-	Mat operator*(const vector3f&);
-	Mat mul(const Mat&);
-	Mat mul(float);
-	Mat mul(const vector3f&);
-	Mat t();
+	Mat operator+(const Mat&) const;
+	Mat operator-(const Mat&) const;
+	Mat operator*(const Mat&) const;
+	Mat operator+(float) const;
+	Mat operator-(float) const;
+	Mat operator*(float) const;
+	Mat operator+(const vector3f&) const;
+	Mat operator-(const vector3f&) const;
+	Mat operator*(const vector3f&) const;
+	Mat mul(const Mat&) const;
+	Mat mul(float) const;
+	Mat mul(const vector3f&) const;
+	Mat t() const;
 	// memory
 	void mallocHost();
 	void mallocDevice();
 	//
-	void printHost(const std::string&);
-	void printDevice(const std::string&);
+	void printHost(const std::string&) const;
+	void printDevice(const std::string&) const;
+};
+
+// matrix
+class cpuMat{
+public:
+	cpuMat();
+	cpuMat(const Mat&);
+	cpuMat(const cpuMat&);
+	cpuMat(int, int, int);
+	~cpuMat();
+	cpuMat& operator=(const cpuMat&);
+
+	int cols;
+	int rows;
+	int channels;
+	float *Data;
+
+	void setSize(int, int, int);
+	void zeros();
+	void ones();
+	void randn();
+	void set(int, int, int, float);
+	void set(int, int, float);
+	void set(int, int, const vector3f&);
+	void set(int, const vector3f&);
+	void setAll(float);
+	void setAll(const vector3f&);
+	float get(int, int, int) const;
+	vector3f get(int, int) const;
+	int getLength() const;
+
+	void copyTo(Mat&) const;
+	void copyTo(cpuMat&) const;
+
+	// only changes devData (on GPU)
+	cpuMat operator+(const cpuMat&) const;
+	cpuMat operator-(const cpuMat&) const;
+	cpuMat operator*(const cpuMat&) const;
+	cpuMat operator+(float) const;
+	cpuMat operator-(float) const;
+	cpuMat operator*(float) const;
+	cpuMat operator+(const vector3f&) const;
+	cpuMat operator-(const vector3f&) const;
+	cpuMat operator*(const vector3f&) const;
+	cpuMat mul(const cpuMat&) const;
+	cpuMat mul(float) const;
+	cpuMat mul(const vector3f&) const;
+	cpuMat t() const;
+	// memory
+	void mallocMat();
+	void print(const std::string&) const;
 };

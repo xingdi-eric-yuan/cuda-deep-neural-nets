@@ -13,7 +13,8 @@
 #include <cufft.h>
 #include <time.h>
 
-#include "data_structure.h"
+#include "ios/read_data.h"
+#include "data_structures/data_structure.h"
 #include "cu_matrix_maths.h"
 #include "matrix_maths.h"
 #include "memory_helper.h"
@@ -21,6 +22,7 @@
 #include "convolutionFFT2D/convolutionFFT2D_common.h"
 
 class Mat;
+class cpuMat;
 class vector2i;
 class vector3f;
 

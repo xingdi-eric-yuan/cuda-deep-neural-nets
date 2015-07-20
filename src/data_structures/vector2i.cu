@@ -46,6 +46,12 @@ void vector2i::set(int pos, int val){
 	else ;
 }
 
+void vector2i::setAll(int val){
+	for(int i = 0; i < 2; ++i){
+		set(i, val);
+	}
+}
+
 int vector2i::get(int pos) const{
 	if(0 == pos) return val0;
 	elif(1 == pos) return val1;

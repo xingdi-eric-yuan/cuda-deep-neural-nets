@@ -28,13 +28,13 @@ Mat log(const Mat &src){
 	return dst;
 }
 
-Mat pow(const Mat &src, float power){
+Mat pow(const Mat &src, int power){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
 	Mat dst(src);
-	if(0.0 == power){
+	if(0 == power){
 		dst.ones();
 		return dst;
 	}
@@ -164,6 +164,34 @@ vector3f divide(const vector3f& numerator, const vector3f& denominator){
 	return dst;
 }
 
+cpuMat divide(const cpuMat& numerator, const vector3f& denominator){
+	if(NULL == numerator.Data || numerator.channels != 3){
+		std::cout<<"invalid numerator..."<<std::endl;
+		exit(0);
+	}
+	cpuMat dst(numerator);
+	int len = dst.rows * dst.cols;
+	for(int ch = 0; ch < 3; ++ch){
+		for(int i = 0; i < len; ++i){
+			dst.Data[ch * len + i] = dst.Data[ch * len + i] / denominator.get(ch);
+		}
+	}
+	return dst;
+}
+
+cpuMat divide(const cpuMat& numerator, float denominator){
+	if(NULL == numerator.Data || numerator.channels != 3){
+		std::cout<<"invalid numerator..."<<std::endl;
+		exit(0);
+	}
+	cpuMat dst(numerator);
+	int len = dst.getLength();
+	for(int i = 0; i < len; ++i){
+		dst.Data[i] = dst.Data[i] / denominator;
+	}
+	return dst;
+}
+
 float sum(const vector3f& src){
 	float res = 0.0;
 	for(int i = 0; i < 3; ++i){
@@ -190,6 +218,58 @@ vector3f sum(const Mat& src){
 		cudaFree(devRes);
 		res.set(i, hostRes);
 	}
+	return res;
+}
+
+vector3f average(const Mat& src){
+	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat tmp = divide(src, src.rows * src.cols);
+	vector3f res = sum(tmp);
+	return res;
+}
+
+vector3f average(const cpuMat& src){
+	if(NULL == src.Data || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	vector3f res;
+	for(int ch = 0; ch < 3; ++ch){
+		for(int i = 0; i < src.rows * src.cols; ++i){
+			res.set(ch, res.get(ch) + src.Data[ch * src.rows * src.cols + i] / src.rows / src.cols);
+		}
+	}
+	return res;
+}
+
+vector3f stddev(const cpuMat& src, const vector3f& avg){
+	if(NULL == src.Data || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	cpuMat tmpmat(src);
+	for(int ch = 0; ch < 3; ++ch){
+		for(int i = 0; i < tmpmat.rows * tmpmat.cols; ++i){
+			float tmp = tmpmat.Data[ch * tmpmat.rows * src.cols + i] - avg.get(ch);
+			tmp = tmp * tmp;
+			tmpmat.Data[ch * tmpmat.rows * tmpmat.cols + i] = tmp;
+		}
+	}
+	vector3f res = average(tmpmat);
+	return res;
+}
+
+vector3f stddev(const Mat& src, const vector3f& avg){
+	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat tmp = src - avg;
+	tmp = pow(tmp, 2);
+	vector3f res = average(tmp);
 	return res;
 }
 
@@ -437,7 +517,7 @@ dsigmoid(const Mat &src){
 	}
     Mat tmp = exp(src);
     Mat tmp2 = tmp + 1.0;
-    tmp2 = pow(tmp2, 2.0);
+    tmp2 = pow(tmp2, 2);
     return divide(tmp, tmp2);
 }
 
@@ -518,7 +598,7 @@ Mat dTanh(const Mat &src){
 	}
     Mat res(src);
     res.ones();
-    res = res - pow(src, 2.0);
+    res = res - pow(src, 2);
     return res;
 }
 
@@ -793,6 +873,28 @@ Mat downSample(const Mat& src, int y_stride, int x_stride){
 	return res;
 }
 
+Mat copyMakeBorder(const Mat& src, int up, int down, int left, int right, vector3f& val){
+	if(NULL == src.hostData || NULL == src.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	if(0 == up && 0 == down && 0 == left && 0 == right){
+		Mat dst(src);
+		return dst;
+	}
+	Mat dst(src.rows + up + down, src.cols + left + right, src.channels);
+	dst.setAll(val);
+	int tmp1 = src.rows * src.cols;
+	int tmp2 = dst.rows * dst.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp1 / block_size) + ((tmp1 % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		cu_copyMakeBorder<<<num_blocks, block_size>>>(src.devData + i * tmp1, dst.devData + i * tmp2, src.rows, src.cols, up, down, left, right, tmp1);
+	}
+	dst.deviceToHost();
+	return dst;
+}
+
 // Pooling with overlap
 // Max pooling and stochastic pooling supported
 // output size = (input size - window size) / stride + 1
@@ -833,7 +935,7 @@ Mat pooling_with_overlap(const Mat &src, vector2i window_size, int stride, int p
 }
 
 // Max pooling and stochastic pooling supported
-Mat unpooling_with_overlap(const Mat &src, vector2i window_size, int stride, int poolingMethod, std::vector<vector3f> &locat, vector2i up_size){
+Mat unpooling_with_overlap(const Mat &src, vector2i window_size, int stride, int poolingMethod, std::vector<vector3f> &locat, vector2i& up_size){
 	if(NULL == src.hostData || NULL == src.devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -853,9 +955,78 @@ Mat unpooling_with_overlap(const Mat &src, vector2i window_size, int stride, int
     return res;
 }
 
+Mat pooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3f> &locat){
+	if(NULL == src.hostData || NULL == src.devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    if(stride == 1){
+    	for(int i = 0; i < src.rows * src.cols; ++i){
+    		vector3f tmp(i, i, i);
+    		locat.push_back(tmp);
+    	}
+        Mat res(src);
+        return res;
+    }
+	int dst_rows = src.rows / stride;
+	if(src.rows % stride > 0) ++dst_rows;
+	int dst_cols = src.cols / stride;
+	if(src.cols % stride > 0) ++dst_cols;
+	Mat res(dst_rows, dst_cols, src.channels);
+    for(int i = 0; i < res.rows; ++i){
+        for(int j = 0; j < res.cols; ++j){
+        	Mat tmp = getRange(src, j * stride, j * stride + stride  - 1, i * stride, i * stride + stride - 1);
+        	vector3f val;
+        	vector3f loc;
+        	if(POOL_MAX == poolingMethod){
+        		// max poling
+        		max(tmp, val, loc);
+        	}elif(POOL_MEAN == poolingMethod){
+        		// Mean Pooling
+        		val = average(src);
+        		loc.setAll(0.0);
+            }
+        	vector3f tmpr = loc % stride;
+        	vector3f tmpc = loc.divNoRem(stride);
+        	tmpr = tmpr + i * stride;
+        	tmpc = tmpc + j * stride;
+        	loc = tmpc * src.rows + tmpr;
+            locat.push_back(loc);
+            res.set(i, j, val);
+        }
+    }
+    return res;
+}
 
-
-
+Mat unpooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3f>& locat, vector2i& up_size){
+	if(NULL == src.hostData || NULL == src.devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    if(stride == 1){
+        Mat res(src);
+        return res;
+    }
+    if(POOL_MEAN == poolingMethod){
+    	Mat one(stride, stride, src.channels);
+    	one.ones();
+        Mat res = kron(src, one);
+        res = divide(res, stride * stride);
+        vector3f tmp(0.0, 0.0, 0.0);
+        res = copyMakeBorder(res, 0, up_size.get(1) - res.rows, 0, up_size.get(0) - res.cols, tmp);
+        return res;
+    }else{ //(POOL_MAX == poolingMethod || POOL_STOCHASTIC == poolingMethod)
+        Mat res(up_size.get(1), up_size.get(0), src.channels);
+        for(int i = 0; i < src.rows; i++){
+            for(int j = 0; j < src.cols; j++){
+            	for(int ch = 0; ch < src.channels; ++ch){
+                	res.set(locat[i * src.cols + j].get(ch), ch, src.get(i, j, ch));
+            	}
+            }
+        }
+        return res;
+    }
+}
 
 
 

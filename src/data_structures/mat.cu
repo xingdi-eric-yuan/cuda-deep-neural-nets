@@ -9,6 +9,7 @@ Mat::Mat(){
 	hostData = NULL;
 	devData = NULL;
 }
+
 Mat::Mat(const Mat &m){
 	cols = m.cols;
 	rows = m.rows;
@@ -20,6 +21,19 @@ Mat::Mat(const Mat &m){
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
 	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
 }
+
+Mat::Mat(const cpuMat &m){
+	cols = m.cols;
+	rows = m.rows;
+	channels = m.channels;
+	hostData = NULL;
+	devData = NULL;
+	mallocHost();
+	mallocDevice();
+	memcpy(hostData, m.Data, getLength() * sizeof(float));
+	cudaMemcpy(devData, m.Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+}
+
 Mat::Mat(int height, int width, int nchannels){
 	cols = width;
 	rows = height;
@@ -30,6 +44,7 @@ Mat::Mat(int height, int width, int nchannels){
 	mallocDevice();
 	zeros();
 }
+
 Mat::~Mat(){
 	if(NULL != hostData)
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
@@ -48,6 +63,23 @@ Mat& Mat::operator=(const Mat &m){
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
 	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
     return *this;
+}
+
+void Mat::setSize(int r, int c, int ch){
+	rows = r;
+	cols = c;
+	channels = ch;
+	if(NULL != hostData){
+		MemoryMonitor::instance()->freeCpuMemory(hostData);
+	}
+	if(NULL != devData){
+		MemoryMonitor::instance()->freeGpuMemory(devData);
+	}
+	hostData = NULL;
+	devData = NULL;
+	mallocHost();
+	mallocDevice();
+	zeros();
 }
 
 void Mat::zeros(){
@@ -71,6 +103,10 @@ void Mat::randn(){
 	// Cleanup generator
 	curandDestroyGenerator(gen);
 	deviceToHost();
+	for(int i = 0; i < getLength(); ++i){
+		hostData[i] = hostData[i] * 2.0 - 1.0;
+	}
+	hostToDevice();
 }
 
 void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
@@ -191,7 +227,7 @@ void Mat::hostToDevice(){
 	cudaMemcpy(devData, hostData, getLength() * sizeof(float), cudaMemcpyHostToDevice);
 }
 
-void Mat::copyTo(Mat &m){
+void Mat::copyTo(Mat &m) const{
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
@@ -203,8 +239,17 @@ void Mat::copyTo(Mat &m){
 	cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
 }
 
+void Mat::copyTo(cpuMat &m) const{
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
+	m.Data = NULL;
+	m.mallocMat();
+	memcpy(m.Data, hostData, getLength() * sizeof(float));
+}
+
 // only changes devData (on GPU)
-Mat Mat::operator+(const Mat &m){
+Mat Mat::operator+(const Mat &m) const{
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||
 	   getLength() != m.getLength()){
@@ -226,7 +271,7 @@ Mat Mat::operator+(const Mat &m){
 	return tmpmat;
 }
 
-Mat Mat::operator+(float val){
+Mat Mat::operator+(float val) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -241,7 +286,7 @@ Mat Mat::operator+(float val){
 	return tmpmat;
 }
 
-Mat Mat::operator+(const vector3f &v){
+Mat Mat::operator+(const vector3f &v) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -263,7 +308,7 @@ Mat Mat::operator+(const vector3f &v){
 	return tmpmat;
 }
 
-Mat Mat::operator-(const Mat &m){
+Mat Mat::operator-(const Mat &m) const{
 
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||
@@ -287,7 +332,7 @@ Mat Mat::operator-(const Mat &m){
 	return tmpmat;
 }
 
-Mat Mat::operator-(float val){
+Mat Mat::operator-(float val) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -302,7 +347,7 @@ Mat Mat::operator-(float val){
 	return tmpmat;
 }
 
-Mat Mat::operator-(const vector3f &v){
+Mat Mat::operator-(const vector3f &v) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -323,7 +368,7 @@ Mat Mat::operator-(const vector3f &v){
 	return tmpmat;
 }
 
-Mat Mat::operator*(const Mat &m){
+Mat Mat::operator*(const Mat &m) const{
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||
 	   cols != m.rows || channels != m.channels){
@@ -346,7 +391,7 @@ Mat Mat::operator*(const Mat &m){
 	return tmpmat;
 }
 
-Mat Mat::operator*(float val){
+Mat Mat::operator*(float val) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -362,7 +407,7 @@ Mat Mat::operator*(float val){
 	return tmpmat;
 }
 
-Mat Mat::operator*(const vector3f &v){
+Mat Mat::operator*(const vector3f &v) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -384,7 +429,7 @@ Mat Mat::operator*(const vector3f &v){
 	return tmpmat;
 }
 
-Mat Mat::mul(const Mat &m){
+Mat Mat::mul(const Mat &m) const{
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||
 	   getLength()!= m.getLength()){
@@ -401,7 +446,7 @@ Mat Mat::mul(const Mat &m){
 	return tmpmat;
 }
 
-Mat Mat::mul(float val){
+Mat Mat::mul(float val) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -417,7 +462,7 @@ Mat Mat::mul(float val){
 	return tmpmat;
 }
 
-Mat Mat::mul(const vector3f &v){
+Mat Mat::mul(const vector3f &v) const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -439,7 +484,7 @@ Mat Mat::mul(const vector3f &v){
 	return tmpmat;
 }
 
-Mat Mat::t(){
+Mat Mat::t() const{
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -492,7 +537,7 @@ void Mat::mallocDevice(){
 	}
 }
 
-void Mat::printHost(const std::string &str){
+void Mat::printHost(const std::string &str) const{
 	std::cout<<str<<std::endl;
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid matrix..."<<std::endl;
@@ -513,7 +558,7 @@ void Mat::printHost(const std::string &str){
 	}
 }
 
-void Mat::printDevice(const std::string &str){
+void Mat::printDevice(const std::string &str) const{
 	std::cout<<str<<std::endl;
 	if(NULL == hostData || NULL == devData){
 		std::cout<<"invalid matrix..."<<std::endl;

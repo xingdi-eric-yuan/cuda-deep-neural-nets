@@ -48,6 +48,12 @@ void vector3f::set(int pos, float val){
 	else ;
 }
 
+void vector3f::setAll(float val){
+	for(int i = 0; i < 3; ++i){
+		set(i, val);
+	}
+}
+
 float vector3f::get(int pos) const{
 	if(0 == pos) return val0;
 	elif(1 == pos) return val1;
