@@ -9,20 +9,33 @@
  */
 #include "general_settings.h"
 
+float momentum_w_init = 0.5;
+float momentum_d2_init = 0.5;
+float momentum_w_adjust = 0.95;
+float momentum_d2_adjust = 0.90;
+float lrate_w = 0.0;
+float lrate_b = 0.0;
+
+bool is_gradient_checking = false;
+bool use_log = false;
+int training_epochs = 0;
+int iter_per_epo = 0;
+
+
 int main(void){
 
-
+/*
     std::vector<cpuMat> trainX;
     std::vector<cpuMat> testX;
     cpuMat trainY, testY;
     read_CIFAR10_data(trainX, testX, trainY, testY);
-
+*/
 
 
 	/*
 	cpuMat a(3, 2, 3);
 	//a.setAll(2.2);
-	a.randn();
+	a.randu();
 	a.set(1, 1, 0, 0.7);
 	a.set(2, 1, 0, 0.8);
 	a.set(1, 0, 1, 0.55);
@@ -32,10 +45,23 @@ int main(void){
 	cpuMat b = a.t();
 	b.print("2nd print");
 //*/
+	/*
+	Mat a(3, 3, 3);
+	a.randu();
+	a.printHost("1st print");
 
-/*
+	Mat b(2, 2, 3);
+	b.randu();
+	b.printHost("2nd print");
+
+	Mat c = conv2(a, b, CONV_FULL, 0, 1);
+	c.printHost("3rd print");
+*/
+
+
+
 	Mat a(3, 2, 3);
-	a.randn();
+	a.randu();
 	a.set(1, 1, 0, 0.7);
 	a.set(2, 1, 0, 0.8);
 	a.set(1, 0, 1, 0.55);
@@ -55,7 +81,7 @@ int main(void){
 	Mat e = pow(d, 2.0);
 	e.printHost("5th print");
 
-	Mat f = padding(e, 2);
+	Mat f = dopadding(e, 2);
 	f.printHost("6th print");
 
 	Mat g = depadding(f, 2);
@@ -70,8 +96,11 @@ int main(void){
 	Mat j = repmat(i, 2, 2);
 	j.printHost("10th print");
 
-	Mat k = conv2(j, h, CONV_SAME, 0, 1);
+	Mat k = conv2(j, h, CONV_VALID, 0, 1);
 	k.printHost("11th print");
+
+
+	/*
 
 	vector2i _size1(2, 3);
 	std::vector<vector3f> locat;

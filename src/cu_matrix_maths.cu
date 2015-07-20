@@ -420,6 +420,19 @@ __global__ void cu_downSample(const float *src, float* dst, const int y_stride, 
 	}
 }
 
+__global__ void cu_interpolation(const float* src, float* dst, const int rowssrc, const int rowsdst, const int _stride, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		int rsrc = tid % rowssrc;
+		int csrc = tid / rowssrc;
+		int rdst = rsrc * _stride;
+		int cdst = csrc * _stride;
+		dst[rdst + rowsdst * cdst] = src[tid];
+		tid += stride;
+	}
+}
+
 __global__ void cu_getRange(const float *src, float* dst, const int xstart, const int xend, const int ystart, const int yend, const int rowssrc, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;

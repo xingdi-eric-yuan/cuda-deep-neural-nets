@@ -90,7 +90,7 @@ void Mat::ones(){
 	setAll(1.0);
 }
 
-void Mat::randn(){
+void Mat::randu(){
 	if(NULL == hostData) mallocHost();
 	if(NULL == devData) mallocDevice();
 	curandGenerator_t gen;

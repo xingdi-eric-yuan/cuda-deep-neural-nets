@@ -32,6 +32,9 @@ void minMaxLoc(const Mat&, vector3f&, vector3f&, vector3f&, vector3f&);
 Mat greaterThan(const Mat&, float);
 Mat lessThan(const Mat&, float);
 
+void convert(std::vector<std::vector<Mat> >&, Mat&);
+void convert(Mat&, std::vector<std::vector<Mat> >&, int, int);
+
 // non-linearity
 Mat sigmoid(const Mat&);
 Mat dsigmoid(const Mat&);
@@ -48,10 +51,11 @@ Mat dnonLinearity(const Mat&, int);
 // convolution and pooling
 Mat fliplr(const Mat&);
 Mat rot90(const Mat&, int);
-Mat padding(const Mat&, int);
+Mat dopadding(const Mat&, int);
 Mat depadding(const Mat&, int);
 
-
+Mat reduce(const Mat&, int, int);
+Mat interpolation(const Mat&, int);
 Mat repmat(const Mat&, int, int);
 Mat kron(const Mat&, const Mat&);
 

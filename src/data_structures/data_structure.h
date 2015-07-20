@@ -90,7 +90,7 @@ public:
 	void setSize(int, int, int);
 	void zeros();
 	void ones();
-	void randn();
+	void randu();
 	void set(int, int, int, float);
 	void set(int, int, float);
 	void set(int, int, const vector3f&);
@@ -146,7 +146,7 @@ public:
 	void setSize(int, int, int);
 	void zeros();
 	void ones();
-	void randn();
+	void randu();
 	void set(int, int, int, float);
 	void set(int, int, float);
 	void set(int, int, const vector3f&);

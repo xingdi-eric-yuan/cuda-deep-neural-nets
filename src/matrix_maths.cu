@@ -109,7 +109,7 @@ vector3f divide(float numerator, const vector3f& denominator){
 }
 
 Mat divide(const Mat& numerator, const vector3f& denominator){
-	if(NULL == numerator.hostData || NULL == numerator.devData || numerator.channels != 3){
+	if(NULL == numerator.hostData || NULL == numerator.devData){
 		std::cout<<"invalid numerator..."<<std::endl;
 		exit(0);
 	}
@@ -117,7 +117,7 @@ Mat divide(const Mat& numerator, const vector3f& denominator){
 	int tmp = numerator.rows * numerator.cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < numerator.channels; ++i){
 		cu_divide<<<num_blocks, block_size>>>(numerator.devData + i * tmp, dst.devData + i * tmp, denominator.get(i), tmp);
 	}
 	dst.deviceToHost();
@@ -125,7 +125,7 @@ Mat divide(const Mat& numerator, const vector3f& denominator){
 }
 
 Mat divide(const vector3f& numerator, const Mat& denominator){
-	if(NULL == denominator.hostData || NULL == denominator.devData || denominator.channels != 3){
+	if(NULL == denominator.hostData || NULL == denominator.devData){
 		std::cout<<"invalid denominator..."<<std::endl;
 		exit(0);
 	}
@@ -133,7 +133,7 @@ Mat divide(const vector3f& numerator, const Mat& denominator){
 	int tmp = denominator.rows * denominator.cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	for(int i = 0; i < 3; ++i){
+	for(int i = 0; i < denominator.channels; ++i){
 		cu_divide<<<num_blocks, block_size>>>(numerator.get(i), denominator.devData + i * tmp, dst.devData + i * tmp, tmp);
 	}
 	dst.deviceToHost();
@@ -165,13 +165,13 @@ vector3f divide(const vector3f& numerator, const vector3f& denominator){
 }
 
 cpuMat divide(const cpuMat& numerator, const vector3f& denominator){
-	if(NULL == numerator.Data || numerator.channels != 3){
+	if(NULL == numerator.Data){
 		std::cout<<"invalid numerator..."<<std::endl;
 		exit(0);
 	}
 	cpuMat dst(numerator);
 	int len = dst.rows * dst.cols;
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < numerator.channels; ++ch){
 		for(int i = 0; i < len; ++i){
 			dst.Data[ch * len + i] = dst.Data[ch * len + i] / denominator.get(ch);
 		}
@@ -180,7 +180,7 @@ cpuMat divide(const cpuMat& numerator, const vector3f& denominator){
 }
 
 cpuMat divide(const cpuMat& numerator, float denominator){
-	if(NULL == numerator.Data || numerator.channels != 3){
+	if(NULL == numerator.Data){
 		std::cout<<"invalid numerator..."<<std::endl;
 		exit(0);
 	}
@@ -201,7 +201,7 @@ float sum(const vector3f& src){
 }
 
 vector3f sum(const Mat& src){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -222,7 +222,7 @@ vector3f sum(const Mat& src){
 }
 
 vector3f average(const Mat& src){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -232,12 +232,12 @@ vector3f average(const Mat& src){
 }
 
 vector3f average(const cpuMat& src){
-	if(NULL == src.Data || src.channels != 3){
+	if(NULL == src.Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
 	vector3f res;
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < src.channels; ++ch){
 		for(int i = 0; i < src.rows * src.cols; ++i){
 			res.set(ch, res.get(ch) + src.Data[ch * src.rows * src.cols + i] / src.rows / src.cols);
 		}
@@ -246,12 +246,12 @@ vector3f average(const cpuMat& src){
 }
 
 vector3f stddev(const cpuMat& src, const vector3f& avg){
-	if(NULL == src.Data || src.channels != 3){
+	if(NULL == src.Data ){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
 	cpuMat tmpmat(src);
-	for(int ch = 0; ch < 3; ++ch){
+	for(int ch = 0; ch < src.channels; ++ch){
 		for(int i = 0; i < tmpmat.rows * tmpmat.cols; ++i){
 			float tmp = tmpmat.Data[ch * tmpmat.rows * src.cols + i] - avg.get(ch);
 			tmp = tmp * tmp;
@@ -263,7 +263,7 @@ vector3f stddev(const cpuMat& src, const vector3f& avg){
 }
 
 vector3f stddev(const Mat& src, const vector3f& avg){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -282,7 +282,7 @@ float max(const vector3f &src){
 }
 
 vector3f max(const Mat& src){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -318,7 +318,7 @@ vector3f max(const Mat& src){
 }
 
 void max(const Mat& src, vector3f& max_val, vector3f& max_loc){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -361,7 +361,7 @@ float min(const vector3f &src){
 }
 
 vector3f min(const Mat& src){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -397,7 +397,7 @@ vector3f min(const Mat& src){
 }
 
 void min(const Mat& src, vector3f& min_val, vector3f& min_loc){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -432,7 +432,7 @@ void min(const Mat& src, vector3f& min_val, vector3f& min_loc){
 }
 
 void minMaxLoc(const Mat& src, vector3f& max_val, vector3f& max_loc, vector3f& min_val, vector3f& min_loc){
-	if(NULL == src.hostData || NULL == src.devData || src.channels != 3){
+	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -494,6 +494,39 @@ Mat lessThan(const Mat &src, float val){
 	cu_lessThan<<<num_blocks, block_size>>>(src.devData, dst.devData, val, tmp);
 	dst.deviceToHost();
 	return dst;
+}
+
+// convert from vector of img to matrix
+// vec.size() == nsamples
+void convert(std::vector<std::vector<Mat> >& vec, Mat &M){
+    int subFeatures = vec[0][0].rows * vec[0][0].cols;
+    Mat res(3 * vec[0].size() * subFeatures, vec.size(), 1);
+    for(int i = 0; i < vec.size(); i++){
+        for(int m = 0; m < vec[i].size(); m++){
+			memcpy(res.hostData + vec[i][m].getLength() * (m + i * vec[i].size()), vec[i][m].hostData, vec[i][m].getLength() * sizeof(float));
+        }
+    }
+    res.hostToDevice();
+    res.copyTo(M);
+}
+
+// convert from matrix to vector of img
+// vec.size() == nsamples
+void convert(Mat &M, std::vector<std::vector<Mat> >& vec, int nsamples, int imagesize){
+    std::vector<Mat> tmpvec;
+    for(int i = 0; i < nsamples; i++){
+        tmpvec.clear();
+        int dim = imagesize * imagesize;
+        for(int j = 0; j < M.rows; j += dim * 3){
+        	Mat tmp(imagesize, imagesize, 3);
+        	memcpy(tmp.hostData, M.hostData + i * M.rows + j, dim * 3 * sizeof(float));
+        	tmp.hostToDevice();
+        	tmpvec.push_back(tmp);
+        }
+        vec.push_back(tmpvec);
+    }
+    tmpvec.clear();
+    std::vector<Mat>().swap(tmpvec);
 }
 
 // non-linearity
@@ -669,7 +702,7 @@ Mat rot90(const Mat &src, int k){
     return res;
 }
 
-Mat padding(const Mat &src, int pad){
+Mat dopadding(const Mat &src, int pad){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -700,6 +733,56 @@ Mat depadding(const Mat &src, int pad){
 	const size_t num_blocks = (tmp2 / block_size) + ((tmp2 % block_size) ? 1 : 0);
 	for(int i = 0; i < src.channels; ++i){
 		cu_depadding<<<num_blocks, block_size>>>(src.devData + i * tmp1, dst.devData + i * tmp2, src.rows, src.cols, dst.rows, tmp2);
+	}
+	dst.deviceToHost();
+	return dst;
+}
+
+Mat reduce(const Mat& src, int direction, int mode){
+	if(NULL == src.hostData || NULL == src.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat dst;
+	if(REDUCE_TO_SINGLE_ROW == direction){
+		dst.setSize(1, src.cols, src.channels);
+		for(int i = 0; i < src.cols; ++i){
+			Mat tmp = getRange(src, i, i, 0, src.rows - 1);
+			if(REDUCE_SUM == mode){
+				dst.set(i, sum(tmp));
+			}elif(REDUCE_MAX == mode){
+				dst.set(i, max(tmp));
+			}
+		}
+	}else{ // REDUCE_TO_SINGLE_COL == direction
+		dst.setSize(src.rows, 1, src.channels);
+		for(int i = 0; i < src.rows; ++i){
+			Mat tmp = getRange(src, 0, src.cols - 1, i, i);
+			if(REDUCE_SUM == mode){
+				dst.set(i, sum(tmp));
+			}elif(REDUCE_MAX == mode){
+				dst.set(i, max(tmp));
+			}
+		}
+	}
+	return dst;
+}
+
+Mat interpolation(const Mat& src, int _size){
+	if(NULL == src.hostData || NULL == src.devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    int stride = _size / src.rows;
+    if(_size % src.rows > 0) ++ stride;
+    if(stride == 0 || stride == 1) {Mat dst(src); return dst;}
+    Mat dst(_size, _size, src.channels);
+	int tmp1 = src.rows * src.cols;
+	int tmp2 = dst.rows * dst.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp1 / block_size) + ((tmp1 % block_size) ? 1 : 0);
+	for(int i = 0; i < src.channels; ++i){
+		cu_interpolation<<<num_blocks, block_size>>>(src.devData + i * tmp1, dst.devData + i * tmp2, src.rows, dst.rows, stride, tmp1);
 	}
 	dst.deviceToHost();
 	return dst;
@@ -816,13 +899,19 @@ Mat conv2(const Mat &m, const Mat &kernel, int convtype, int pad, int stride){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat src = padding(m, pad);
+	Mat src = dopadding(m, kernel.cols - 1);
+	src = dopadding(src, pad);
 	Mat res = conv2(src, kernel);
+	res = getRange(res, (res.cols - (m.cols + kernel.cols - 1)) / 2, (res.cols - (m.cols + kernel.cols - 1)) / 2 + m.cols + kernel.cols - 1 - 1,
+						(res.rows - (m.rows + kernel.rows - 1)) / 2, (res.rows - (m.rows + kernel.rows - 1)) / 2 + m.rows + kernel.rows - 1 - 1);
+	if(CONV_SAME == convtype){
+		res = getRange(res, kernel.cols / 2, res.cols - 1 - kernel.cols / 2, kernel.rows / 2, res.rows - 1 - kernel.rows / 2);
+	}
 	if(CONV_VALID == convtype){
-        int tmpx = src.cols - kernel.cols + 1;
-        int tmpy = src.rows - kernel.rows + 1;
-        res = getRange(res, (src.cols - tmpx) / 2, src.cols - 1 - (src.cols - tmpx) / 2,
-        		 	 	    (src.rows - tmpy) / 2, src.rows - 1 - (src.rows - tmpy) / 2);
+        int tmpx = m.cols + pad * 2 - kernel.cols + 1;
+        int tmpy = m.rows + pad * 2 - kernel.rows + 1;
+        res = getRange(res, (res.cols - tmpx) / 2, res.cols - 1 - (res.cols - tmpx) / 2,
+        		 	 	    (res.rows - tmpy) / 2, res.rows - 1 - (res.rows - tmpy) / 2);
 	}
 	res = downSample(res, stride, stride);
 	return res;

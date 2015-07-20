@@ -70,7 +70,7 @@ void cpuMat::ones(){
 	setAll(1.0);
 }
 
-void cpuMat::randn(){
+void cpuMat::randu(){
 	if(NULL == Data) mallocMat();
 	for(int i = 0; i < rows; ++i){
 		for(int j = 0; j < cols; ++j){

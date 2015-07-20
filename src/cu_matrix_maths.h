@@ -34,6 +34,7 @@ __global__ void cu_depadding(const float*, float*, const int, const int, const i
 __global__ void cu_repmat(const float*, float*, const int, const int, const int, const int, const int);
 __global__ void cu_kron(const float*, const float*, float*, const int, const int, const int, const int, const int);
 __global__ void cu_downSample(const float*, float*, const int, const int, const int, const int);
+__global__ void cu_interpolation(const float*, float*, const int, const int, const int, const int);
 __global__ void cu_getRange(const float*, float*, const int, const int, const int, const int, const int, const int);
 __global__ void cu_copyMakeBorder(const float*, float*, const int, const int, const int, const int, const int, const int, const int);
 
