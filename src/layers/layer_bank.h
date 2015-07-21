@@ -221,6 +221,7 @@ public:
     std::vector<std::vector<Mat> > bernoulli_vector;
 };
 
+//*/
 class non_linearity_layer : public network_layer{
 public:
     non_linearity_layer();
@@ -258,6 +259,5 @@ public:
 
 
 
-//*/
 
 

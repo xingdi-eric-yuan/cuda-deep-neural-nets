@@ -31,7 +31,7 @@ void run(){
     std::vector<network_layer*> flow;
     buildNetworkFromConfigFile("config.txt", flow);
 
-
+    trainNetwork(trainX, trainY, testX, testY, flow);
 
     flow.clear();
     std::vector<network_layer*>().swap(flow);
@@ -72,7 +72,8 @@ int main(void){
 	Mat c = conv2(a, b, CONV_FULL, 0, 1);
 	c.printHost("3rd print");
 */
-/*
+
+	/*
 	Mat a(3, 2, 3);
 	a.randu();
 	a.set(1, 1, 0, 0.7);

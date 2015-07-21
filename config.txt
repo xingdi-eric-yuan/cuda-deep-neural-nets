@@ -8,7 +8,7 @@
 *
 *******************************************************/
 
-IS_GRADIENT_CHECKING = false;
+IS_GRADIENT_CHECKING = true;
 USE_LOG = false;
 LEARNING_RATE_W = 1e-3;
 LEARNING_RATE_B = 3e-4;
@@ -36,19 +36,37 @@ $
 LAYER = convolutional;
 NAME = conv1;
 OUTPUT_TYPE = image;
-KERNEL_SIZE = 7;
-KERNEL_AMOUNT = 16;
+KERNEL_SIZE = 3;
+KERNEL_AMOUNT = 4;
 PADDING = 0;
-STRIDE = 6;
+STRIDE = 1;
 COMBINE_MAP = 0;
 WEIGHT_DECAY = 1e-6;
 &
+
+
+$
+LAYER = non_linearity;
+NAME = nl1;
+OUTPUT_TYPE = image;
+METHOD = leaky_relu;
+&
+
+
 $
 LAYER = fully_connected;
 NAME = fc1;
 OUTPUT_TYPE = matrix;
-NUM_HIDDEN_NEURONS = 32;
+NUM_HIDDEN_NEURONS = 4;
 WEIGHT_DECAY = 1e-6;
+&
+
+
+$
+LAYER = non_linearity;
+NAME = nl2;
+OUTPUT_TYPE = matrix;
+METHOD = leaky_relu;
 &
 
 $

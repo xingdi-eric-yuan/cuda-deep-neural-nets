@@ -542,8 +542,7 @@ Mat sigmoid(const Mat &src){
 	return tmp;
 }
 
-Mat
-dsigmoid(const Mat &src){
+Mat dsigmoid(const Mat &src){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -554,8 +553,7 @@ dsigmoid(const Mat &src){
     return divide(tmp, tmp2);
 }
 
-Mat
-dsigmoid_a(const Mat &src){
+Mat dsigmoid_a(const Mat &src){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);

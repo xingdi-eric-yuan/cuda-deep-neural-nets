@@ -120,8 +120,9 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Ma
         previous_layer -> output_matrix -> copyTo(*input);
     }
     Mat derivative = groundTruth - *output_matrix;
-    *wgrad = (derivative * input -> t()).mul(-1.0) / nsamples + (*w) * weight_decay;
-    *bgrad = reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM).mul(-1.0) / nsamples;
+    *wgrad = (derivative * (input -> t())).mul(-1.0) / nsamples + (*w) * weight_decay;
+    *bgrad = reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM);
+    *bgrad /= -nsamples;
     *wd2 = pow(derivative, 2.0) * pow(input -> t(), 2.0) / nsamples + weight_decay;
     *bd2 = reduce(pow(derivative, 2.0), REDUCE_TO_SINGLE_COL, REDUCE_SUM) / nsamples;
 

@@ -607,12 +607,11 @@ Mat Mat::mul(const Mat &m) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat;
-	copyTo(tmpmat);
+	Mat tmpmat(m);
 	int tmp = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, m.devData, tmpmat.devData, tmp);
+	cu_elementWiseMultiply<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
 	tmpmat.deviceToHost();
 	return tmpmat;
 }

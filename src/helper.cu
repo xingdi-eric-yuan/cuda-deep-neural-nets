@@ -22,8 +22,10 @@ int snapTransformSize(int dataSize){
 }
 
 void copyVector(const std::vector<vector<Mat*> >& _from, std::vector<vector<Mat*> >& _to){
+	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
+		_to[i].clear();
 		_to[i].resize(_from[i].size());
 	}
 	for(int i = 0; i < _to.size(); ++i){
@@ -35,6 +37,7 @@ void copyVector(const std::vector<vector<Mat*> >& _from, std::vector<vector<Mat*
 }
 
 void copyVector(const std::vector<Mat*>& _from, std::vector<Mat*>& _to){
+	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
 		_to[i] = new Mat();

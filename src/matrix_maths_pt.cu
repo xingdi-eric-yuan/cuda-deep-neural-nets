@@ -165,7 +165,7 @@ void convert(std::vector<std::vector<Mat*> >& vec, Mat*M){
 	std::vector<std::vector<Mat> > tmp;
 	for(int i = 0; i < vec.size(); ++i){
 		std::vector<Mat> tmp1;
-		for(int j = 0; j < vec[0].size(); ++j){
+		for(int j = 0; j < vec[i].size(); ++j){
 			tmp1.push_back(*(vec[i][j]));
 		}
 		tmp.push_back(tmp1);
@@ -181,16 +181,20 @@ void convert(Mat*M, std::vector<std::vector<Mat*> >& vec, int nsamples, int imag
 
 	std::vector<std::vector<Mat> > tmp;
 	convert(*M, tmp, nsamples, imagesize);
+	vec.clear();
 	vec.resize(tmp.size());
 	for(int i = 0; i < vec.size(); ++i){
+		vec[i].clear();
 		vec[i].resize(tmp[i].size());
 	}
 	for(int i = 0; i < vec.size(); ++i){
-		for(int j = 0; j < vec[0].size(); ++j){
+		for(int j = 0; j < vec[i].size(); ++j){
 			vec[i][j] = new Mat();
 			tmp[i][j].copyTo(*(vec[i][j]));
 		}
 	}
+    tmp.clear();
+    std::vector<std::vector<Mat> >().swap(tmp);
 }
 
 // non-linearity

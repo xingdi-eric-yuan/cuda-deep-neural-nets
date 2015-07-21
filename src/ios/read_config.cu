@@ -234,7 +234,7 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 break;
             }
             case 6:{ // non linearity layer
-/*
+
                 non_linearity_layer *tmp = new non_linearity_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
@@ -247,7 +247,6 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 elif(strmethod == "leaky_relu") method = 3;
                 tmp -> init_config(namestr, method, of);
                 flow.push_back(tmp);
-*/
                 break;
             }case 7:{ // pooling layer
 /*

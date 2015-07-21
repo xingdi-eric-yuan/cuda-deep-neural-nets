@@ -17,6 +17,8 @@
 #include "layers/layer_bank.h"
 #include "ios/read_data.h"
 #include "ios/read_config.h"
+#include "train_network.h"
+#include "gradient_checking.h"
 #include "cu_matrix_maths.h"
 #include "matrix_maths.h"
 #include "memory_helper.h"

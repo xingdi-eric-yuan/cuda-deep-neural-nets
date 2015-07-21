@@ -1,6 +1,6 @@
 #include "cu_matrix_maths.h"
 
-__global__ void cu_plus(float *A, float *B, const int n){
+__global__ void cu_plus(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -9,7 +9,7 @@ __global__ void cu_plus(float *A, float *B, const int n){
 	}
 }
 
-__global__ void cu_plus(float *A, float *B, float *C, const int n){
+__global__ void cu_plus(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -27,7 +27,7 @@ __global__ void cu_plus(float *A, const float b, const int n){
 	}
 }
 
-__global__ void cu_plus(float *A, float *B, const float c, const int n){
+__global__ void cu_plus(const float *A, float *B, const float c, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -36,7 +36,7 @@ __global__ void cu_plus(float *A, float *B, const float c, const int n){
 	}
 }
 
-__global__ void cu_minus(float *A, float *B, const int n){
+__global__ void cu_minus(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -45,7 +45,7 @@ __global__ void cu_minus(float *A, float *B, const int n){
 	}
 }
 
-__global__ void cu_minus(float *A, float *B, float *C, const int n){
+__global__ void cu_minus(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -63,7 +63,7 @@ __global__ void cu_minus(float *A, const float b, const int n){
 	}
 }
 
-__global__ void cu_minus(float *A, float *B, const float c, const int n){
+__global__ void cu_minus(const float *A, float *B, const float c, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -72,7 +72,7 @@ __global__ void cu_minus(float *A, float *B, const float c, const int n){
 	}
 }
 
-__global__ void cu_square(float *A, float *B, const int n){
+__global__ void cu_square(const float *A, float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -81,7 +81,7 @@ __global__ void cu_square(float *A, float *B, const int n){
 	}
 }
 
-__global__ void cu_elementWiseMultiply(float *A, float *B, const int n){
+__global__ void cu_elementWiseMultiply(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -90,7 +90,7 @@ __global__ void cu_elementWiseMultiply(float *A, float *B, const int n){
 	}
 }
 
-__global__ void cu_elementWiseMultiply(float *A, float *B, float *C, const int n){
+__global__ void cu_elementWiseMultiply(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -248,7 +248,7 @@ __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue,
 	}
 }
 
-__global__ void cu_greaterThan(const float* src, float* dst, const double val, const int n){
+__global__ void cu_greaterThan(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -258,7 +258,7 @@ __global__ void cu_greaterThan(const float* src, float* dst, const double val, c
 	}
 }
 
-__global__ void cu_greaterThanOrEqualTo(const float* src, float* dst, const double val, const int n){
+__global__ void cu_greaterThanOrEqualTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -268,7 +268,7 @@ __global__ void cu_greaterThanOrEqualTo(const float* src, float* dst, const doub
 	}
 }
 
-__global__ void cu_lessThan(const float* src, float* dst, const double val, const int n){
+__global__ void cu_lessThan(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -278,7 +278,7 @@ __global__ void cu_lessThan(const float* src, float* dst, const double val, cons
 	}
 }
 
-__global__ void cu_lessThanOrEqualTo(const float* src, float* dst, const double val, const int n){
+__global__ void cu_lessThanOrEqualTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
@@ -288,7 +288,7 @@ __global__ void cu_lessThanOrEqualTo(const float* src, float* dst, const double 
 	}
 }
 
-__global__ void cu_equalTo(const float* src, float* dst, const double val, const int n){
+__global__ void cu_equalTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
