@@ -534,6 +534,72 @@ Mat& Mat::operator*=(const vector3f &v){
 	return *this;
 }
 
+Mat Mat::operator/(float val) const{
+	if(NULL == hostData || NULL == devData || 0 == val){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	float tmp = 1 / val;
+	Mat tmpmat;
+	copyTo(tmpmat);
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	cublasSscal(handle, n, &tmp, tmpmat.devData, 1);
+	tmpmat.deviceToHost();
+    cublasDestroy(handle);
+	return tmpmat;
+}
+
+Mat Mat::operator/(const vector3f &v) const{
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	Mat tmpmat;
+	copyTo(tmpmat);
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	for(int i = 0; i < channels; ++i){
+		float tmp = 1 / v.get(i);
+		cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1);
+	}
+	tmpmat.deviceToHost();
+    cublasDestroy(handle);
+	return tmpmat;
+}
+
+Mat& Mat::operator/=(float val){
+	if(NULL == hostData || NULL == devData || 0 == val){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	int n = getLength();
+	float tmp = 1 / val;
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	cublasSscal(handle, n, &tmp, devData, 1);
+	deviceToHost();
+    cublasDestroy(handle);
+	return *this;
+}
+
+Mat& Mat::operator/=(const vector3f &v){
+	if(NULL == hostData || NULL == devData){
+		std::cout<<"invalid vectors..."<<std::endl;
+		exit(0);
+	}
+	cublasHandle_t handle; // CUBLAS context
+	cublasCreate (&handle); // initialize CUBLAS context
+	for(int i = 0; i < channels; ++i){
+		float tmp = 1 / v.get(i);
+		cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1);
+	}
+	deviceToHost();
+    cublasDestroy(handle);
+	return *this;
+}
+
 Mat Mat::mul(const Mat &m) const{
 	if(NULL == hostData || NULL == devData ||
 	   NULL == m.hostData || NULL == m.devData||

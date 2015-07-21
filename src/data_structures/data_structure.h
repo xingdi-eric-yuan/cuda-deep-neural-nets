@@ -131,18 +131,22 @@ public:
 	Mat operator+(float) const;
 	Mat operator-(float) const;
 	Mat operator*(float) const;
+	Mat operator/(float) const;
 	Mat operator+(const vector3f&) const;
 	Mat operator-(const vector3f&) const;
 	Mat operator*(const vector3f&) const;
+	Mat operator/(const vector3f&) const;
 
 	Mat& operator+=(const Mat&);
 	Mat& operator-=(const Mat&);
 	Mat& operator+=(float);
 	Mat& operator-=(float);
 	Mat& operator*=(float);
+	Mat& operator/=(float);
 	Mat& operator+=(const vector3f&);
 	Mat& operator-=(const vector3f&);
 	Mat& operator*=(const vector3f&);
+	Mat& operator/=(const vector3f&);
 
 	Mat mul(const Mat&) const;
 	Mat mul(float) const;

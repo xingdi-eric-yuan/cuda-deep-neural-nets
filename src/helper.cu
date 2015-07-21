@@ -20,3 +20,24 @@ int snapTransformSize(int dataSize){
         return iAlignUp(dataSize, 512);
     }
 }
+
+void copyVector(const std::vector<vector<Mat*> >& _from, std::vector<vector<Mat*> >& _to){
+	_to.resize(_from.size());
+	for(int i = 0; i < _to.size(); ++i){
+		_to[i].resize(_from[i].size());
+	}
+	for(int i = 0; i < _to.size(); ++i){
+		for(int j = 0; j < _to[i].size(); ++j){
+			_to[i][j] = new Mat();
+			_from[i][j] -> copyTo(*(_to[i][j]));
+		}
+	}
+}
+
+void copyVector(const std::vector<Mat*>& _from, std::vector<Mat*>& _to){
+	_to.resize(_from.size());
+	for(int i = 0; i < _to.size(); ++i){
+		_to[i] = new Mat();
+		_from[i] -> copyTo(*(_to[i]));
+	}
+}

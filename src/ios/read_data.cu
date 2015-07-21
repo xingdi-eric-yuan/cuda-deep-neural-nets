@@ -95,8 +95,6 @@ preProcessing(std::vector<cpuMat> &trainX, std::vector<cpuMat> &testX){
 
     vector3f mean = average(tmp);
     vector3f sdev = stddev(tmp, mean);
-    mean.print("mean");
-    sdev.print("stddev");
 
     for(int i = 0; i < trainX.size(); i++){
     	trainX[i] = trainX[i] - mean;

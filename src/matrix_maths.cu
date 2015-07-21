@@ -962,7 +962,7 @@ Mat downSample(const Mat& src, int y_stride, int x_stride){
 	return res;
 }
 
-Mat copyMakeBorder(const Mat& src, int up, int down, int left, int right, vector3f& val){
+Mat copyMakeBorder(const Mat& src, int up, int down, int left, int right, const vector3f& val){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);

@@ -13,8 +13,10 @@
 #include <cufft.h>
 #include <time.h>
 
-#include "ios/read_data.h"
 #include "data_structures/data_structure.h"
+#include "layers/layer_bank.h"
+#include "ios/read_data.h"
+#include "ios/read_config.h"
 #include "cu_matrix_maths.h"
 #include "matrix_maths.h"
 #include "memory_helper.h"
