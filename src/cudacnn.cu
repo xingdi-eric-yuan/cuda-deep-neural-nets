@@ -35,6 +35,11 @@ void run(){
 
     flow.clear();
     std::vector<network_layer*>().swap(flow);
+
+    releaseVector(trainX);
+    releaseVector(testX);
+    trainY.release();
+    testY.release();
     trainX.clear();
     std::vector<cpuMat>().swap(trainX);
     testX.clear();
@@ -45,33 +50,32 @@ int main(void){
 
 	run();
 //*/
+/*
+	Mat *a = new Mat();
+	a -> setSize(3, 2, 1);
+	a -> randu();
+	a -> printHost("see");
+	a -> printDevice("dev");
+	a -> release();
 
+	a -> setSize(2, 2, 2);
+	a -> randu();
+	a -> printHost("see");
+	a -> printDevice("dev");
 
-	/*
-	cpuMat a(3, 2, 3);
-	//a.setAll(2.2);
-	a.randu();
-	a.set(1, 1, 0, 0.7);
-	a.set(2, 1, 0, 0.8);
-	a.set(1, 0, 1, 0.55);
-	a.set(2, 0, 1, 0.45);
-	a.print("1st print");
-
-	cpuMat b = a.t();
-	b.print("2nd print");
-//*/
-	/*
+	//*/
+/*
 	Mat a(3, 3, 3);
 	a.randu();
+	//a += 2.0;
 	a.printHost("1st print");
 
-	Mat b(2, 2, 3);
-	b.randu();
-	b.printHost("2nd print");
+	Mat b = pow(a, 2.0);
+	b.printHost("22222222");
 
-	Mat c = conv2(a, b, CONV_FULL, 0, 1);
+	Mat c = square(a);
 	c.printHost("3rd print");
-*/
+//*/
 
 	/*
 	Mat a(3, 2, 3);
@@ -145,7 +149,23 @@ int main(void){
 			vect2[i][j] -> printHost(" ");
 		}
 	}
-*/
+	a.release();
+	b.release();
+	c.release();
+	d.release();
+	e -> release();
+	f -> release();
+	g -> release();
+	h -> release();
+	i -> release();
+	j -> release();
+	k -> release();
+	l -> release();
+	m -> release();
+	n -> release();
+	releaseVector(vect);
+	releaseVector(vect2);
+//*/
 
 	/*
 	Mat a(3, 2, 3);

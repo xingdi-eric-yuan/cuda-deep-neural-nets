@@ -24,6 +24,17 @@ softmax_layer::softmax_layer(){
     learning_rate = new Mat();
 }
 softmax_layer::~softmax_layer(){
+    w -> release();
+    b -> release();
+    wgrad -> release();
+    bgrad -> release();
+    wd2 -> release();
+    bd2 -> release();
+    velocity_w -> release();
+    velocity_b -> release();
+    second_derivative_w -> release();
+    second_derivative_b -> release();
+    learning_rate -> release();
 }
 
 void softmax_layer::init_config(string namestr, int numclasses, float weightDecay, string outputformat){
@@ -45,7 +56,7 @@ void softmax_layer::init_weight(network_layer* previous_layer){
     float epsilon = 0.12;
     w -> setSize(output_size, inputsize, 1);
     w -> randu();
-    (*w) *= epsilon;
+    *w = w -> mul(epsilon);
     b -> setSize(output_size, 1, 1);
     wgrad -> setSize(output_size, inputsize, 1);
     wd2 -> setSize(output_size, inputsize, 1);
@@ -75,16 +86,31 @@ void softmax_layer::setMomentum(){
 void softmax_layer::update(int iter_num){
     iter = iter_num;
     if(iter == 30) softmax_layer::setMomentum();
+    Mat tmp;
 
-    *second_derivative_w = (*second_derivative_w) * momentum_second_derivative + (*wd2) * (1.0 - momentum_second_derivative);
-    *learning_rate = divide(lrate_w, (*second_derivative_w + mu));
-    *velocity_w = (*velocity_w) * momentum_derivative + wgrad -> mul(*learning_rate) * (1.0 - momentum_derivative);
-    *w -= *velocity_w;
+    ((*second_derivative_w) * momentum_second_derivative).moveTo(*second_derivative_w);
+    wd2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
+    (*second_derivative_w) += tmp;
+    (*second_derivative_w + mu).moveTo(tmp);
+    divide(lrate_w, tmp).moveTo(*learning_rate);
+    ((*velocity_w) * momentum_derivative).moveTo(*velocity_w);
+    wgrad -> mul(*learning_rate).moveTo(tmp);
+    tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
+    (*velocity_w) += tmp;
+    (*w) -= (*velocity_w);
 
-    *second_derivative_b = (*second_derivative_b) * momentum_second_derivative + (*bd2) * (1.0 - momentum_second_derivative);
-    *learning_rate = divide(lrate_b, (*second_derivative_b + mu));
-    *velocity_b = (*velocity_b) * momentum_derivative + bgrad -> mul(*learning_rate) * (1.0 - momentum_derivative);
-    *b -= *velocity_b;
+    ((*second_derivative_b) * momentum_second_derivative).moveTo(*second_derivative_b);
+    bd2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
+    (*second_derivative_b) += tmp;
+    (*second_derivative_b + mu).moveTo(tmp);
+    divide(lrate_b, tmp).moveTo(*learning_rate);
+    ((*velocity_b) * momentum_derivative).moveTo(*velocity_b);
+    bgrad -> mul(*learning_rate).moveTo(tmp);
+    tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
+    (*velocity_b) += tmp;
+    (*b) -= (*velocity_b);
+
+    tmp.release();
 }
 
 void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
@@ -94,11 +120,20 @@ void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
     }else{
         previous_layer -> output_matrix -> copyTo(*input);
     }
-    Mat M = (*w) * (*input) + (*repmat(b, 1, nsamples));
-    M -= repmat(reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_MAX), M.rows, 1);
+    Mat tmp, M;
+    ((*w) * (*input)).moveTo(M);
+    repmat(b, 1, nsamples) -> moveTo(tmp);
+    M += tmp;
+    reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_MAX).moveTo(tmp);
+    repmat(tmp, M.rows, 1).moveTo(tmp);
+    M -= tmp;
     M = exp(M);
-    Mat p = divide(M, repmat(reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_SUM), M.rows, 1));
-    p.copyTo(*output_matrix);
+    reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_SUM).moveTo(tmp);
+    repmat(tmp, M.rows, 1).moveTo(tmp);
+    divide(M, tmp).moveTo(*output_matrix);
+    M.release();
+    input -> release();
+    tmp.release();
 }
 
 void softmax_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -108,8 +143,12 @@ void softmax_layer::forwardPassTest(int nsamples, network_layer* previous_layer)
     }else{
         previous_layer -> output_matrix -> copyTo(*input);
     }
-    Mat M = (*w) * (*input) + (*repmat(b, 1, nsamples));
-    M.copyTo(*output_matrix);
+    Mat tmp, M;
+    ((*w) * (*input)).moveTo(M);
+    repmat(b, 1, nsamples) -> moveTo(tmp);
+    M += tmp;
+    M.moveTo(*output_matrix);
+    input -> release();
 }
 
 void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Mat& groundTruth){
@@ -119,17 +158,36 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Ma
     }else{
         previous_layer -> output_matrix -> copyTo(*input);
     }
-    Mat derivative = groundTruth - *output_matrix;
-    *wgrad = (derivative * (input -> t())).mul(-1.0) / nsamples + (*w) * weight_decay;
-    *bgrad = reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM);
-    *bgrad /= -nsamples;
-    *wd2 = pow(derivative, 2.0) * pow(input -> t(), 2.0) / nsamples + weight_decay;
-    *bd2 = reduce(pow(derivative, 2.0), REDUCE_TO_SINGLE_COL, REDUCE_SUM) / nsamples;
+    Mat tmp, tmp2;
+    Mat derivative(groundTruth);
+    derivative -= (*output_matrix);
+    (derivative * (input -> t())).moveTo(tmp);
+    divide(tmp, -nsamples).moveTo(*wgrad);
+    (*w * weight_decay).moveTo(tmp);
+    (*wgrad) += tmp;
+    reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM).moveTo(tmp);
+    divide(tmp, -nsamples).moveTo(*bgrad);
+    square(derivative).moveTo(tmp);
+    input -> t().moveTo(tmp2);
+    square(tmp2).moveTo(tmp2);
+    (tmp * tmp2).moveTo(*wd2);
+    (*wd2) /= nsamples;
+    (*wd2) += weight_decay;
+    reduce(tmp, REDUCE_TO_SINGLE_COL, REDUCE_SUM).moveTo(*bd2);
+    (*bd2) /= nsamples;
 
-    Mat tmp = (w -> t() * derivative).mul(-1);
-    tmp.copyTo(*delta_matrix);
-    tmp = pow(w -> t(), 2.0) * pow(derivative, 2.0);
-    tmp.copyTo(*d2_matrix);
+    w -> t().moveTo(tmp);
+    (tmp * derivative).moveTo(tmp);
+    tmp.mul(-1).moveTo(*delta_matrix);
+    w -> t().moveTo(tmp);
+    square(tmp).moveTo(tmp);
+    square(derivative).moveTo(tmp2);
+    (tmp * tmp2).moveTo(*d2_matrix);
+
+    tmp.release();
+    tmp2.release();
+    input -> release();
+    derivative.release();
 }
 //*/
 

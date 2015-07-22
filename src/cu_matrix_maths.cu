@@ -126,19 +126,11 @@ __global__ void cu_log(const float* src, float* dst, const int n){
 	}
 }
 
-__global__ void cu_pow(const float* src, float* dst, const int power, const int n){
+__global__ void cu_pow(const float* src, float* dst, const float power, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		if(src[tid] >= 0){
-			dst[tid] = __powf(src[tid], power);
-		}else{
-			if(0 == power % 2){
-				dst[tid] = __powf(-src[tid], power);
-			}else{
-				dst[tid] = -(__powf(-src[tid], power));
-			}
-		}
+		dst[tid] = powf(src[tid], power);
 		tid += stride;
 	}
 }
@@ -206,7 +198,6 @@ __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue,
 	__shared__ int maxLocCache[threadsPerBlock];
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	//int stride = blockDim.x * gridDim.x;
-
 	float val = src[0];
 	int loc = 0;
 	if(tid < n){

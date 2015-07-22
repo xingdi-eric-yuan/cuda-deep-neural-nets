@@ -40,13 +40,39 @@ cpuMat::~cpuMat(){
 		MemoryMonitor::instance()->freeCpuMemory(Data);
 }
 
+void cpuMat::release(){
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+	rows = 0;
+	cols = 0;
+	channels = 0;
+	Data = NULL;
+}
+
 cpuMat& cpuMat::operator=(const cpuMat &m){
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	Data = NULL;
+	if(NULL != Data){
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+		Data = NULL;
+	}
 	mallocMat();
 	memcpy(Data, m.Data, getLength() * sizeof(float));
+    return *this;
+}
+
+cpuMat& cpuMat::operator<<=(cpuMat &m){
+	cols = m.cols;
+	rows = m.rows;
+	channels = m.channels;
+	if(NULL != Data){
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+		Data = NULL;
+	}
+	mallocMat();
+	memcpy(Data, m.Data, getLength() * sizeof(float));
+	m.release();
     return *this;
 }
 
@@ -56,8 +82,8 @@ void cpuMat::setSize(int r, int c, int ch){
 	channels = ch;
 	if(NULL != Data){
 		MemoryMonitor::instance()->freeCpuMemory(Data);
+		Data = NULL;
 	}
-	Data = NULL;
 	mallocMat();
 	zeros();
 }
@@ -76,7 +102,6 @@ void cpuMat::randu(){
 		for(int j = 0; j < cols; ++j){
 			for(int ch = 0; ch < channels; ++ch){
 				set(i, j, ch, 2.0 * ((float) rand() / (RAND_MAX)) - 1.0);
-
 			}
 		}
 	}
@@ -170,7 +195,10 @@ void cpuMat::copyTo(cpuMat &m) const{
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.Data = NULL;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeCpuMemory(m.Data);
+		m.Data = NULL;
+	}
 	m.mallocMat();
 	memcpy(m.Data, Data, getLength() * sizeof(float));
 }
@@ -179,12 +207,50 @@ void cpuMat::copyTo(Mat &m) const{
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.hostData = NULL;
-	m.devData = NULL;
+	if(NULL != m.hostData){
+		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
+		m.hostData = NULL;
+	}
+	if(NULL != m.devData){
+		MemoryMonitor::instance()->freeGpuMemory(m.devData);
+		m.devData = NULL;
+	}
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, Data, getLength() * sizeof(float));
 	cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+}
+
+void cpuMat::moveTo(cpuMat &m){
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeCpuMemory(m.Data);
+		m.Data = NULL;
+	}
+	m.mallocMat();
+	memcpy(m.Data, Data, getLength() * sizeof(float));
+	release();
+}
+
+void cpuMat::moveTo(Mat &m){
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
+	if(NULL != m.hostData){
+		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
+		m.hostData = NULL;
+	}
+	if(NULL != m.devData){
+		MemoryMonitor::instance()->freeGpuMemory(m.devData);
+		m.devData = NULL;
+	}
+	m.mallocHost();
+	m.mallocDevice();
+	memcpy(m.hostData, Data, getLength() * sizeof(float));
+	cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+	release();
 }
 
 // only changes devData (on GPU)

@@ -98,7 +98,7 @@ public:
     Mat* learning_rate_w;
     vector3f* learning_rate_b;
 };
-/*
+
 class pooling_layer : public network_layer{
 public:
     pooling_layer();
@@ -115,9 +115,9 @@ public:
     int window_size;
     int method;
     bool overlap;
-    std::vector<std::vector<std::vector<vector3f> > > location;
+    std::vector<std::vector<std::vector<vector3f*> > > location;
 };
-*/
+
 class fully_connected_layer : public network_layer{
 public:
     fully_connected_layer();
@@ -186,7 +186,6 @@ public:
     Mat* second_derivative_b;
     Mat* learning_rate;
 };
-/*
 class local_response_normalization_layer : public network_layer{
 public:
 
@@ -197,8 +196,8 @@ public:
     void forwardPass(int, network_layer*);
     void forwardPassTest(int, network_layer*);
     void backwardPass(int, network_layer*, network_layer*);
-    Mat local_response_normalization(std::vector<Mat>&, int);
-    Mat dlocal_response_normalization(std::vector<Mat>&, int);
+    Mat local_response_normalization(std::vector<Mat*>&, int);
+    Mat dlocal_response_normalization(std::vector<Mat*>&, int);
 
     float alpha;
     float beta;
@@ -206,6 +205,7 @@ public:
     int n;
 };
 
+/*
 class dropout_layer : public network_layer{
 public:
     dropout_layer();

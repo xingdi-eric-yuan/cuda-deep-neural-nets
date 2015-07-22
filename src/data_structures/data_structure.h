@@ -96,7 +96,9 @@ public:
 	Mat(const cpuMat&);
 	Mat(int, int, int);
 	~Mat();
+	void release();
 	Mat& operator=(const Mat&);
+	Mat& operator<<=(Mat&);
 
 	int cols;
 	int rows;
@@ -123,6 +125,8 @@ public:
 	void hostToDevice();
 	void copyTo(Mat&) const;
 	void copyTo(cpuMat&) const;
+	void moveTo(Mat&);
+	void moveTo(cpuMat&);
 
 	// only changes devData (on GPU)
 	Mat operator+(const Mat&) const;
@@ -168,7 +172,9 @@ public:
 	cpuMat(const cpuMat&);
 	cpuMat(int, int, int);
 	~cpuMat();
+	void release();
 	cpuMat& operator=(const cpuMat&);
+	cpuMat& operator<<=(cpuMat&);
 
 	int cols;
 	int rows;
@@ -191,6 +197,8 @@ public:
 
 	void copyTo(Mat&) const;
 	void copyTo(cpuMat&) const;
+	void moveTo(Mat&);
+	void moveTo(cpuMat&);
 
 	// only changes devData (on GPU)
 	cpuMat operator+(const cpuMat&) const;

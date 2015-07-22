@@ -12,9 +12,15 @@ Mat* log(const Mat* src){
 	return res;
 }
 
-Mat* pow(const Mat* src, int power){
+Mat* pow(const Mat* src, float power){
 	Mat *res = new Mat();
 	*res = pow(*src, power);
+	return res;
+}
+
+Mat* square(const Mat* src){
+	Mat *res = new Mat();
+	*res = square(*src);
 	return res;
 }
 
@@ -171,6 +177,7 @@ void convert(std::vector<std::vector<Mat*> >& vec, Mat*M){
 		tmp.push_back(tmp1);
 	}
 	convert(tmp, *M);
+	releaseVector(tmp);
     tmp.clear();
     std::vector<std::vector<Mat> >().swap(tmp);
 }
@@ -193,6 +200,7 @@ void convert(Mat*M, std::vector<std::vector<Mat*> >& vec, int nsamples, int imag
 			tmp[i][j].copyTo(*(vec[i][j]));
 		}
 	}
+	releaseVector(tmp);
     tmp.clear();
     std::vector<std::vector<Mat> >().swap(tmp);
 }

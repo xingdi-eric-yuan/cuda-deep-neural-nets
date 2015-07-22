@@ -16,6 +16,8 @@ public:
 	void printGpuMemory(){printf("total malloc gpu memory %fMb\n", gpuMemory / 1024 / 1024);}
 	void freeGpuMemory(void* ptr);
 	void freeCpuMemory(void* ptr);
+	float getCpuMemory() const;
+	float getGpuMemory() const;
 private:
 	float cpuMemory;
 	float gpuMemory;

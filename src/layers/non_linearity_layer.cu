@@ -74,7 +74,7 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
         Mat tmp = *(dnonLinearity(input, method));
         Mat tmp2 = derivative -> mul(tmp);
         tmp2.copyTo(*delta_matrix);
-        tmp2 = deriv2 -> mul(pow(tmp, 2));
+        tmp2 = deriv2 -> mul(square(tmp));
         tmp2.copyTo(*d2_matrix);
     }else{
         std::vector<std::vector<Mat*> > input;
@@ -107,7 +107,7 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
             	d2_vector[i][j] = new Mat();
             	Mat tmp = *(dnonLinearity(input[i][j], method));
             	*(delta_vector[i][j]) = tmp.mul(*(derivative[i][j]));
-            	*(d2_vector[i][j]) = pow(tmp, 2).mul(*(deriv2[i][j]));
+            	*(d2_vector[i][j]) = square(tmp).mul(*(deriv2[i][j]));
             }
         }
         derivative.clear();

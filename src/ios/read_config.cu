@@ -249,7 +249,6 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 flow.push_back(tmp);
                 break;
             }case 7:{ // pooling layer
-/*
                 pooling_layer *tmp = new pooling_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
@@ -267,10 +266,8 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                     tmp -> init_config(namestr, method, of, stride);
                 }
                 flow.push_back(tmp);
-*/
                 break;
             }case 8:{ // local response normalization layer
-/*
                 local_response_normalization_layer *tmp = new local_response_normalization_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
@@ -280,7 +277,7 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 int n = get_word_int(layers[i], "N");
                 tmp -> init_config(namestr, of, alpha, beta, k, n);
                 flow.push_back(tmp);
-                */
+
                 break;
             }case 9:{ // dropout layer
 /*

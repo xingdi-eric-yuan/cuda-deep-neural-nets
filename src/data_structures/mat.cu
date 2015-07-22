@@ -52,16 +52,54 @@ Mat::~Mat(){
 		MemoryMonitor::instance()->freeGpuMemory(devData);
 }
 
+void Mat::release(){
+	if(NULL != hostData)
+		MemoryMonitor::instance()->freeCpuMemory(hostData);
+	if(NULL != devData)
+		MemoryMonitor::instance()->freeGpuMemory(devData);
+	rows = 0;
+	cols = 0;
+	channels = 0;
+	hostData = NULL;
+	devData = NULL;
+}
+
 Mat& Mat::operator=(const Mat &m){
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	hostData = NULL;
-	devData = NULL;
+	if(NULL != hostData){
+		MemoryMonitor::instance()->freeCpuMemory(hostData);
+		hostData = NULL;
+	}
+	if(NULL != devData){
+		MemoryMonitor::instance()->freeGpuMemory(devData);
+		devData = NULL;
+	}
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
 	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+    return *this;
+}
+
+Mat& Mat::operator<<=(Mat &m){
+	cols = m.cols;
+	rows = m.rows;
+	channels = m.channels;
+	if(NULL != hostData){
+		MemoryMonitor::instance()->freeCpuMemory(hostData);
+		hostData = NULL;
+	}
+	if(NULL != devData){
+		MemoryMonitor::instance()->freeGpuMemory(devData);
+		devData = NULL;
+	}
+	mallocHost();
+	mallocDevice();
+	memcpy(hostData, m.hostData, getLength() * sizeof(float));
+	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	m.release();
     return *this;
 }
 
@@ -71,15 +109,15 @@ void Mat::setSize(int r, int c, int ch){
 	channels = ch;
 	if(NULL != hostData){
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
+		hostData = NULL;
 	}
 	if(NULL != devData){
 		MemoryMonitor::instance()->freeGpuMemory(devData);
+		devData = NULL;
 	}
-	hostData = NULL;
-	devData = NULL;
 	mallocHost();
 	mallocDevice();
-	zeros();
+	//zeros();
 }
 
 void Mat::zeros(){
@@ -110,7 +148,8 @@ void Mat::randu(){
 }
 
 void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
-	if(NULL == hostData || NULL == devData) {zeros();}
+	if(NULL == hostData) {mallocHost();}
+	if(NULL == devData) {mallocDevice();}
 	if(pos_x >= cols || pos_y >= rows || pos_channel >= channels){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
@@ -120,7 +159,8 @@ void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
 }
 
 void Mat::set(int pos_y, int pos_x, const vector3f& val){
-	if(NULL == hostData || NULL == devData) {zeros();}
+	if(NULL == hostData) {mallocHost();}
+	if(NULL == devData) {mallocDevice();}
 	if(pos_x >= cols || pos_y >= rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
@@ -132,7 +172,8 @@ void Mat::set(int pos_y, int pos_x, const vector3f& val){
 }
 
 void Mat::set(int pos, const vector3f& val){
-	if(NULL == hostData || NULL == devData) {zeros();}
+	if(NULL == hostData) {mallocHost();}
+	if(NULL == devData) {mallocDevice();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
@@ -144,7 +185,8 @@ void Mat::set(int pos, const vector3f& val){
 }
 
 void Mat::set(int pos, int pos_channel, float val){
-	if(NULL == hostData || NULL == devData) {zeros();}
+	if(NULL == hostData) {mallocHost();}
+	if(NULL == devData) {mallocDevice();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
@@ -202,15 +244,21 @@ int Mat::getLength() const{
 }
 
 void Mat::deviceToHost(){
-	if(NULL == hostData) mallocHost();
-	if(NULL == devData) mallocDevice();
+	if(NULL == hostData || NULL == devData){
+		if(NULL == hostData) std::cout<<"can't do that, host data is NULL..."<<std::endl;
+		if(NULL == devData) std::cout<<"can't do that, device data is NULL..."<<std::endl;
+		exit(0);
+	}
 	// Copy device memory to host
 	cudaMemcpy(hostData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost);
 }
 
 void Mat::hostToDevice(){
-	if(NULL == hostData) mallocHost();
-	if(NULL == devData) mallocDevice();
+	if(NULL == hostData || NULL == devData){
+		if(NULL == hostData) std::cout<<"can't do that, host data is NULL..."<<std::endl;
+		if(NULL == devData) std::cout<<"can't do that, device data is NULL..."<<std::endl;
+		exit(0);
+	}
 	// Copy host memory to device
 	cudaMemcpy(devData, hostData, getLength() * sizeof(float), cudaMemcpyHostToDevice);
 }
@@ -219,8 +267,14 @@ void Mat::copyTo(Mat &m) const{
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.hostData = NULL;
-	m.devData = NULL;
+	if(NULL != m.hostData){
+		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
+		m.hostData = NULL;
+	}
+	if(NULL != m.devData){
+		MemoryMonitor::instance()->freeGpuMemory(m.devData);
+		m.devData = NULL;
+	}
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, hostData, getLength() * sizeof(float));
@@ -231,9 +285,44 @@ void Mat::copyTo(cpuMat &m) const{
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.Data = NULL;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeCpuMemory(m.Data);
+		m.Data = NULL;
+	}
 	m.mallocMat();
 	memcpy(m.Data, hostData, getLength() * sizeof(float));
+}
+
+void Mat::moveTo(Mat &m){
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
+	if(NULL != m.hostData){
+		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
+		m.hostData = NULL;
+	}
+	if(NULL != m.devData){
+		MemoryMonitor::instance()->freeGpuMemory(m.devData);
+		m.devData = NULL;
+	}
+	m.mallocHost();
+	m.mallocDevice();
+	memcpy(m.hostData, hostData, getLength() * sizeof(float));
+	cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	release();
+}
+
+void Mat::moveTo(cpuMat &m){
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeCpuMemory(m.Data);
+		m.Data = NULL;
+	}
+	m.mallocMat();
+	memcpy(m.Data, hostData, getLength() * sizeof(float));
+	release();
 }
 
 Mat Mat::operator+(const Mat &m) const{
@@ -310,6 +399,7 @@ Mat& Mat::operator+=(const Mat &m){
 	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
 	cublasDestroy ( handle ); // destroy CUBLAS context
 	deviceToHost();
+	tmpmat.release();
     return *this;
 }
 
@@ -416,6 +506,7 @@ Mat& Mat::operator-=(const Mat &m){
 	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
 	cublasDestroy ( handle ); // destroy CUBLAS context
 	deviceToHost();
+	tmpmat.release();
     return *this;
 }
 
@@ -706,7 +797,8 @@ void Mat::mallocDevice(){
 void Mat::printHost(const std::string &str) const{
 	std::cout<<str<<std::endl;
 	if(NULL == hostData || NULL == devData){
-		std::cout<<"invalid matrix..."<<std::endl;
+		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
+		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
 		exit(0);
 	}
 	Mat show = t();
@@ -722,12 +814,14 @@ void Mat::printHost(const std::string &str) const{
 			std::cout<<std::endl;
 		}
 	}
+	show.release();
 }
 
 void Mat::printDevice(const std::string &str) const{
 	std::cout<<str<<std::endl;
 	if(NULL == hostData || NULL == devData){
-		std::cout<<"invalid matrix..."<<std::endl;
+		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
+		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
 		exit(0);
 	}
 	Mat show = t();
@@ -746,6 +840,6 @@ void Mat::printDevice(const std::string &str) const{
 			std::cout<<std::endl;
 		}
 	}
-	if(NULL != host_data)
-		MemoryMonitor::instance()->freeCpuMemory(host_data);
+	if(NULL != host_data) MemoryMonitor::instance()->freeCpuMemory(host_data);
+	show.release();
 }

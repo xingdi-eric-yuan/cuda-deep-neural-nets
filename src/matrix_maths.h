@@ -9,7 +9,8 @@ class vector2i;
 // basic maths
 Mat exp(const Mat&);
 Mat log(const Mat&);
-Mat pow(const Mat&, int);
+Mat pow(const Mat&, float);
+Mat square(const Mat&);
 Mat divide(const Mat&, float);
 Mat divide(float, const Mat&);
 vector3f divide(const vector3f&, float);
@@ -84,7 +85,8 @@ cpuMat divide(const cpuMat&, float);
 // basic maths
 Mat* exp(const Mat*);
 Mat* log(const Mat*);
-Mat* pow(const Mat*, int);
+Mat* pow(const Mat*, float);
+Mat* square(const Mat*);
 Mat* divide(const Mat*, float);
 Mat* divide(float, const Mat*);
 vector3f* divide(const vector3f*, float);

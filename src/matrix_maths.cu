@@ -28,7 +28,7 @@ Mat log(const Mat &src){
 	return dst;
 }
 
-Mat pow(const Mat &src, int power){
+Mat pow(const Mat &src, float power){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
@@ -42,6 +42,20 @@ Mat pow(const Mat &src, int power){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
 	cu_pow<<<num_blocks, block_size>>>(src.devData, dst.devData, power, tmp);
+	dst.deviceToHost();
+	return dst;
+}
+
+Mat square(const Mat &src){
+	if(NULL == src.hostData || NULL == src.devData){
+		std::cout<<"invalid src..."<<std::endl;
+		exit(0);
+	}
+	Mat dst(src);
+	int tmp = src.getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	cu_square<<<num_blocks, block_size>>>(src.devData, dst.devData, tmp);
 	dst.deviceToHost();
 	return dst;
 }
@@ -226,8 +240,10 @@ vector3f average(const Mat& src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat tmp = divide(src, src.rows * src.cols);
+	Mat tmp;
+	divide(src, src.rows * src.cols).moveTo(tmp);
 	vector3f res = sum(tmp);
+	tmp.release();
 	return res;
 }
 
@@ -259,6 +275,7 @@ vector3f stddev(const cpuMat& src, const vector3f& avg){
 		}
 	}
 	vector3f res = average(tmpmat);
+	tmpmat.release();
 	return res;
 }
 
@@ -267,9 +284,11 @@ vector3f stddev(const Mat& src, const vector3f& avg){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat tmp = src - avg;
-	tmp = pow(tmp, 2);
+	Mat tmp(src);
+	tmp -= avg;
+	square(tmp).moveTo(tmp);
 	vector3f res = average(tmp);
+	tmp.release();
 	return res;
 }
 
@@ -507,7 +526,7 @@ void convert(std::vector<std::vector<Mat> >& vec, Mat &M){
         }
     }
     res.hostToDevice();
-    res.copyTo(M);
+    res.moveTo(M);
 }
 
 // convert from matrix to vector of img
@@ -515,6 +534,7 @@ void convert(std::vector<std::vector<Mat> >& vec, Mat &M){
 void convert(Mat &M, std::vector<std::vector<Mat> >& vec, int nsamples, int imagesize){
     std::vector<Mat> tmpvec;
     for(int i = 0; i < nsamples; i++){
+        releaseVector(tmpvec);
         tmpvec.clear();
         int dim = imagesize * imagesize;
         for(int j = 0; j < M.rows; j += dim * 3){
@@ -522,9 +542,11 @@ void convert(Mat &M, std::vector<std::vector<Mat> >& vec, int nsamples, int imag
         	memcpy(tmp.hostData, M.hostData + i * M.rows + j, dim * 3 * sizeof(float));
         	tmp.hostToDevice();
         	tmpvec.push_back(tmp);
+        	tmp.release();
         }
         vec.push_back(tmpvec);
     }
+    releaseVector(tmpvec);
     tmpvec.clear();
     std::vector<Mat>().swap(tmpvec);
 }
@@ -536,9 +558,10 @@ Mat sigmoid(const Mat &src){
 		exit(0);
 	}
 	Mat tmp(src);
-	tmp = tmp.mul(-1.0);
-	tmp = exp(tmp) + 1.0;
-	tmp = divide(1.0, tmp);
+	tmp.mul(-1.0).moveTo(tmp);
+	exp(tmp).moveTo(tmp);
+	tmp += 1.0;
+	divide(1.0, tmp).moveTo(tmp);
 	return tmp;
 }
 
@@ -547,10 +570,13 @@ Mat dsigmoid(const Mat &src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    Mat tmp = exp(src);
-    Mat tmp2 = tmp + 1.0;
-    tmp2 = pow(tmp2, 2);
-    return divide(tmp, tmp2);
+	Mat tmp, tmp2;
+	exp(src).moveTo(tmp);
+	(tmp + 1.0).moveTo(tmp2);
+	square(tmp2).moveTo(tmp2);
+	divide(tmp, tmp2).moveTo(tmp);
+    tmp2.release();
+    return tmp;
 }
 
 Mat dsigmoid_a(const Mat &src){
@@ -560,8 +586,8 @@ Mat dsigmoid_a(const Mat &src){
 	}
     Mat res(src);
     res.ones();
-    res = res - src;
-    res = res.mul(src);
+    res -= src;
+    res.mul(src).moveTo(res);
     return res;
 }
 
@@ -570,8 +596,9 @@ Mat ReLU(const Mat& M){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    Mat res = greaterThan(M, 0.0);
-    res = res.mul(M);
+	Mat res;
+	greaterThan(M, 0.0).moveTo(res);
+	res.mul(M).moveTo(res);
     return res;
 }
 
@@ -580,7 +607,8 @@ Mat dReLU(const Mat& M){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    Mat res = greaterThan(M, 0.0);
+	Mat res;
+	greaterThan(M, 0.0).moveTo(res);
     return res;
 }
 
@@ -589,12 +617,18 @@ Mat LeakyReLU(const Mat& M){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    Mat p = greaterThan(M, 0.0);
-    p = p.mul(M);
-    Mat n = lessThan(M, 0.0);
-    n = n.mul(M);
-    n = divide(n, leaky_relu_alpha);
-    return p + n;
+	Mat p, n, tmp;
+	greaterThan(M, 0.0).moveTo(p);
+	lessThan(M, 0.0).moveTo(n);
+	p.mul(M).moveTo(p);
+	n.mul(M).moveTo(n);
+	divide(n, leaky_relu_alpha).moveTo(n);
+	Mat res;
+	(p + n).moveTo(res);
+	tmp.release();
+    n.release();
+    p.release();
+    return res;
 }
 
 Mat dLeakyReLU(const Mat& M){
@@ -602,10 +636,16 @@ Mat dLeakyReLU(const Mat& M){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    Mat p = greaterThan(M, 0.0);
-    Mat n = lessThan(M, 0.0);
-    n = divide(n, leaky_relu_alpha);
-    return p + n;
+	Mat p, n, tmp;
+	greaterThan(M, 0.0).moveTo(p);
+	lessThan(M, 0.0).moveTo(n);
+	divide(n, leaky_relu_alpha).moveTo(n);
+	Mat res;
+	(p + n).moveTo(res);
+	tmp.release();
+    n.release();
+    p.release();
+    return res;
 }
 
 Mat Tanh(const Mat &src){
@@ -627,9 +667,12 @@ Mat dTanh(const Mat &src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	Mat tmp;
     Mat res(src);
     res.ones();
-    res = res - pow(src, 2);
+    square(src).moveTo(tmp);
+    res -= tmp;
+    tmp.release();
     return res;
 }
 
@@ -690,12 +733,12 @@ Mat rot90(const Mat &src, int k){
     Mat res(src);
     if(0 == k) return res;
     elif(1 == k) {
-    	res = res.t();
-    	res = fliplr(res);
+    	res.t().moveTo(res);
+    	fliplr(res).moveTo(res);
     }else{
-    	res = rot90(res, k - 1);
-    	res = res.t();
-    	res = fliplr(res);
+    	rot90(res, k - 1).moveTo(res);
+    	res.t().moveTo(res);
+    	fliplr(res).moveTo(res);
     }
     return res;
 }
@@ -741,11 +784,12 @@ Mat reduce(const Mat& src, int direction, int mode){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	Mat tmp;
 	Mat dst;
 	if(REDUCE_TO_SINGLE_ROW == direction){
 		dst.setSize(1, src.cols, src.channels);
 		for(int i = 0; i < src.cols; ++i){
-			Mat tmp = getRange(src, i, i, 0, src.rows - 1);
+			getRange(src, i, i, 0, src.rows - 1).moveTo(tmp);
 			if(REDUCE_SUM == mode){
 				dst.set(i, sum(tmp));
 			}elif(REDUCE_MAX == mode){
@@ -755,7 +799,7 @@ Mat reduce(const Mat& src, int direction, int mode){
 	}else{ // REDUCE_TO_SINGLE_COL == direction
 		dst.setSize(src.rows, 1, src.channels);
 		for(int i = 0; i < src.rows; ++i){
-			Mat tmp = getRange(src, 0, src.cols - 1, i, i);
+			getRange(src, 0, src.cols - 1, i, i).moveTo(tmp);
 			if(REDUCE_SUM == mode){
 				dst.set(i, sum(tmp));
 			}elif(REDUCE_MAX == mode){
@@ -763,6 +807,7 @@ Mat reduce(const Mat& src, int direction, int mode){
 			}
 		}
 	}
+	tmp.release();
 	return dst;
 }
 
@@ -897,21 +942,23 @@ Mat conv2(const Mat &m, const Mat &kernel, int convtype, int pad, int stride){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat src = dopadding(m, kernel.cols - 1);
-	src = dopadding(src, pad);
-	Mat res = conv2(src, kernel);
-	res = getRange(res, (res.cols - (m.cols + kernel.cols - 1)) / 2, (res.cols - (m.cols + kernel.cols - 1)) / 2 + m.cols + kernel.cols - 1 - 1,
-						(res.rows - (m.rows + kernel.rows - 1)) / 2, (res.rows - (m.rows + kernel.rows - 1)) / 2 + m.rows + kernel.rows - 1 - 1);
+	Mat src, res;
+	dopadding(m, kernel.cols - 1).moveTo(src);
+	dopadding(src, pad).moveTo(src);
+	conv2(src, kernel).moveTo(res);
+	getRange(res, (res.cols - (m.cols + kernel.cols - 1)) / 2, (res.cols - (m.cols + kernel.cols - 1)) / 2 + m.cols + kernel.cols - 1 - 1,
+							(res.rows - (m.rows + kernel.rows - 1)) / 2, (res.rows - (m.rows + kernel.rows - 1)) / 2 + m.rows + kernel.rows - 1 - 1).moveTo(res);
 	if(CONV_SAME == convtype){
-		res = getRange(res, kernel.cols / 2, res.cols - 1 - kernel.cols / 2, kernel.rows / 2, res.rows - 1 - kernel.rows / 2);
+		getRange(res, kernel.cols / 2, res.cols - 1 - kernel.cols / 2, kernel.rows / 2, res.rows - 1 - kernel.rows / 2).moveTo(res);
 	}
 	if(CONV_VALID == convtype){
         int tmpx = m.cols + pad * 2 - kernel.cols + 1;
         int tmpy = m.rows + pad * 2 - kernel.rows + 1;
-        res = getRange(res, (res.cols - tmpx) / 2, res.cols - 1 - (res.cols - tmpx) / 2,
-        		 	 	    (res.rows - tmpy) / 2, res.rows - 1 - (res.rows - tmpy) / 2);
+        getRange(res, (res.cols - tmpx) / 2, res.cols - 1 - (res.cols - tmpx) / 2,
+                		 	 	    (res.rows - tmpy) / 2, res.rows - 1 - (res.rows - tmpy) / 2).moveTo(res);
 	}
-	res = downSample(res, stride, stride);
+	downSample(res, stride, stride).moveTo(res);
+	src.release();
 	return res;
 }
 
@@ -925,7 +972,8 @@ Mat getRange(const Mat& src, int xstart, int xend, int ystart, int yend){
 		std::cout<<"invalid range..."<<std::endl;
 		exit(0);
 	}
-	Mat dst(yend - ystart + 1, xend - xstart + 1, src.channels);
+	Mat dst;
+	dst.setSize(yend - ystart + 1, xend - xstart + 1, src.channels);
 	int len = dst.rows * dst.cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -992,9 +1040,15 @@ Mat pooling_with_overlap(const Mat &src, vector2i window_size, int stride, int p
 	}
 	Mat tmpres(src.rows - window_size.get(1) + 1, src.cols - window_size.get(0) + 1, src.channels);
 	std::vector<vector3f> tmplocat;
+	Mat tmp;
     for(int i = 0; i < tmpres.rows; ++i){
         for(int j = 0; j < tmpres.cols; ++j){
-        	Mat tmp = getRange(src, j, j + window_size.get(0) - 1, i, i + window_size.get(1) - 1);
+
+        	int xstart = j;
+        	int xend = j + window_size.get(0) - 1 < src.cols - 1 ? j + window_size.get(0) - 1 : src.cols - 1;
+        	int ystart = i;
+        	int yend = i + window_size.get(1) - 1 < src.rows - 1 ? i + window_size.get(1) - 1 : src.rows - 1;
+        	getRange(src, xstart, xend, ystart, yend).moveTo(tmp);
         	vector3f val;
         	vector3f loc;
         	if(POOL_MAX == poolingMethod){
@@ -1009,13 +1063,16 @@ Mat pooling_with_overlap(const Mat &src, vector2i window_size, int stride, int p
             tmpres.set(i, j, val);
         }
     }
-    Mat dst = downSample(tmpres, stride, stride);
+    Mat dst;
+    downSample(tmpres, stride, stride).moveTo(dst);
     for(int i = 0; i < tmpres.cols; i++){
         for(int j = 0; j < tmpres.rows; j++){
             if(i % stride > 0 || j % stride > 0) continue;
             locat.push_back(tmplocat[i * tmpres.rows + j]);
         }
     }
+    tmpres.release();
+    tmp.release();
     tmplocat.clear();
     std::vector<vector3f>().swap(tmplocat);
     return dst;
@@ -1060,9 +1117,14 @@ Mat pooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3f>
 	int dst_cols = src.cols / stride;
 	if(src.cols % stride > 0) ++dst_cols;
 	Mat res(dst_rows, dst_cols, src.channels);
+	Mat tmp;
     for(int i = 0; i < res.rows; ++i){
         for(int j = 0; j < res.cols; ++j){
-        	Mat tmp = getRange(src, j * stride, j * stride + stride  - 1, i * stride, i * stride + stride - 1);
+        	int xstart = j * stride;
+        	int xend = (j * stride + stride  - 1) < (src.cols - 1) ? (j * stride + stride  - 1) : (src.cols - 1);
+        	int ystart = i * stride;
+        	int yend = (i * stride + stride  - 1) < (src.rows - 1) ? (i * stride + stride  - 1) : (src.rows - 1);
+        	getRange(src, xstart, xend, ystart, yend).moveTo(tmp);
         	vector3f val;
         	vector3f loc;
         	if(POOL_MAX == poolingMethod){
@@ -1070,7 +1132,7 @@ Mat pooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3f>
         		max(tmp, val, loc);
         	}elif(POOL_MEAN == poolingMethod){
         		// Mean Pooling
-        		val = average(src);
+        		val = average(tmp);
         		loc.setAll(0.0);
             }
         	vector3f tmpr = loc % stride;
@@ -1082,6 +1144,7 @@ Mat pooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3f>
             res.set(i, j, val);
         }
     }
+    tmp.release();
     return res;
 }
 
@@ -1097,10 +1160,12 @@ Mat unpooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3
     if(POOL_MEAN == poolingMethod){
     	Mat one(stride, stride, src.channels);
     	one.ones();
-        Mat res = kron(src, one);
-        res = divide(res, stride * stride);
+    	Mat res;
+    	kron(src, one).moveTo(res);
+    	divide(res, stride * stride).moveTo(res);
         vector3f tmp(0.0, 0.0, 0.0);
-        res = copyMakeBorder(res, 0, up_size.get(1) - res.rows, 0, up_size.get(0) - res.cols, tmp);
+        copyMakeBorder(res, 0, up_size.get(1) - res.rows, 0, up_size.get(0) - res.cols, tmp).moveTo(res);
+        one.release();
         return res;
     }else{ //(POOL_MAX == poolingMethod || POOL_STOCHASTIC == poolingMethod)
         Mat res(up_size.get(1), up_size.get(0), src.channels);
@@ -1114,10 +1179,3 @@ Mat unpooling(const Mat& src, int stride, int poolingMethod, std::vector<vector3
         return res;
     }
 }
-
-
-
-
-
-
-

@@ -19,7 +19,10 @@ void input_layer::forwardPass(int nsamples, const std::vector<cpuMat>& input_dat
 }
 
 void input_layer::getSample(const std::vector<cpuMat>& src1, std::vector<std::vector<Mat*> >& dst1, const cpuMat& src2, Mat* dst2){
-    dst1.clear();
+    releaseVector(dst1);
+	dst1.clear();
+	dst2->zeros();
+
     if(is_gradient_checking){
         for(int i = 0; i < batch_size; i++){
         	std::vector<Mat*> tmp;
@@ -28,6 +31,8 @@ void input_layer::getSample(const std::vector<cpuMat>& src1, std::vector<std::ve
             tmp.push_back(tmpmat);
             dst1.push_back(tmp);
             dst2 -> set(0, i, 0, src2.get(0, i, 0));
+            tmp.clear();
+            std::vector<Mat*>().swap(tmp);
         }
         return;
     }
@@ -39,6 +44,8 @@ void input_layer::getSample(const std::vector<cpuMat>& src1, std::vector<std::ve
             tmp.push_back(tmpmat);
             dst1.push_back(tmp);
             dst2 -> set(0, i, 0, src2.get(0, i, 0));
+            tmp.clear();
+            std::vector<Mat*>().swap(tmp);
         }
         return;
     }
@@ -54,6 +61,8 @@ void input_layer::getSample(const std::vector<cpuMat>& src1, std::vector<std::ve
         tmp.push_back(tmpmat);
         dst1.push_back(tmp);
         dst2 -> set(0, i, 0, src2.get(0, sample_vec[i], 0));
+        tmp.clear();
+        std::vector<Mat*>().swap(tmp);
     }
 }
 

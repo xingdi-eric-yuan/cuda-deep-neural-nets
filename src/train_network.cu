@@ -2,13 +2,12 @@
 
 using namespace std;
 
-void
-forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
     // cout<<"---------------- forward init"<<endl;
     // forward pass
     int batch_size = 0;
     for(int i = 0; i < flow.size(); i++){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             batch_size = ((input_layer*)flow[i]) -> batch_size;
             ((input_layer*)flow[i]) -> forwardPass(batch_size, x, y);
@@ -27,12 +26,11 @@ forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netwo
             ((branch_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "non_linearity"){
             ((non_linearity_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }
-        /*elif(flow[i] -> layer_type == "pooling"){
+        }elif(flow[i] -> layer_type == "pooling"){
             ((pooling_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }elif(flow[i] -> layer_type == "dropout"){
+        }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }*/
         if(flow[i] -> output_format == "matrix"){
@@ -43,12 +41,12 @@ forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netwo
     }
 }
 
-void
-forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
 
     //cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
+    Mat tmp;
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
         //cout<<flow[i] -> layer_name<<endl;
@@ -59,13 +57,16 @@ forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_l
             ((convolutional_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
             for(int k = 0; k < ((convolutional_layer*)flow[i]) -> kernels.size(); ++k){
-            	vector3f tmpvec3 = sum(*(pow(((convolutional_layer*)flow[i]) -> kernels[k] -> w, 2.0)));
+            	square(((convolutional_layer*)flow[i]) -> kernels[k] -> w) -> moveTo(tmp);
+            	vector3f tmpvec3 = sum(tmp);
+            	//vector3f tmpvec3 = sum(*(square(((convolutional_layer*)flow[i]) -> kernels[k] -> w)));
                 J4 += sum(tmpvec3) * ((convolutional_layer*)flow[i]) -> kernels[k] -> weight_decay / 2.0;
             }
         }elif(flow[i] -> layer_type == "fully_connected"){
             ((fully_connected_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
-            vector3f tmpvec3 = sum(*(pow(((fully_connected_layer*)flow[i]) -> w, 2.0)));
+            square(((fully_connected_layer*)flow[i]) -> w) -> moveTo(tmp);
+            vector3f tmpvec3 = sum(tmp);
             J3 += sum(tmpvec3) * ((fully_connected_layer*)flow[i]) -> weight_decay / 2.0;
         }elif(flow[i] -> layer_type == "softmax"){
             ((softmax_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
@@ -74,21 +75,25 @@ forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_l
             for(int i = 0; i < batch_size; i++){
             	groundTruth.set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
             }
-            vector3f tmpvec3 = sum(groundTruth.mul(log(*(flow[i] -> output_matrix))));
+            log(flow[i] -> output_matrix) -> moveTo(tmp);
+            tmp.mul(groundTruth).moveTo(tmp);
+            vector3f tmpvec3 = sum(tmp);
             J1 += -sum(tmpvec3) / batch_size;
-            tmpvec3 = sum(*(pow(((softmax_layer*)flow[i]) -> w, 2.0)));
+            square(((softmax_layer*)flow[i]) -> w) -> moveTo(tmp);
+            tmpvec3 = sum(tmp);
             J2 += sum(tmpvec3) * ((softmax_layer*)flow[i]) -> weight_decay / 2.0;
+            groundTruth.release();
         }elif(flow[i] -> layer_type == "combine"){
             ((combine_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "branch"){
             ((branch_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "non_linearity"){
             ((non_linearity_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }/*elif(flow[i] -> layer_type == "pooling"){
+        }elif(flow[i] -> layer_type == "pooling"){
             ((pooling_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }elif(flow[i] -> layer_type == "dropout"){
+        }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }*/
         if(flow[i] -> output_format == "matrix"){
@@ -102,10 +107,10 @@ forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_l
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost<<endl;
+    tmp.release();
 }
 
-void
-forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
 
     // forward pass
     int batch_size = x.size();
@@ -125,19 +130,18 @@ forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netwo
             ((branch_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "non_linearity"){
             ((non_linearity_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
-        }/*elif(flow[i] -> layer_type == "pooling"){
+        }elif(flow[i] -> layer_type == "pooling"){
             ((pooling_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
-        }elif(flow[i] -> layer_type == "dropout"){
+        }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
         }
 */
     }
 }
 
-void
-backwardPass(std::vector<network_layer*> &flow){
+void backwardPass(std::vector<network_layer*> &flow){
     //cout<<"---------------- backward"<<endl;
     // backward pass
     int batch_size = ((input_layer*)flow[0]) -> batch_size;
@@ -161,11 +165,11 @@ backwardPass(std::vector<network_layer*> &flow){
             ((branch_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }elif(flow[i] -> layer_type == "non_linearity"){
             ((non_linearity_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
-        }/*elif(flow[i] -> layer_type == "pooling"){
+        }elif(flow[i] -> layer_type == "pooling"){
             ((pooling_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
-        }elif(flow[i] -> layer_type == "dropout"){
+        }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }*/
         if(flow[i] -> layer_name == "input") break;;
@@ -175,10 +179,10 @@ backwardPass(std::vector<network_layer*> &flow){
             //cout<<"delta dimension is "<<flow[i] -> delta_vector.size()<<" * "<<flow[i] -> delta_vector[0].size()<<" * "<<flow[i] -> delta_vector[0][0].size()<<endl;
         }
     }
+    groundTruth.release();
 }
 
-void
-updateNetwork(std::vector<network_layer*> &flow, int iter){
+void updateNetwork(std::vector<network_layer*> &flow, int iter){
     for(int i = 0; i < flow.size(); ++i){
         //cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "convolutional"){
@@ -191,8 +195,7 @@ updateNetwork(std::vector<network_layer*> &flow, int iter){
     }
 }
 
-void
-printNetwork(std::vector<network_layer*> &flow){
+void printNetwork(std::vector<network_layer*> &flow){
     cout<<"****************************************************************************"<<endl
         <<"**                       NETWORK LAYERS                                     "<<endl
         <<"****************************************************************************"<<endl<<endl;
@@ -219,7 +222,7 @@ printNetwork(std::vector<network_layer*> &flow){
             ;
         }elif(flow[i] -> layer_type == "non_linearity"){
             cout<<"non-lin method = "<<((non_linearity_layer*)flow[i]) -> method<<endl;
-        }/*elif(flow[i] -> layer_type == "pooling"){
+        }elif(flow[i] -> layer_type == "pooling"){
             cout<<"pooling method = "<<((pooling_layer*)flow[i]) -> method<<endl;
             cout<<"overlap = "<<((pooling_layer*)flow[i]) -> overlap<<endl;
             cout<<"stride = "<<((pooling_layer*)flow[i]) -> stride<<endl;
@@ -229,7 +232,7 @@ printNetwork(std::vector<network_layer*> &flow){
             cout<<"beta = "<<((local_response_normalization_layer*)flow[i]) -> beta<<endl;
             cout<<"k = "<<((local_response_normalization_layer*)flow[i]) -> k<<endl;
             cout<<"n = "<<((local_response_normalization_layer*)flow[i]) -> n<<endl;
-        }elif(flow[i] -> layer_type == "dropout"){
+        }/*elif(flow[i] -> layer_type == "dropout"){
             cout<<"dropout rate = "<<((dropout_layer*)flow[i]) -> dropout_rate<<endl;
         }*/
         if(flow[i] -> output_format == "matrix"){
@@ -241,8 +244,7 @@ printNetwork(std::vector<network_layer*> &flow){
     }
 }
 
-void
-testNetwork(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void testNetwork(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
 /*
     int batch_size = 100;
 
@@ -282,12 +284,16 @@ testNetwork(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_l
     */
 }
 
-void
-trainNetwork(const std::vector<cpuMat> &x, const cpuMat &y, const std::vector<cpuMat> &tx, const cpuMat &ty, std::vector<network_layer*> &flow){
+void trainNetwork(const std::vector<cpuMat> &x, const cpuMat &y, const std::vector<cpuMat> &tx, const cpuMat &ty, std::vector<network_layer*> &flow){
 
     forwardPassInit(x, y, flow);
     printNetwork(flow);
 
+
+
+    //forwardPass(x, y, flow);
+    //forwardPass(x, y, flow);
+    //return;
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);
     }else{
@@ -303,6 +309,8 @@ trainNetwork(const std::vector<cpuMat> &x, const cpuMat &y, const std::vector<cp
                 forwardPass(x, y, flow);
                 backwardPass(flow);
                 updateNetwork(flow, k);
+
+        		printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
             }
 
             //cout<<"Test training data: "<<endl;

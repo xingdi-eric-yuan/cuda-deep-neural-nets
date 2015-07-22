@@ -117,12 +117,12 @@ void fully_connected_layer::backwardPass(int nsamples, network_layer* previous_l
 
         *wgrad = derivative * input -> t() / nsamples + (*w) * weight_decay;
         *bgrad = reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM) / nsamples;
-        *wd2 = deriv2 * pow(input -> t(), 2.0) / nsamples + weight_decay;
+        *wd2 = deriv2 * square(input -> t()) / nsamples + weight_decay;
         *bd2 = reduce(deriv2, REDUCE_TO_SINGLE_COL, REDUCE_SUM) / nsamples;
 
         Mat tmp = w -> t() * derivative;
         tmp.copyTo(*delta_matrix);
-        tmp = pow(w -> t(), 2.0) * deriv2;
+        tmp = square(w -> t()) * deriv2;
         tmp.copyTo(*d2_matrix);
     }
 }

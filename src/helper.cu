@@ -44,3 +44,55 @@ void copyVector(const std::vector<Mat*>& _from, std::vector<Mat*>& _to){
 		_from[i] -> copyTo(*(_to[i]));
 	}
 }
+
+void releaseVector(std::vector<std::vector<Mat*> >& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		for(int j = 0; j < vec[i].size(); ++j){
+			vec[i][j] -> release();
+		}
+	}
+}
+
+void releaseVector(std::vector<std::vector<Mat> >& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		for(int j = 0; j < vec[i].size(); ++j){
+			vec[i][j].release();
+		}
+	}
+}
+void releaseVector(std::vector<Mat*>& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		vec[i] -> release();
+	}
+}
+void releaseVector(std::vector<Mat>& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		vec[i].release();
+	}
+}
+
+void releaseVector(std::vector<std::vector<cpuMat*> >& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		for(int j = 0; j < vec[i].size(); ++j){
+			vec[i][j] -> release();
+		}
+	}
+}
+
+void releaseVector(std::vector<std::vector<cpuMat> >& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		for(int j = 0; j < vec[i].size(); ++j){
+			vec[i][j].release();
+		}
+	}
+}
+void releaseVector(std::vector<cpuMat*>& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		vec[i] -> release();
+	}
+}
+void releaseVector(std::vector<cpuMat>& vec){
+	for(int i = 0; i < vec.size(); ++i){
+		vec[i].release();
+	}
+}

@@ -29,7 +29,7 @@ $
 LAYER = input;
 NAME = input;
 OUTPUT_TYPE = image;
-BATCH_SIZE = 5;
+BATCH_SIZE = 32;
 &
 
 $
@@ -45,6 +45,7 @@ WEIGHT_DECAY = 1e-6;
 &
 
 
+/*
 $
 LAYER = non_linearity;
 NAME = nl1;
@@ -52,6 +53,25 @@ OUTPUT_TYPE = image;
 METHOD = leaky_relu;
 &
 
+
+$
+LAYER = local_response_normalization;
+NAME = lrn1;
+OUTPUT_TYPE = image;
+ALPHA = 0.000125;
+BETA = 0.75;
+K = 2.0;
+N = 5;
+&
+
+$
+LAYER = pooling;
+NAME = pool1;
+METHOD = max;
+OUTPUT_TYPE = image;
+OVERLAP = false;
+STRIDE = 2;
+&
 
 $
 LAYER = fully_connected;
@@ -68,6 +88,7 @@ NAME = nl2;
 OUTPUT_TYPE = matrix;
 METHOD = leaky_relu;
 &
+*/
 
 $
 LAYER = softmax;
