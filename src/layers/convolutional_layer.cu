@@ -120,16 +120,15 @@ void convolutional_layer::update(int iter_num){
     iter = iter_num;
     if(iter == 30) convolutional_layer::setMomentum();
     vector3f allmu(mu, mu, mu);
-
     Mat tmp;
 
     for(int i = 0; i < kernels.size(); ++i){
-        ((*(second_derivative_w[i])) * momentum_second_derivative).moveTo(*(second_derivative_w[i]));
+        second_derivative_w[i] -> mul(momentum_second_derivative).moveTo(*(second_derivative_w[i]));
         kernels[i] -> wd2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
         (*(second_derivative_w[i])) += tmp;
         (*(second_derivative_w[i]) + mu).moveTo(tmp);
         divide(lrate_w, tmp).moveTo(*learning_rate_w);
-        ((*(velocity_w[i])) * momentum_derivative).moveTo(*(velocity_w[i]));
+        velocity_w[i] -> mul(momentum_derivative).moveTo(*(velocity_w[i]));
         kernels[i] -> wgrad -> mul(*learning_rate_w).moveTo(tmp);
         tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
         (*(velocity_w[i])) += tmp;
@@ -142,12 +141,12 @@ void convolutional_layer::update(int iter_num){
     }
 
     if(combine_feature_map > 0){
-        ((*second_derivative_combine_weight) * momentum_second_derivative).moveTo(*second_derivative_combine_weight);
+        second_derivative_combine_weight -> mul(momentum_second_derivative).moveTo(*second_derivative_combine_weight);
         combine_weight_d2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
         (*second_derivative_combine_weight) += tmp;
         (*second_derivative_combine_weight + mu).moveTo(tmp);
         divide(lrate_b, tmp).moveTo(*learning_rate_w);
-        ((*velocity_combine_weight) * momentum_derivative).moveTo(*velocity_combine_weight);
+        velocity_combine_weight -> mul(momentum_derivative).moveTo(*velocity_combine_weight);
         combine_weight_grad -> mul(*learning_rate_w).moveTo(tmp);
         tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
         (*velocity_combine_weight) += tmp;
@@ -246,6 +245,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
         cout<<"??? image after matrix??? I can't do that for now..."<<endl;
         return;
     }
+    cout<<"1111111"<<endl;
     releaseVector(delta_vector);
     releaseVector(d2_vector);
     delta_vector.clear();
@@ -262,6 +262,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
         	d2_vector[i][j] = new Mat();
         }
     }
+    cout<<"2222222"<<endl;
     Mat tmp, tmp2, tmp3, tmp4;
     std::vector<Mat> tmp_wgrad(kernels.size());
     std::vector<Mat> tmp_wd2(kernels.size());
@@ -273,6 +274,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
         tmpgradb[m].zeros();
         tmpbd2[m].zeros();
     }
+    cout<<"333333333"<<endl;
     Mat c_weight, c_weightgrad, c_weightd2;
     if(combine_feature_map > 0){
         exp(*combine_weight).moveTo(c_weight);
@@ -284,6 +286,8 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     }
     for(int i = 0; i < nsamples; i++){
         for(int j = 0; j < previous_layer -> output_vector[i].size(); j++){
+
+            cout<<"44444444         -----   "<<i<<", "<<j<<endl;
             std::vector<Mat> sensi(kernels.size());
             std::vector<Mat> sensid2(kernels.size());
             Mat tmp_delta;
@@ -291,6 +295,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
             for(int m = 0; m < kernels.size(); m++) {
             	sensi[m].setSize(output_vector[0][0] -> rows, output_vector[0][0] -> cols, 3);
             	sensid2[m].setSize(output_vector[0][0] -> rows, output_vector[0][0] -> cols, 3);
+                cout<<"555555         -----   "<<i<<", "<<j<<", "<<m<<endl;
                 if(combine_feature_map > 0){
                     for(int n = 0; n < combine_feature_map; n++){
                     	vector3f tmpvec3_1, tmpvec3_2;
@@ -307,6 +312,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                     sensid2[m] += *(deriv2[i][j * kernels.size() + m]);
                 }
 
+                cout<<"666666         -----   "<<i<<", "<<j<<", "<<m<<endl;
                 if(stride > 1){
                     int len = previous_layer -> output_vector[0][0] -> rows + padding * 2 - kernels[0] -> w -> rows + 1;
                     interpolation(sensi[m], len).moveTo(sensi[m]);
@@ -322,22 +328,30 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                     tmp_delta += tmp;
                     tmp_d2 += tmp2;
                 }
+                cout<<"777777         -----   "<<i<<", "<<j<<", "<<m<<endl;
                 Mat input;
                 if(padding > 0){
                 	dopadding(previous_layer -> output_vector[i][j], padding) -> moveTo(input);
                 }else{
                     previous_layer -> output_vector[i][j] -> copyTo(input);
                 }
+                cout<<"777  111    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 square(input).moveTo(tmp);
                 rot90(sensi[m], 2).moveTo(tmp2);
+                cout<<"777  222    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 rot90(sensid2[m], 2).moveTo(tmp3);
                 tmpgradb[m] += sum(tmp2);
+                cout<<"777  333    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 tmpbd2[m] += sum(tmp3);
+                cout<<"777  333.1    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 conv2(input, tmp2, CONV_VALID, 0, 1).moveTo(tmp2);
+                cout<<"777  444    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 conv2(tmp, tmp3, CONV_VALID, 0, 1).moveTo(tmp3);
                 tmp_wgrad[m] += tmp2;
+                cout<<"777  555    -----   "<<i<<", "<<j<<", "<<m<<endl;
                 tmp_wd2[m] += tmp3;
 
+                cout<<"88888888         -----   "<<i<<", "<<j<<", "<<m<<endl;
                 if(combine_feature_map > 0){
                     // combine feature map weight matrix (after softmax)
                     previous_layer -> output_vector[i][j] -> copyTo(input);
@@ -370,6 +384,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
             releaseVector(sensid2);
             sensid2.clear();
             std::vector<Mat>().swap(sensid2);
+            cout<<"9999999         -----   "<<i<<", "<<j<<endl;
         }
     }
     for(int i = 0; i < kernels.size(); i++){
@@ -383,6 +398,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	(*(kernels[i] -> bgrad)) = divide(tmpgradb[i], nsamples);
     	(*(kernels[i] -> bd2)) = divide(tmpbd2[i], nsamples);
     }
+    cout<<"@@@@@@@         -----   "<<endl;
     if(combine_feature_map > 0){
     	c_weightgrad.mul(c_weight).moveTo(tmp2);
     	reduce(tmp2, REDUCE_TO_SINGLE_ROW, REDUCE_SUM).moveTo(tmp2);

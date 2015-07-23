@@ -50,6 +50,11 @@ Mat::~Mat(){
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
 	if(NULL != devData)
 		MemoryMonitor::instance()->freeGpuMemory(devData);
+	rows = 0;
+	cols = 0;
+	channels = 0;
+	hostData = NULL;
+	devData = NULL;
 }
 
 void Mat::release(){

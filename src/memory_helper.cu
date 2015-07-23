@@ -30,7 +30,6 @@ cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
  	//if(size >= 1024 * 1024){
  	//	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / 1024 / 1024);
  	//}
-	//printf("******************************* using gpu memory %fMb\n", gpuMemory / 1024 / 1024);
 	return error;
 }
 
@@ -42,7 +41,6 @@ void MemoryMonitor::freeGpuMemory(void* ptr){
 		gpuMemory -= gpuPoint[ptr];
 		cudaFree(ptr);
 		gpuPoint.erase(ptr);
-		//printf("******************************* using gpu memory %fMb\n", gpuMemory / 1024 / 1024);
 	}
 }
 

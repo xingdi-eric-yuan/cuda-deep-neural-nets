@@ -43,13 +43,13 @@ void forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<
 
 void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
 
-    //cout<<"---------------- forward "<<endl;
+    cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
     Mat tmp;
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             batch_size = ((input_layer*)flow[i]) -> batch_size;
             ((input_layer*)flow[i]) -> forwardPass(batch_size, x, y);
@@ -108,6 +108,9 @@ void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netw
     if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost<<endl;
     tmp.release();
+
+	//printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+	//printf("------------------------------- using cpu memory %fMb\n", MemoryMonitor::instance() -> getCpuMemory() / 1024 / 1024);
 }
 
 void forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
@@ -142,7 +145,7 @@ void forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<
 }
 
 void backwardPass(std::vector<network_layer*> &flow){
-    //cout<<"---------------- backward"<<endl;
+    cout<<"---------------- backward"<<endl;
     // backward pass
     int batch_size = ((input_layer*)flow[0]) -> batch_size;
     Mat groundTruth(((softmax_layer*)flow[flow.size() - 1]) -> output_size, batch_size, 1);
@@ -150,7 +153,7 @@ void backwardPass(std::vector<network_layer*> &flow){
     	groundTruth.set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
     }
     for(int i = flow.size() - 1; i >= 0; --i){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> backwardPass();
         }elif(flow[i] -> layer_type == "convolutional"){
@@ -172,7 +175,7 @@ void backwardPass(std::vector<network_layer*> &flow){
         }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }*/
-        if(flow[i] -> layer_name == "input") break;;
+        if(flow[i] -> layer_name == "input") break;
         if(flow[i] -> output_format == "matrix"){
             //cout<<"delta dimension is "<<flow[i] -> delta_matrix.size()<<endl;
         }else{
@@ -183,8 +186,9 @@ void backwardPass(std::vector<network_layer*> &flow){
 }
 
 void updateNetwork(std::vector<network_layer*> &flow, int iter){
+    cout<<"---------------- update"<<endl;
     for(int i = 0; i < flow.size(); ++i){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "convolutional"){
             ((convolutional_layer*)flow[i]) -> update(iter);
         }elif(flow[i] -> layer_type == "fully_connected"){

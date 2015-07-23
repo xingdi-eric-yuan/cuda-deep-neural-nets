@@ -13,3 +13,4 @@ void releaseVector(std::vector<std::vector<cpuMat*> >&);
 void releaseVector(std::vector<std::vector<cpuMat> >&);
 void releaseVector(std::vector<cpuMat*>&);
 void releaseVector(std::vector<cpuMat>&);
+void showGpuProperty();

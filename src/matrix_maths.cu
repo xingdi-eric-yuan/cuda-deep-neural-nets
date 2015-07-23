@@ -748,8 +748,10 @@ Mat dopadding(const Mat &src, int pad){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	if(pad <= 0) return src;
+	if(pad <= 0) {Mat dst(src); return dst;}
+	cout<<"pad   "<<src.rows<<", "<<src.cols<<", "<<pad<<", "<<src.channels<<endl;
 	Mat dst(src.rows + pad * 2, src.cols + pad * 2, src.channels);
+	cout<<"pad   ------- "<<dst.rows<<", "<<dst.cols<<endl;
 	int tmp1 = src.rows * src.cols;
 	int tmp2 = dst.rows * dst.cols;
 	const size_t block_size = threadsPerBlock;
@@ -766,7 +768,7 @@ Mat depadding(const Mat &src, int pad){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	if(pad <= 0) return src;
+	if(pad <= 0) {Mat dst(src); return dst;}
 	Mat dst(src.rows - pad * 2, src.cols - pad * 2, src.channels);
 	int tmp1 = src.rows * src.cols;
 	int tmp2 = dst.rows * dst.cols;
@@ -871,11 +873,14 @@ Mat conv2(const Mat &m, const Mat &kernel){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	cout<<"conv inside ------- 111 "<<endl;
 	Mat res(m.rows, m.cols, m.channels);
+	cout<<"conv inside ------- 222 "<<endl;
     float *d_Data, *d_Kernel, *d_PaddedData, *d_PaddedKernel;
     fComplex *d_DataSpectrum0, *d_KernelSpectrum0;
     cufftHandle fftPlan;
     float *host_result_tmp, *host_result;
+	cout<<"conv inside ------- 333 "<<endl;
 
     const int kernelH = kernel.rows;
     const int kernelW = kernel.cols;
@@ -885,6 +890,7 @@ Mat conv2(const Mat &m, const Mat &kernel){
     const int dataW = m.cols;
     const int fftH = snapTransformSize(dataH + kernelH - 1);
     const int fftW = snapTransformSize(dataW + kernelW - 1);
+	cout<<"conv inside ------- 444 "<<endl;
     host_result = (float *)malloc(dataH * dataW * sizeof(float));
     host_result_tmp = (float *)malloc(fftH * fftW * sizeof(float));
     cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float));
@@ -893,9 +899,11 @@ Mat conv2(const Mat &m, const Mat &kernel){
     cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float));
     cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex));
     cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex));
+	cout<<"conv inside ------- 555 "<<endl;
     // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
     cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C);
     for(int i = 0; i < m.channels; ++i){
+    	cout<<"conv inside ------- 666     "<<i<<endl;
         cudaMemcpy(d_Data, m.devData + m.rows * m.cols * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(d_Kernel, kernel.devData + kernel.rows * kernel.cols * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemset(d_PaddedData,   0, fftH * fftW * sizeof(float));
@@ -904,6 +912,7 @@ Mat conv2(const Mat &m, const Mat &kernel){
         					dataH, dataW, kernelH, kernelW, kernelY, kernelX);
         padKernel(d_PaddedKernel, d_Kernel, fftH, fftW,
             kernelH, kernelW, kernelY, kernelX);
+    	cout<<"conv inside ------- 777     "<<i<<endl;
         //CUFFT_INVERSE works just as well...
         const int FFT_DIR = CUFFT_FORWARD;
         //Not including kernel transformation into time measurement,
@@ -912,10 +921,12 @@ Mat conv2(const Mat &m, const Mat &kernel){
         cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedKernel, (cufftComplex *)d_KernelSpectrum0, FFT_DIR);
         // std::cout<<"...running GPU FFT convolution: "<<std::endl;
         cudaDeviceSynchronize();
+    	cout<<"conv inside ------- 888     "<<i<<endl;
         cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedData, (cufftComplex *)d_DataSpectrum0, FFT_DIR);
         spProcess2D(d_DataSpectrum0, d_DataSpectrum0, d_KernelSpectrum0, fftH, fftW / 2, FFT_DIR);
         cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR);
         cudaDeviceSynchronize();
+    	cout<<"conv inside ------- 999     "<<i<<endl;
         // std::cout<<"...reading back GPU FFT results"<<std::endl;
         cudaMemcpy(host_result_tmp, d_PaddedData, fftH * fftW * sizeof(float), cudaMemcpyDeviceToHost);
         for(int y = 0; y < dataH; y++){
@@ -924,8 +935,10 @@ Mat conv2(const Mat &m, const Mat &kernel){
             }
         }
         memcpy(res.hostData + i * res.rows * res.cols, host_result, res.rows * res.cols * sizeof(float));
+    	cout<<"conv inside ------- @@@     "<<i<<endl;
     }
     res.hostToDevice();
+	cout<<"conv inside ------     "<<endl;
     cudaFree(d_KernelSpectrum0);
     cudaFree(d_DataSpectrum0);
     cudaFree(d_PaddedKernel);
@@ -942,22 +955,31 @@ Mat conv2(const Mat &m, const Mat &kernel, int convtype, int pad, int stride){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+	cout<<"conv2 ***********   111"<<endl;
 	Mat src, res;
-	dopadding(m, kernel.cols - 1).moveTo(src);
+	dopadding(m, kernel.cols / 2 + 1).moveTo(src);
+	cout<<"conv2 ***********   222"<<endl;
 	dopadding(src, pad).moveTo(src);
+	cout<<"conv2 ***********   333"<<endl;
 	conv2(src, kernel).moveTo(res);
+	cout<<"conv2 ***********   444"<<endl;
 	getRange(res, (res.cols - (m.cols + kernel.cols - 1)) / 2, (res.cols - (m.cols + kernel.cols - 1)) / 2 + m.cols + kernel.cols - 1 - 1,
 							(res.rows - (m.rows + kernel.rows - 1)) / 2, (res.rows - (m.rows + kernel.rows - 1)) / 2 + m.rows + kernel.rows - 1 - 1).moveTo(res);
+
+	cout<<"conv2 ***********   555"<<endl;
 	if(CONV_SAME == convtype){
 		getRange(res, kernel.cols / 2, res.cols - 1 - kernel.cols / 2, kernel.rows / 2, res.rows - 1 - kernel.rows / 2).moveTo(res);
 	}
+	cout<<"conv2 ***********   666"<<endl;
 	if(CONV_VALID == convtype){
         int tmpx = m.cols + pad * 2 - kernel.cols + 1;
         int tmpy = m.rows + pad * 2 - kernel.rows + 1;
         getRange(res, (res.cols - tmpx) / 2, res.cols - 1 - (res.cols - tmpx) / 2,
                 		 	 	    (res.rows - tmpy) / 2, res.rows - 1 - (res.rows - tmpy) / 2).moveTo(res);
 	}
+	cout<<"conv2 ***********   777"<<endl;
 	downSample(res, stride, stride).moveTo(res);
+	cout<<"conv2 ***********   888"<<endl;
 	src.release();
 	return res;
 }

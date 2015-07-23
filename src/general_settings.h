@@ -41,7 +41,7 @@ class vector3f;
 	return EXIT_FAILURE;}} while(0)
 
 #define elif else if
-#define threadsPerBlock 512
+#define threadsPerBlock 64
 //#define Point2i vector2i;
 //#define Size2i vector2i;
 //typedef vector2i Size2i;

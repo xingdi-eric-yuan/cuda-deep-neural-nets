@@ -56,7 +56,7 @@ void softmax_layer::init_weight(network_layer* previous_layer){
     float epsilon = 0.12;
     w -> setSize(output_size, inputsize, 1);
     w -> randu();
-    *w = w -> mul(epsilon);
+    *w *= epsilon;
     b -> setSize(output_size, 1, 1);
     wgrad -> setSize(output_size, inputsize, 1);
     wd2 -> setSize(output_size, inputsize, 1);
@@ -87,28 +87,39 @@ void softmax_layer::update(int iter_num){
     iter = iter_num;
     if(iter == 30) softmax_layer::setMomentum();
     Mat tmp;
-
-    ((*second_derivative_w) * momentum_second_derivative).moveTo(*second_derivative_w);
+    cout<<"fcud    ----     1"<<endl;
+    second_derivative_w -> mul(momentum_second_derivative).moveTo(*second_derivative_w);
+    cout<<"fcud    ----     1.1"<<endl;
     wd2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
+    cout<<"fcud    ----     2"<<endl;
     (*second_derivative_w) += tmp;
     (*second_derivative_w + mu).moveTo(tmp);
+    cout<<"fcud    ----     3"<<endl;
     divide(lrate_w, tmp).moveTo(*learning_rate);
-    ((*velocity_w) * momentum_derivative).moveTo(*velocity_w);
+    velocity_w -> mul(momentum_derivative).moveTo(*velocity_w);
+    cout<<"fcud    ----     4"<<endl;
     wgrad -> mul(*learning_rate).moveTo(tmp);
     tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
+    cout<<"fcud    ----     5"<<endl;
     (*velocity_w) += tmp;
     (*w) -= (*velocity_w);
 
-    ((*second_derivative_b) * momentum_second_derivative).moveTo(*second_derivative_b);
+    cout<<"fcud    ----     6"<<endl;
+    second_derivative_b -> mul(momentum_second_derivative).moveTo(*second_derivative_b);
     bd2 -> mul(1.0 - momentum_second_derivative).moveTo(tmp);
+    cout<<"fcud    ----     7"<<endl;
     (*second_derivative_b) += tmp;
     (*second_derivative_b + mu).moveTo(tmp);
+    cout<<"fcud    ----     8"<<endl;
     divide(lrate_b, tmp).moveTo(*learning_rate);
-    ((*velocity_b) * momentum_derivative).moveTo(*velocity_b);
+    velocity_b -> mul(momentum_derivative).moveTo(*velocity_b);
+    cout<<"fcud    ----     9"<<endl;
     bgrad -> mul(*learning_rate).moveTo(tmp);
     tmp.mul(1.0 - momentum_derivative).moveTo(tmp);
+    cout<<"fcud    ----     #"<<endl;
     (*velocity_b) += tmp;
     (*b) -= (*velocity_b);
+    cout<<"fcud    ----     @"<<endl;
 
     tmp.release();
 }
