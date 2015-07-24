@@ -6,6 +6,9 @@ class cpuMat;
 class vector3f;
 class vector2i;
 
+
+
+
 // basic maths
 Mat exp(const Mat&);
 Mat log(const Mat&);
@@ -78,9 +81,11 @@ vector3f stddev(const cpuMat&, const vector3f&);
 cpuMat divide(const cpuMat&, const vector3f&);
 cpuMat divide(const cpuMat&, float);
 
-
+// */
 
 /////////// pointer version
+void safeGetPt(Mat*&, Mat*);
+
 
 // basic maths
 Mat* exp(const Mat*);

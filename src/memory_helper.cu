@@ -24,13 +24,34 @@ void MemoryMonitor::freeCpuMemory(void* ptr)
 }
 
 cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
+	//gpuMemory += size;
+	//cudaError_t error = cudaMalloc(devPtr, size);
+	//gpuPoint[*devPtr] = (float)size;
+
+	const size_t Mb = 1<<20; // Assuming a 1Mb page size here
+	size_t available, total;
+	cudaMemGetInfo(&available, &total);
+	size_t nwords = total / sizeof(float);
+	size_t words_per_Mb = Mb / sizeof(float);
+	cudaError_t error;
+	while(1){
+		error = cudaMalloc(devPtr,  size);
+		if(cudaSuccess != error){
+		 	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / 1024 / 1024);
+		}
+		if(cudaErrorMemoryAllocation != error) break;
+	    nwords -= words_per_Mb;
+	    if( nwords  < words_per_Mb){
+	        // signal no free memory
+	    	return error;
+	    }
+	}
 	gpuMemory += size;
-	cudaError_t error = cudaMalloc(devPtr, size);
 	gpuPoint[*devPtr] = (float)size;
+	return error;
  	//if(size >= 1024 * 1024){
  	//	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / 1024 / 1024);
  	//}
-	return error;
 }
 
 void MemoryMonitor::freeGpuMemory(void* ptr){

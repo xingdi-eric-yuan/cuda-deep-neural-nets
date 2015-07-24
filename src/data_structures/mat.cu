@@ -42,7 +42,7 @@ Mat::Mat(int height, int width, int nchannels){
 	devData = NULL;
 	mallocHost();
 	mallocDevice();
-	zeros();
+	//zeros();
 }
 
 Mat::~Mat(){
@@ -788,12 +788,12 @@ void Mat::mallocDevice(){
 		// malloc device data
 		cudaStat = MemoryMonitor::instance()->gpuMalloc((void**)&devData, cols * rows * channels * sizeof(float));
 		if(cudaStat != cudaSuccess) {
-			std::cout<<"device memory allocation failed..."<<std::endl;
+			std::cout<<"device memory allocation failed... because of error number : "<<(int)cudaStat<<std::endl;
 			exit(0);
 		}
 		cudaStat = cudaMemset(devData, 0, sizeof(float) * cols * rows * channels);
 		if(cudaStat != cudaSuccess) {
-			std::cout<<"device memory cudaMemset failed..."<<std::endl;
+			std::cout<<"device memory cudaMemset failed... because of error number : "<<(int)cudaStat<<std::endl;
 			exit(0);
 		}
 	}

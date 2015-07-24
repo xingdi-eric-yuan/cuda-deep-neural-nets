@@ -88,6 +88,15 @@ public:
 	float val2;
 };
 
+class MatPtr{
+public:
+	MatPtr();
+	~MatPtr();
+	MatPtr& operator=(const MatPtr&);
+	MatPtr& operator<=(const MatPtr&);
+	Mat* mptr;
+};
+
 // matrix
 class Mat{
 public:

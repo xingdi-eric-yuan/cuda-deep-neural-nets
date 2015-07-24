@@ -48,8 +48,58 @@ void run(){
 
 int main(void){
 
-	run();
+	//run();
 
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+	MatPtr a;
+	a.mptr = new Mat();
+
+	a.mptr -> setSize(3, 2, 1);
+	a.mptr -> randu();
+	a.mptr -> printHost("see");
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+
+	MatPtr b;
+	b = a;
+	b.mptr -> printHost("see b");
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+
+
+	MatPtr c;
+	c.mptr = new Mat();
+	c.mptr -> setSize(3, 3, 3);
+	c.mptr -> randu();
+	c.mptr -> printHost("see c111");
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+
+	c <= a;
+	c.mptr -> printHost("see c222");
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+
+	a.mptr -> release();
+	free(a.mptr);
+
+//*/
+
+/*
+	Mat *a = new Mat();
+	a -> setSize(3, 2, 1);
+	a -> randu();
+	a -> printHost("see");
+
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+	Mat *b = new Mat();
+	b -> setSize(2, 2, 2);
+	b -> printHost("b");
+
+
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+	safeGetPt(b, a);
+
+	a -> printHost("a");
+	b -> printHost("b");
+
+	printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
 
 //*/
 /*

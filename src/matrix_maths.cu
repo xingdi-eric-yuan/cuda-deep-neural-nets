@@ -1,5 +1,14 @@
 #include "matrix_maths.h"
 
+void safeGetPt(Mat* &dst, Mat* src){
+	if(dst){
+		dst -> release();
+	}
+	dst = src;
+}
+
+
+
 Mat exp(const Mat &src){
 	if(NULL == src.hostData || NULL == src.devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -947,6 +956,7 @@ Mat conv2(const Mat &m, const Mat &kernel){
     cudaFree(d_Data);
     free(host_result);
     free(host_result_tmp);
+	cout<<"conv inside ------   maybe??  "<<endl;
     return res;
 }
 
@@ -960,6 +970,7 @@ Mat conv2(const Mat &m, const Mat &kernel, int convtype, int pad, int stride){
 	dopadding(m, kernel.cols / 2 + 1).moveTo(src);
 	cout<<"conv2 ***********   222"<<endl;
 	dopadding(src, pad).moveTo(src);
+	//src.printHost("src");
 	cout<<"conv2 ***********   333"<<endl;
 	conv2(src, kernel).moveTo(res);
 	cout<<"conv2 ***********   444"<<endl;
