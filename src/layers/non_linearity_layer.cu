@@ -16,7 +16,7 @@ void non_linearity_layer::init_config(string namestr, int _method, string output
 }
 
 void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_layer){
-
+/*
     if(output_format == "matrix"){
         Mat *input = new Mat();
         if(previous_layer -> output_format == "matrix"){
@@ -50,6 +50,7 @@ void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_laye
         input.clear();
         std::vector<std::vector<Mat*> >().swap(input);
     }
+    */
 }
 
 void non_linearity_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -57,7 +58,7 @@ void non_linearity_layer::forwardPassTest(int nsamples, network_layer* previous_
 }
 
 void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-
+/*
     if(output_format == "matrix"){
         Mat *derivative = new Mat();
         Mat *deriv2 = new Mat();
@@ -133,6 +134,7 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
         input.clear();
         std::vector<std::vector<Mat*> >().swap(input);
     }
+    */
 }
 /*
 void non_linearity_layer::update(){}

@@ -56,9 +56,9 @@ public:
     input_layer();
     ~input_layer();
     void init_config(string, int, string);
-    void forwardPass(int, const std::vector<cpuMat>&, const cpuMat&);
-    void forwardPassTest(int, const std::vector<cpuMat>&, const cpuMat&);
-    void getSample(const std::vector<cpuMat>&, std::vector<std::vector<Mat*> >&, const cpuMat&, Mat*);
+    void forwardPass(int, const std::vector<cpuMat*>&, const cpuMat*);
+    void forwardPassTest(int, const std::vector<cpuMat*>&, const cpuMat*);
+    void getSample(const std::vector<cpuMat*>&, std::vector<std::vector<Mat*> >&, const cpuMat*, Mat*);
     void backwardPass();
     Mat *label;
     int batch_size;
@@ -160,7 +160,7 @@ public:
     void forwardPass(int, network_layer*);
     void forwardPassTest(int, network_layer*);
     void init_weight(network_layer*);
-    void backwardPass(int, network_layer*, Mat&);
+    void backwardPass(int, network_layer*, Mat*);
 
     Mat* w;
     Mat* b;

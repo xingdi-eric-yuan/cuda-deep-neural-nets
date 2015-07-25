@@ -22,7 +22,7 @@ void local_response_normalization_layer::init_config(string namestr, string outp
 }
 
 void local_response_normalization_layer::forwardPass(int nsamples, network_layer* previous_layer){
-
+/*
     if(output_format == "matrix"){
         cout<<"Can't use LRN for matrix, give me an image..."<<endl;
         return;
@@ -49,6 +49,7 @@ void local_response_normalization_layer::forwardPass(int nsamples, network_layer
     }
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
+    */
 }
 
 void local_response_normalization_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -56,7 +57,7 @@ void local_response_normalization_layer::forwardPassTest(int nsamples, network_l
 }
 
 void local_response_normalization_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-
+/*
     if(output_format == "matrix"){
         cout<<"Can't use LRN for matrix, give me an image..."<<endl;
         return;
@@ -107,10 +108,11 @@ void local_response_normalization_layer::backwardPass(int nsamples, network_laye
     std::vector<std::vector<Mat*> >().swap(deriv2);
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
+    */
 }
 
 Mat local_response_normalization_layer::local_response_normalization(std::vector<Mat*> &vec, int which){
-
+/*
 	Mat res;
 	vec[which] -> copyTo(res);
 	Mat sum(res.rows, res.cols, 3);
@@ -131,10 +133,11 @@ Mat local_response_normalization_layer::local_response_normalization(std::vector
 	sum += k;
 	res = divide(res, pow(sum, beta));
 	return res;
+	*/
 }
 
 Mat local_response_normalization_layer::dlocal_response_normalization(std::vector<Mat*> &vec_input, int which){
-
+/*
 	Mat input;
 	vec_input[which] -> copyTo(input);
 	Mat sum(input.rows, input.cols, 3);
@@ -164,6 +167,7 @@ Mat local_response_normalization_layer::dlocal_response_normalization(std::vecto
 	Mat res = t2 - tmp2;
 	res = divide(res, t3);
     return res;
+    */
 }
 
 

@@ -34,7 +34,7 @@ void pooling_layer::init_config(string namestr, int _method, string outputformat
 }
 
 void pooling_layer::forwardPass(int nsamples, network_layer* previous_layer){
-
+/*
 	if(previous_layer -> output_format == "matrix"){
         cout<<"??? Can not do pooling with matrix... give me an image..."<<endl;
         return;
@@ -72,6 +72,7 @@ void pooling_layer::forwardPass(int nsamples, network_layer* previous_layer){
 	}
 	input.clear();
 	std::vector<std::vector<Mat*> >().swap(input);
+	*/
 }
 
 void pooling_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -79,7 +80,7 @@ void pooling_layer::forwardPassTest(int nsamples, network_layer* previous_layer)
 }
 
 void pooling_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-
+/*
     if(previous_layer -> output_format != "image"){
         cout<<"??? image after matrix??? I can't do that for now..."<<endl;
         return;
@@ -132,6 +133,7 @@ void pooling_layer::backwardPass(int nsamples, network_layer* previous_layer, ne
     std::vector<std::vector<Mat*> >().swap(deriv2);
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
+    */
 }
 
 /*

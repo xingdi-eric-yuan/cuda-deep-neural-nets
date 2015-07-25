@@ -2,6 +2,7 @@
 
 // kernel
 convolutional_kernel::convolutional_kernel(){
+    /*
 	weight_decay = 0.0;
 	kernel_size = 0;
     w = new Mat();
@@ -10,14 +11,18 @@ convolutional_kernel::convolutional_kernel(){
     bgrad = new vector3f();
     wd2 = new Mat();
     bd2 = new vector3f();
+    */
 }
 convolutional_kernel::~convolutional_kernel(){
+    /*
 	w -> release();
 	wgrad -> release();
     wd2 -> release();
+    */
 }
 
 void convolutional_kernel::init_config(int width, float weightDecay){
+    /*
     kernel_size = width;
     weight_decay = weightDecay;
     w -> setSize(kernel_size, kernel_size, 3);
@@ -29,10 +34,12 @@ void convolutional_kernel::init_config(int width, float weightDecay){
     bd2 -> setAll(0.0);
     float epsilon = 0.12;
     (*w) *= epsilon;
+    */
 }
 
 // layer
 convolutional_layer::convolutional_layer(){
+    /*
 	stride = 1;
 	padding = 0;
 	combine_feature_map = 0;
@@ -48,8 +55,10 @@ convolutional_layer::convolutional_layer(){
     second_derivative_combine_weight = new Mat();
     learning_rate_w = new Mat();
     learning_rate_b = new vector3f();
+    */
 }
 convolutional_layer::~convolutional_layer(){
+    /*
     kernels.clear();
     vector<convolutional_kernel*>().swap(kernels);
     combine_weight -> release();
@@ -58,9 +67,11 @@ convolutional_layer::~convolutional_layer(){
     velocity_combine_weight -> release();
     second_derivative_combine_weight -> release();
     learning_rate_w -> release();
+    */
 }
 
 void convolutional_layer::init_config(string namestr, int kernel_amount, int kernel_size, int output_amount, int _padding, int _stride, float weight_decay, string outputformat){
+    /*
     layer_type = "convolutional";
     layer_name = namestr;
     output_format = outputformat;
@@ -73,9 +84,11 @@ void convolutional_layer::init_config(string namestr, int kernel_amount, int ker
         tmp_kernel -> init_config(kernel_size, weight_decay);
         kernels.push_back(tmp_kernel);
     }
+    */
 }
 
 void convolutional_layer::init_weight(network_layer* previous_layer){
+    /*
     if(combine_feature_map > 0){
     	combine_weight -> setSize(kernels.size(), combine_feature_map, 1);
     	combine_weight -> randu();
@@ -104,6 +117,7 @@ void convolutional_layer::init_weight(network_layer* previous_layer){
     iter = 0;
     mu = 1e-2;
     convolutional_layer::setMomentum();
+    */
 }
 
 void convolutional_layer::setMomentum(){
@@ -117,6 +131,7 @@ void convolutional_layer::setMomentum(){
 }
 
 void convolutional_layer::update(int iter_num){
+    /*
     iter = iter_num;
     if(iter == 30) convolutional_layer::setMomentum();
     vector3f allmu(mu, mu, mu);
@@ -153,10 +168,11 @@ void convolutional_layer::update(int iter_num){
         (*combine_weight) -= (*velocity_combine_weight);
     }
     tmp.release();
+    */
 }
 
 void convolutional_layer::forwardPass(int nsamples, network_layer* previous_layer){
-
+/*
     releaseVector(output_vector);
     output_vector.clear();
     std::vector<std::vector<Mat*> > input;
@@ -224,6 +240,7 @@ void convolutional_layer::forwardPass(int nsamples, network_layer* previous_laye
     releaseVector(input);
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
+    */
 }
 
 void convolutional_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -231,7 +248,7 @@ void convolutional_layer::forwardPassTest(int nsamples, network_layer* previous_
 }
 
 void convolutional_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-
+/*
     std::vector<std::vector<Mat*> > derivative;
     std::vector<std::vector<Mat*> > deriv2;
     if(next_layer -> output_format == "matrix"){
@@ -437,6 +454,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     std::vector<vector3f>().swap(tmpgradb);
     tmpbd2.clear();
     std::vector<vector3f>().swap(tmpbd2);
+    */
 }
 
 

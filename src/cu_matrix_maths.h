@@ -10,6 +10,7 @@ __global__ void cu_minus(const float*, const float*, float*, const int);
 __global__ void cu_minus(float*, float, const int);
 __global__ void cu_minus(const float*, float*, const float, const int);
 __global__ void cu_square(const float*, float*, const int);
+__global__ void cu_sqrt(const float*, float*, const int);
 __global__ void cu_elementWiseMultiply(float*, const float*, const int);
 __global__ void cu_elementWiseMultiply(const float*, const float*, float*, const int);
 __global__ void cu_setAll(float*, const float, const int);

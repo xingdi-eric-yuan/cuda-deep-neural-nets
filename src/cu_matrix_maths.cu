@@ -81,6 +81,15 @@ __global__ void cu_square(const float *A, float *B, const int n){
 	}
 }
 
+__global__ void cu_sqrt(const float *A, float *B, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		B[tid] = sqrtf(A[tid]);
+		tid += stride;
+	}
+}
+
 __global__ void cu_elementWiseMultiply(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;

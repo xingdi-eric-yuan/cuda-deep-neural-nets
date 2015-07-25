@@ -91,9 +91,13 @@ public:
 class MatPtr{
 public:
 	MatPtr();
+	MatPtr(int, int, int);
 	~MatPtr();
 	MatPtr& operator=(const MatPtr&);
 	MatPtr& operator<=(const MatPtr&);
+	
+
+	
 	Mat* mptr;
 };
 

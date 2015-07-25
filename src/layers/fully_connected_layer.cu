@@ -3,6 +3,7 @@
 using namespace std;
 
 fully_connected_layer::fully_connected_layer(){
+    /*
     size = 0;
     weight_decay = 0.0;
     momentum_derivative = 0.0;
@@ -20,8 +21,10 @@ fully_connected_layer::fully_connected_layer(){
     second_derivative_w = new Mat();
     second_derivative_b = new Mat();
     learning_rate = new Mat();
+    */
 }
 fully_connected_layer::~fully_connected_layer(){
+    /*
     w -> release();
     b -> release();
     wgrad -> release();
@@ -33,6 +36,7 @@ fully_connected_layer::~fully_connected_layer(){
     second_derivative_w -> release();
     second_derivative_b -> release();
     learning_rate -> release();
+    */
 }
 
 void fully_connected_layer::init_config(string namestr, int hiddensize, float weightDecay, string outputformat){
@@ -44,7 +48,7 @@ void fully_connected_layer::init_config(string namestr, int hiddensize, float we
 }
 
 void fully_connected_layer::init_weight(network_layer* previous_layer){
-
+/*
     int inputsize = 0;
     if(previous_layer -> output_format == "image"){
         inputsize = previous_layer -> output_vector[0].size() * previous_layer -> output_vector[0][0] -> rows * previous_layer -> output_vector[0][0] -> cols * 3;
@@ -69,6 +73,7 @@ void fully_connected_layer::init_weight(network_layer* previous_layer){
     iter = 0;
     mu = 1e-2;
     fully_connected_layer::setMomentum();
+    */
 }
 
 void fully_connected_layer::setMomentum(){
@@ -82,6 +87,7 @@ void fully_connected_layer::setMomentum(){
 }
 
 void fully_connected_layer::update(int iter_num){
+    /*
     iter = iter_num;
     if(iter == 30) fully_connected_layer::setMomentum();
     Mat tmp;
@@ -120,9 +126,11 @@ void fully_connected_layer::update(int iter_num){
     cout<<"fcud    ----     @"<<endl;
 
     tmp.release();
+    */
 }
 
 void fully_connected_layer::forwardPass(int nsamples, network_layer* previous_layer){
+    /*
     Mat *input = new Mat();
     if(previous_layer -> output_format == "image"){
         convert(previous_layer -> output_vector, input);
@@ -135,6 +143,7 @@ void fully_connected_layer::forwardPass(int nsamples, network_layer* previous_la
     (*output_matrix) += tmp;
     input -> release();
     tmp.release();
+    */
 }
 
 void fully_connected_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -142,6 +151,7 @@ void fully_connected_layer::forwardPassTest(int nsamples, network_layer* previou
 }
 
 void fully_connected_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
+    /*
     Mat *input = new Mat();
     if(previous_layer -> output_format == "image"){
         convert(previous_layer -> output_vector, input);
@@ -184,6 +194,7 @@ void fully_connected_layer::backwardPass(int nsamples, network_layer* previous_l
     derivative.release();
     deriv2.release();
     tmp.release();
+    */
 }
 
 //*/

@@ -2,8 +2,8 @@
 
 using namespace std;
 
-void forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
-    // cout<<"---------------- forward init"<<endl;
+void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
+     cout<<"---------------- forward init"<<endl;
     // forward pass
     int batch_size = 0;
     for(int i = 0; i < flow.size(); i++){
@@ -41,12 +41,13 @@ void forwardPassInit(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<
     }
 }
 
-void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
     cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
-    Mat tmp;
+    Mat *tmp = NULL;
+	vector3f *tmpvec3 = new vector3f();
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
         cout<<flow[i] -> layer_name<<endl;
@@ -57,32 +58,31 @@ void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netw
             ((convolutional_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
             for(int k = 0; k < ((convolutional_layer*)flow[i]) -> kernels.size(); ++k){
-            	square(((convolutional_layer*)flow[i]) -> kernels[k] -> w) -> moveTo(tmp);
-            	vector3f tmpvec3 = sum(tmp);
-            	//vector3f tmpvec3 = sum(*(square(((convolutional_layer*)flow[i]) -> kernels[k] -> w)));
+            	safeGetPt(tmp, square(((convolutional_layer*)flow[i]) -> kernels[k] -> w));
+            	tmpvec3 = sum(tmp);
                 J4 += sum(tmpvec3) * ((convolutional_layer*)flow[i]) -> kernels[k] -> weight_decay / 2.0;
             }
         }elif(flow[i] -> layer_type == "fully_connected"){
             ((fully_connected_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
-            square(((fully_connected_layer*)flow[i]) -> w) -> moveTo(tmp);
-            vector3f tmpvec3 = sum(tmp);
+            safeGetPt(tmp, square(((fully_connected_layer*)flow[i]) -> w));
+        	tmpvec3 = sum(tmp);
             J3 += sum(tmpvec3) * ((fully_connected_layer*)flow[i]) -> weight_decay / 2.0;
         }elif(flow[i] -> layer_type == "softmax"){
-            ((softmax_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
+        	((softmax_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
-            Mat groundTruth(((softmax_layer*)flow[i]) -> output_size, batch_size, 1);
+            Mat *groundTruth = new Mat(((softmax_layer*)flow[i]) -> output_size, batch_size, 1);
             for(int i = 0; i < batch_size; i++){
-            	groundTruth.set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
+            	groundTruth -> set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
             }
-            log(flow[i] -> output_matrix) -> moveTo(tmp);
-            tmp.mul(groundTruth).moveTo(tmp);
-            vector3f tmpvec3 = sum(tmp);
+            safeGetPt(tmp, log(flow[i] -> output_matrix));
+            safeGetPt(tmp, multiply_elem(tmp, groundTruth));
+        	tmpvec3 = sum(tmp);
             J1 += -sum(tmpvec3) / batch_size;
-            square(((softmax_layer*)flow[i]) -> w) -> moveTo(tmp);
+            safeGetPt(tmp, square(((softmax_layer*)flow[i]) -> w));
             tmpvec3 = sum(tmp);
             J2 += sum(tmpvec3) * ((softmax_layer*)flow[i]) -> weight_decay / 2.0;
-            groundTruth.release();
+            groundTruth -> release();
         }elif(flow[i] -> layer_type == "combine"){
             ((combine_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "branch"){
@@ -107,13 +107,13 @@ void forwardPass(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netw
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost<<endl;
-    tmp.release();
+    tmp -> release();
 
 	//printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
 	//printf("------------------------------- using cpu memory %fMb\n", MemoryMonitor::instance() -> getCpuMemory() / 1024 / 1024);
 }
 
-void forwardPassTest(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
     // forward pass
     int batch_size = x.size();
@@ -148,9 +148,9 @@ void backwardPass(std::vector<network_layer*> &flow){
     cout<<"---------------- backward"<<endl;
     // backward pass
     int batch_size = ((input_layer*)flow[0]) -> batch_size;
-    Mat groundTruth(((softmax_layer*)flow[flow.size() - 1]) -> output_size, batch_size, 1);
+    Mat *groundTruth = new Mat(((softmax_layer*)flow[flow.size() - 1]) -> output_size, batch_size, 1);
     for(int i = 0; i < batch_size; i++){
-    	groundTruth.set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
+    	groundTruth -> set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
     }
     for(int i = flow.size() - 1; i >= 0; --i){
         cout<<flow[i] -> layer_name<<endl;
@@ -182,7 +182,7 @@ void backwardPass(std::vector<network_layer*> &flow){
             //cout<<"delta dimension is "<<flow[i] -> delta_vector.size()<<" * "<<flow[i] -> delta_vector[0].size()<<" * "<<flow[i] -> delta_vector[0][0].size()<<endl;
         }
     }
-    groundTruth.release();
+    groundTruth -> release();
 }
 
 void updateNetwork(std::vector<network_layer*> &flow, int iter){
@@ -248,7 +248,7 @@ void printNetwork(std::vector<network_layer*> &flow){
     }
 }
 
-void testNetwork(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<network_layer*> &flow){
+void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 /*
     int batch_size = 100;
 
@@ -288,9 +288,10 @@ void testNetwork(const std::vector<cpuMat> &x, const cpuMat &y, std::vector<netw
     */
 }
 
-void trainNetwork(const std::vector<cpuMat> &x, const cpuMat &y, const std::vector<cpuMat> &tx, const cpuMat &ty, std::vector<network_layer*> &flow){
+void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vector<cpuMat*> &tx, const cpuMat *ty, std::vector<network_layer*> &flow){
 
     forwardPassInit(x, y, flow);
+    cout<<"????"<<endl;
     printNetwork(flow);
 
 
