@@ -105,7 +105,7 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
         }
     }
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
-    if(!is_gradient_checking)
+    //if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost<<endl;
     tmp -> release();
 

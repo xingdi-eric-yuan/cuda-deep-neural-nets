@@ -161,7 +161,7 @@ Mat* subtract(const Mat* a, const Mat* b){
 	return tmp;
 }
 
-vector3f* multiply(const vector3f* src, float a){
+vector3f* multiply_elem(const vector3f* src, float a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -173,7 +173,7 @@ vector3f* multiply(const vector3f* src, float a){
 	return res;
 }
 
-vector3f* multiply(const vector3f* src1, const vector3f* src2){
+vector3f* multiply_elem(const vector3f* src1, const vector3f* src2){
 	if(NULL == src1 || NULL == src2){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -185,7 +185,7 @@ vector3f* multiply(const vector3f* src1, const vector3f* src2){
 	return res;
 }
 
-Mat* multiply(const Mat* src, float a){
+Mat* multiply_elem(const Mat* src, float a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -202,7 +202,7 @@ Mat* multiply(const Mat* src, float a){
 	return tmp;
 }
 
-Mat* multiply(const Mat* src, const vector3f *a){
+Mat* multiply_elem(const Mat* src, const vector3f *a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -959,7 +959,7 @@ Mat* sigmoid(const Mat *src){
 		exit(0);
 	}
 	Mat *tmp = new Mat();
-	safeGetPt(tmp, multiply(src, -1.0));
+	safeGetPt(tmp, multiply_elem(src, -1.0));
 	safeGetPt(tmp, exp(tmp));
 	safeGetPt(tmp, add(tmp, 1.0));
 	safeGetPt(tmp, divide(1.0, tmp));
@@ -1482,7 +1482,7 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
         	tmpc = div_no_rem(loc, window_size -> get(1));
         	tmpr = add(tmpr, i);
         	tmpc = add(tmpc, j);
-        	loc = multiply(tmpc, src -> rows);
+        	loc = multiply_elem(tmpc, src -> rows);
         	loc = add(loc, tmpr);	
             tmplocat.push_back(loc);
             tmpres -> set(i, j, *val);
@@ -1572,7 +1572,7 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
         	vector3f *tmpc = new vector3f();
         	tmpr = add(tmpr, i * stride);
         	tmpc = add(tmpc, j * stride);
-        	loc = multiply(tmpc, src -> rows);
+        	loc = multiply_elem(tmpc, src -> rows);
         	loc = add(loc, tmpr);
             locat.push_back(loc);
             res -> set(i, j, *val);

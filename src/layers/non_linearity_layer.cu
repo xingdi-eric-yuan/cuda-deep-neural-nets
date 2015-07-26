@@ -16,7 +16,7 @@ void non_linearity_layer::init_config(string namestr, int _method, string output
 }
 
 void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_layer){
-/*
+
     if(output_format == "matrix"){
         Mat *input = new Mat();
         if(previous_layer -> output_format == "matrix"){
@@ -24,7 +24,7 @@ void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_laye
         }else{
             convert(previous_layer -> output_vector, input);
         }
-        nonLinearity(input, method) -> moveTo(*output_matrix);
+        safeGetPt(output_matrix, nonLinearity(input, method));
         input -> release();
     }else{ // output_format == "image"
         std::vector<std::vector<Mat*> > input;
@@ -43,14 +43,13 @@ void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_laye
         for(int i = 0; i < input.size(); i++){
             for(int j = 0; j < input[i].size(); j++){
             	output_vector[i][j] = new Mat();
-            	nonLinearity(input[i][j], method) -> moveTo(*(output_vector[i][j]));
+            	safeGetPt(output_vector[i][j], nonLinearity(input[i][j], method));
             }
         }
         releaseVector(input);
         input.clear();
         std::vector<std::vector<Mat*> >().swap(input);
     }
-    */
 }
 
 void non_linearity_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -58,7 +57,7 @@ void non_linearity_layer::forwardPassTest(int nsamples, network_layer* previous_
 }
 
 void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-/*
+
     if(output_format == "matrix"){
         Mat *derivative = new Mat();
         Mat *deriv2 = new Mat();
@@ -75,13 +74,14 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
         }else{
             convert(previous_layer -> output_vector, input);
         }
-        Mat tmp, tmp2;
-        dnonLinearity(input, method) -> moveTo(tmp);
-        tmp.mul(*derivative).moveTo(*delta_matrix);
-        square(tmp).moveTo(tmp);
-        tmp.mul(*deriv2).moveTo(*d2_matrix);
-        tmp.release();
-        tmp2.release();
+        Mat *tmp = new Mat();
+        Mat *tmp2 = new Mat();
+        safeGetPt(tmp, dnonLinearity(input, method));
+        safeGetPt(delta_matrix, multiply_elem(tmp, derivative));
+        safeGetPt(tmp, square(tmp));
+        safeGetPt(d2_matrix, multiply_elem(tmp, deriv2));
+        tmp -> release();
+        tmp2 -> release();
         input -> release();
         derivative -> release();
         deriv2 -> release();
@@ -112,18 +112,18 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
             delta_vector[i].resize(derivative[i].size());
             d2_vector[i].resize(derivative[i].size());
         }
-    	Mat tmp;
+    	Mat *tmp = new Mat();
         for(int i = 0; i < derivative.size(); i++){
             for(int j = 0; j < derivative[i].size(); j++){
             	delta_vector[i][j] = new Mat();
             	d2_vector[i][j] = new Mat();
-            	dnonLinearity(input[i][j], method) -> moveTo(tmp);
-            	tmp.mul(*(derivative[i][j])).moveTo(*(delta_vector[i][j]));
-            	square(tmp).moveTo(tmp);
-            	tmp.mul(*(deriv2[i][j])).moveTo(*(d2_vector[i][j]));
+            	safeGetPt(tmp, dnonLinearity(input[i][j], method));
+            	safeGetPt(delta_vector[i][j], multiply_elem(tmp, derivative[i][j]));
+                safeGetPt(tmp, square(tmp));
+                safeGetPt(d2_vector[i][j], multiply_elem(tmp, deriv2[i][j]));
             }
         }
-        tmp.release();
+        tmp -> release();
         releaseVector(derivative);
         derivative.clear();
         std::vector<std::vector<Mat*> >().swap(derivative);
@@ -134,7 +134,6 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
         input.clear();
         std::vector<std::vector<Mat*> >().swap(input);
     }
-    */
 }
 /*
 void non_linearity_layer::update(){}

@@ -111,7 +111,7 @@ void local_response_normalization_layer::backwardPass(int nsamples, network_laye
     */
 }
 
-Mat local_response_normalization_layer::local_response_normalization(std::vector<Mat*> &vec, int which){
+Mat* local_response_normalization_layer::local_response_normalization(std::vector<Mat*> &vec, int which){
 /*
 	Mat res;
 	vec[which] -> copyTo(res);
@@ -136,7 +136,7 @@ Mat local_response_normalization_layer::local_response_normalization(std::vector
 	*/
 }
 
-Mat local_response_normalization_layer::dlocal_response_normalization(std::vector<Mat*> &vec_input, int which){
+Mat* local_response_normalization_layer::dlocal_response_normalization(std::vector<Mat*> &vec_input, int which){
 /*
 	Mat input;
 	vec_input[which] -> copyTo(input);

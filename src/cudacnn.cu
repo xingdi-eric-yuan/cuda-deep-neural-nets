@@ -32,7 +32,8 @@ void run(){
     std::vector<network_layer*> flow;
     buildNetworkFromConfigFile("config.txt", flow);
 
-
+//    trainX[0] -> print("matrix 0");
+//    trainX[1] -> print("matrix 1");
 
     trainNetwork(trainX, trainY, testX, testY, flow);
 
@@ -57,7 +58,8 @@ int main(void){
 	run();
 
 
-/*
+
+	/*
 	Mat *a = new Mat(3, 2, 3);
 	a -> randu();
 	a -> set(1, 1, 0, 0.7);
@@ -81,6 +83,7 @@ int main(void){
 	Mat *n = NULL;
 	safeGetPt(b, t(a));
 	b -> printHost("2nd print");
+
 
 
 	safeGetPt(c, multiply(a, b));

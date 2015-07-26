@@ -224,7 +224,6 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
                 tmp -> init_config(namestr, classes, wd, of);
                 flow.push_back(tmp);
-
                 break;
             }case 4:{ // combine layer
 

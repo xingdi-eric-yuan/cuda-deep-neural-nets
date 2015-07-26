@@ -32,6 +32,8 @@ OUTPUT_TYPE = image;
 BATCH_SIZE = 32;
 &
 
+
+/*
 $
 LAYER = convolutional;
 NAME = conv1;
@@ -45,13 +47,13 @@ WEIGHT_DECAY = 1e-6;
 &
 
 
-/*
 $
 LAYER = non_linearity;
 NAME = nl1;
 OUTPUT_TYPE = image;
 METHOD = leaky_relu;
 &
+
 
 
 $
@@ -73,6 +75,8 @@ OVERLAP = false;
 STRIDE = 2;
 &
 
+*/
+
 $
 LAYER = fully_connected;
 NAME = fc1;
@@ -81,14 +85,12 @@ NUM_HIDDEN_NEURONS = 4;
 WEIGHT_DECAY = 1e-6;
 &
 
-
 $
 LAYER = non_linearity;
 NAME = nl2;
 OUTPUT_TYPE = matrix;
 METHOD = leaky_relu;
 &
-*/
 
 $
 LAYER = softmax;

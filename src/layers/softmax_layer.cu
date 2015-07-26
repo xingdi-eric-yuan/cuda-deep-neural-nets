@@ -56,8 +56,10 @@ void softmax_layer::init_weight(network_layer* previous_layer){
     float epsilon = 0.12;
     w = new Mat(output_size, inputsize, 1);
     w -> randu();
-    safeGetPt(w, multiply(w, epsilon));
+    safeGetPt(w, multiply_elem(w, epsilon));
     b = new Mat(output_size, 1, 1);
+    b -> randu();
+    safeGetPt(b, multiply_elem(b, epsilon));
     wgrad = new Mat(output_size, inputsize, 1);
     wd2 = new Mat(output_size, inputsize, 1);
     bgrad = new Mat(output_size, 1, 1);
@@ -88,25 +90,25 @@ void softmax_layer::update(int iter_num){
     iter = iter_num;
     if(iter == 30) softmax_layer::setMomentum();
     Mat *tmp = new Mat();
-    safeGetPt(second_derivative_w, multiply(second_derivative_w, momentum_second_derivative));
-    safeGetPt(tmp, multiply(wd2, 1.0 - momentum_second_derivative));
+    safeGetPt(second_derivative_w, multiply_elem(second_derivative_w, momentum_second_derivative));
+    safeGetPt(tmp, multiply_elem(wd2, 1.0 - momentum_second_derivative));
     safeGetPt(second_derivative_w, add(second_derivative_w, tmp));
     safeGetPt(tmp, add(second_derivative_w, mu));
     safeGetPt(learning_rate, divide(lrate_w, tmp));
-    safeGetPt(velocity_w, multiply(velocity_w, momentum_derivative));
+    safeGetPt(velocity_w, multiply_elem(velocity_w, momentum_derivative));
     safeGetPt(tmp, multiply_elem(wgrad, learning_rate));
-    safeGetPt(tmp, multiply(tmp, 1.0 - momentum_derivative));
+    safeGetPt(tmp, multiply_elem(tmp, 1.0 - momentum_derivative));
     safeGetPt(velocity_w, add(tmp, velocity_w));
     safeGetPt(w, subtract(w, velocity_w));
 
-    safeGetPt(second_derivative_b, multiply(second_derivative_b, momentum_second_derivative));
-    safeGetPt(tmp, multiply(bd2, 1.0 - momentum_second_derivative));
+    safeGetPt(second_derivative_b, multiply_elem(second_derivative_b, momentum_second_derivative));
+    safeGetPt(tmp, multiply_elem(bd2, 1.0 - momentum_second_derivative));
     safeGetPt(second_derivative_b, add(second_derivative_b, tmp));
     safeGetPt(tmp, add(second_derivative_b, mu));
     safeGetPt(learning_rate, divide(lrate_b, tmp));
-    safeGetPt(velocity_b, multiply(velocity_b, momentum_derivative));
+    safeGetPt(velocity_b, multiply_elem(velocity_b, momentum_derivative));
     safeGetPt(tmp, multiply_elem(bgrad, learning_rate));
-    safeGetPt(tmp, multiply(tmp, 1.0 - momentum_derivative));
+    safeGetPt(tmp, multiply_elem(tmp, 1.0 - momentum_derivative));
     safeGetPt(velocity_b, add(tmp, velocity_b));
     safeGetPt(b, subtract(b, velocity_b));
 
@@ -170,12 +172,12 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Ma
     Mat *derivative = new Mat();
     groundTruth -> copyTo(*derivative);
 
-
     safeGetPt(derivative, subtract(derivative, output_matrix));
     safeGetPt(tmp2, t(input));
+    safeGetPt(tmp2, multiply_elem(tmp2, -1));
     safeGetPt(tmp1, multiply(derivative, tmp2));
-    safeGetPt(wgrad, divide(tmp1, -nsamples));
-    safeGetPt(tmp1, multiply(w, weight_decay));
+    safeGetPt(wgrad, divide(tmp1, nsamples));
+    safeGetPt(tmp1, multiply_elem(w, weight_decay));
     safeGetPt(wgrad, add(wgrad, tmp1));
 
     safeGetPt(tmp1, reduce(derivative, REDUCE_TO_SINGLE_COL, REDUCE_SUM));
@@ -190,8 +192,8 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Ma
     safeGetPt(bd2, divide(bd2, nsamples));
 
     safeGetPt(tmp1, t(w));
-    safeGetPt(tmp2, multiply(tmp1, derivative));
-    safeGetPt(delta_matrix, multiply(tmp2, -1));
+    safeGetPt(tmp1, multiply_elem(tmp1, -1));
+    safeGetPt(delta_matrix, multiply(tmp1, derivative));
     safeGetPt(tmp1, square(tmp1));
     safeGetPt(tmp2, square(derivative));
     safeGetPt(d2_matrix, multiply(tmp1, tmp2));

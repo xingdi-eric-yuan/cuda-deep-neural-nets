@@ -12,6 +12,7 @@ public:
     convolutional_kernel();
     ~convolutional_kernel();
     void init_config(int, float);
+    void release();
 
     Mat* w;
     vector3f* b;
@@ -196,8 +197,8 @@ public:
     void forwardPass(int, network_layer*);
     void forwardPassTest(int, network_layer*);
     void backwardPass(int, network_layer*, network_layer*);
-    Mat local_response_normalization(std::vector<Mat*>&, int);
-    Mat dlocal_response_normalization(std::vector<Mat*>&, int);
+    Mat* local_response_normalization(std::vector<Mat*>&, int);
+    Mat* dlocal_response_normalization(std::vector<Mat*>&, int);
 
     float alpha;
     float beta;
