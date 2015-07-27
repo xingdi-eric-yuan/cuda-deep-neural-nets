@@ -67,6 +67,7 @@ void gradientChecking_SoftmaxLayer(std::vector<network_layer*> &flow, const std:
             gradient_checking(sampleX, sampleY, flow, ((softmax_layer*)flow[i]) -> wgrad, p);
         }
     }
+    p = NULL;
 }
 
 void gradientChecking_FullyConnectedLayer(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){
@@ -88,6 +89,7 @@ void gradientChecking_FullyConnectedLayer(std::vector<network_layer*> &flow, con
             gradient_checking(sampleX, sampleY, flow, ((fully_connected_layer*)flow[i]) -> wgrad, p);
         }
     }
+    p = NULL;
 
 }
 
@@ -119,6 +121,7 @@ void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, cons
             gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> combine_weight_grad, p);
         }
     }
+    p = NULL;
 }
 
 void gradient_checking_network_layers(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){

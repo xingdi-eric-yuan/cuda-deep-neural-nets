@@ -23,6 +23,7 @@
 #include "matrix_maths.h"
 #include "memory_helper.h"
 #include "helper.h"
+#include "unit_test/unit_test.h"
 #include "convolutionFFT2D/convolutionFFT2D_common.h"
 
 class Mat;

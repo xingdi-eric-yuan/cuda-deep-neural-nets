@@ -200,6 +200,17 @@ void Mat::set(int pos, int pos_channel, float val){
 	hostToDevice();
 }
 
+void Mat::set(int pos, float val){
+	if(NULL == hostData) {mallocHost();}
+	if(NULL == devData) {mallocDevice();}
+	if(pos >= getLength()){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	hostData[pos] = val;
+	hostToDevice();
+}
+
 void Mat::setAll(float val){
 	if(NULL == hostData) {mallocHost();}
 	if(NULL == devData) {mallocDevice();}

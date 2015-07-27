@@ -161,7 +161,7 @@ public:
     void forwardPass(int, network_layer*);
     void forwardPassTest(int, network_layer*);
     void init_weight(network_layer*);
-    void backwardPass(int, network_layer*, Mat*);
+    void backwardPass(int, network_layer*, const Mat*);
 
     Mat* w;
     Mat* b;

@@ -53,13 +53,17 @@ void run(){
     //*/
 }
 
+
 int main(void){
 
-	run();
+	runAllTest();
+
+//	run();
 
 
 
-	/*
+/*
+
 	Mat *a = new Mat(3, 2, 3);
 	a -> randu();
 	a -> set(1, 1, 0, 0.7);
@@ -84,13 +88,11 @@ int main(void){
 	safeGetPt(b, t(a));
 	b -> printHost("2nd print");
 
-
-
 	safeGetPt(c, multiply(a, b));
 	c -> printHost("3nd print");
 
 	vector3f *v = new vector3f(1.0, 2.0, 3.0);
-	safeGetPt(d, multiply(c, v));
+	safeGetPt(d, multiply_elem(c, v));
 	d -> printHost("4th print");
 
 	safeGetPt(e, pow(d, 2.0));
@@ -128,15 +130,21 @@ int main(void){
 	m -> printHost("13th print");
 
 	vector<vector<Mat*> > vect;
-	vector<Mat*> tmpvect;
-	tmpvect.push_back(m);
-	tmpvect.push_back(m);
-	vect.push_back(tmpvect);
-	vect.push_back(tmpvect);
+	for(int tmp = 0; tmp < 2; ++ tmp){
+		vector<Mat*> tmpvect(2);
+		tmpvect[0] = new Mat();
+		tmpvect[1] = new Mat();
+		m -> copyTo(*tmpvect[0]);
+		m -> copyTo(*tmpvect[1]);
+		vect.push_back(tmpvect);
+	}
 
+	n = new Mat();
 	convert(vect, n);
 	n -> printHost("14th print");
 
+
+	cout<<"**************************************************************"<<endl;
 	vector<vector<Mat*> > vect2;
 	convert(n, vect2, 2, 6);
 	for(int i = 0; i < vect2.size(); ++i){
@@ -145,6 +153,8 @@ int main(void){
 			vect2[i][j] -> printHost(" ");
 		}
 	}
+
+
 	a -> release();
 	b -> release();
 	c -> release();

@@ -159,7 +159,7 @@ void softmax_layer::forwardPassTest(int nsamples, network_layer* previous_layer)
     tmp -> release();
 }
 
-void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Mat* groundTruth){
+void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, const Mat* groundTruth){
 
     Mat *input = new Mat();
     if(previous_layer -> output_format == "image"){
@@ -170,13 +170,11 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, Ma
     Mat *tmp1 = new Mat();
     Mat *tmp2 = new Mat();
     Mat *derivative = new Mat();
-    groundTruth -> copyTo(*derivative);
 
-    safeGetPt(derivative, subtract(derivative, output_matrix));
+    safeGetPt(derivative, subtract(groundTruth, output_matrix));
     safeGetPt(tmp2, t(input));
-    safeGetPt(tmp2, multiply_elem(tmp2, -1));
     safeGetPt(tmp1, multiply(derivative, tmp2));
-    safeGetPt(wgrad, divide(tmp1, nsamples));
+    safeGetPt(wgrad, divide(tmp1, -nsamples));
     safeGetPt(tmp1, multiply_elem(w, weight_decay));
     safeGetPt(wgrad, add(wgrad, tmp1));
 

@@ -46,7 +46,7 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
     cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
-    Mat *tmp = NULL;
+    Mat *tmp = new Mat();
 	vector3f *tmpvec3 = new vector3f();
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
@@ -291,9 +291,7 @@ void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
 void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vector<cpuMat*> &tx, const cpuMat *ty, std::vector<network_layer*> &flow){
 
     forwardPassInit(x, y, flow);
-    cout<<"????"<<endl;
     printNetwork(flow);
-
 
 
     //forwardPass(x, y, flow);

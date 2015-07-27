@@ -126,6 +126,7 @@ public:
 	void randu();
 	void set(int, int, int, float);
 	void set(int, int, float);
+	void set(int, float);
 	void set(int, int, const vector3f&);
 	void set(int, const vector3f&);
 	void setAll(float);
