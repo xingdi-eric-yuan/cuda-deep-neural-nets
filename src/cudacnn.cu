@@ -56,9 +56,9 @@ void run(){
 
 int main(void){
 
-	runAllTest();
+//	runAllTest();
 
-//	run();
+	run();
 
 
 

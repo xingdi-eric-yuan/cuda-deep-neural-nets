@@ -311,9 +311,9 @@ __global__ void cu_fliplr(const float* src, float* dst, const int rows, const in
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		int r = tid % rows;
-		int c = tid / rows;
-		dst[tid] = src[(cols - c - 1) * rows + r];
+		int c = tid % cols;
+		int r = tid / cols;
+		dst[tid] = src[(cols - c - 1) + r * cols];
 		tid += stride;
 	}
 }
@@ -352,11 +352,11 @@ __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int
 	//int scale_x = colsdst / colsa;
 	//int scale_y = rowsdst / rowsa;
 	while(tid < n){
-		int r2 = tid % rowsdst;
-		int c2 = tid / rowsdst;
+		int c2 = tid % colsdst;
+		int r2 = tid / colsdst;
 		int ra = r2 % rowsa;
 		int ca = c2 % colsa;
-		dst[tid] = a[ra + rowsa * ca];
+		dst[tid] = a[ra * colsa + ca];
 		tid += stride;
 	}
 }
@@ -364,58 +364,58 @@ __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int
 __global__ void cu_kron(const float *a, const float* b, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	//int colsb = colsdst / colsa;
+	int colsb = colsdst / colsa;
 	int rowsb = rowsdst / rowsa;
 	while(tid < n){
-		int r2 = tid % rowsdst;
-		int c2 = tid / rowsdst;
-		int ra = r2 % rowsa;
-		int ca = c2 % colsa;
-		int rb = r2 / rowsa;
-		int cb = c2 / colsa;
-		dst[tid] = a[ra + rowsa * ca] * b[rb + rowsb * cb];
+		int c2 = tid % colsdst;
+		int r2 = tid / colsdst;
+		int rb = r2 % rowsb;
+		int cb = c2 % colsb;
+		int ra = r2 / rowsb;
+		int ca = c2 / colsb;
+		dst[tid] = a[ra * colsa + ca] * b[rb * colsb + cb];
 		tid += stride;
 	}
 }
 
-__global__ void cu_downSample(const float *src, float* dst, const int y_stride, const int x_stride, const int rowssrc, const int n){
+__global__ void cu_downSample(const float *src, float* dst, const int y_stride, const int x_stride, const int colssrc, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	int rowsdst = rowssrc / y_stride;
-	if(rowssrc % y_stride > 0) ++rowsdst;
+	int colsdst = colssrc / x_stride;
+	if(colssrc % x_stride > 0) ++colsdst;
 	while(tid < n){
-		int rdst = tid % rowsdst;
-		int cdst = tid / rowsdst;
+		int cdst = tid % colsdst;
+		int rdst = tid / colsdst;
 		int rsrc = rdst * y_stride;
 		int csrc = cdst * x_stride;
-		dst[tid] = src[rsrc + rowssrc * csrc];
+		dst[tid] = src[rsrc * colssrc + csrc];
 		tid += stride;
 	}
 }
 
-__global__ void cu_interpolation(const float* src, float* dst, const int rowssrc, const int rowsdst, const int _stride, const int n){
+__global__ void cu_interpolation(const float* src, float* dst, const int colssrc, const int colsdst, const int _stride, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		int rsrc = tid % rowssrc;
-		int csrc = tid / rowssrc;
+		int csrc = tid % colssrc;
+		int rsrc = tid / colssrc;
 		int rdst = rsrc * _stride;
 		int cdst = csrc * _stride;
-		dst[rdst + rowsdst * cdst] = src[tid];
+		dst[rdst * colsdst + cdst] = src[tid];
 		tid += stride;
 	}
 }
 
-__global__ void cu_getRange(const float *src, float* dst, const int xstart, const int xend, const int ystart, const int yend, const int rowssrc, const int n){
+__global__ void cu_getRange(const float *src, float* dst, const int xstart, const int xend, const int ystart, const int yend, const int colssrc, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	int rowsdst = yend - ystart + 1;
+	int colsdst = xend - xstart + 1;
 	while(tid < n){
-		int rdst = tid % rowsdst;
-		int cdst = tid / rowsdst;
+		int cdst = tid % colsdst;
+		int rdst = tid / colsdst;
 		int rsrc = rdst + ystart;
 		int csrc = cdst + xstart;
-		dst[tid] = src[rsrc + rowssrc * csrc];
+		dst[tid] = src[rsrc * colssrc + csrc];
 		tid += stride;
 	}
 }
@@ -423,14 +423,14 @@ __global__ void cu_getRange(const float *src, float* dst, const int xstart, cons
 __global__ void cu_copyMakeBorder(const float *src, float* dst, const int rowssrc, const int colssrc, const int up, const int down, const int left, const int right, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	int rowsdst = rowssrc + up + down;
+	int colsdst = colssrc + left + right;
 	//int colsdst = colssrc + left + right;
 	while(tid < n){
-		int rsrc = tid % rowssrc;
-		int csrc = tid / rowssrc;
+		int csrc = tid % colssrc;
+		int rsrc = tid / colssrc;
 		int rdst = up + rsrc;
 		int cdst = left + csrc;
-		dst[rdst + rowsdst * cdst] = src[tid];
+		dst[rdst * colsdst + cdst] = src[tid];
 		tid += stride;
 	}
 }

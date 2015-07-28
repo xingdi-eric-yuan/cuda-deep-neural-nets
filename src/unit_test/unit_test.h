@@ -12,14 +12,19 @@ void runAllTest();
 
 Mat* getTestMatrix_5();
 Mat* getTestMatrix_3();
-vector3f* getTestVector3f();
+vector3f* getTestVector3f_0();
+vector3f* getTestVector3f_1();
 float getTestFloat();
+int getTestInt();
+void getTestVectorVectorMat(std::vector<std::vector<Mat*> >&);
 
 bool hostEqualToDevice(const Mat*);
+bool areIdentical(const std::vector<std::vector<Mat*> >&, const std::vector<std::vector<Mat*> >&);
 bool areIdentical(const Mat*, const Mat*);
 bool areIdentical(const cpuMat*, const cpuMat*);
 bool areIdentical(const vector3f*, const vector3f*);
 bool areIdentical(float, float);
+bool areApproximatelyIdentical(const std::vector<std::vector<Mat*> >&, const std::vector<std::vector<Mat*> >&);
 bool areApproximatelyIdentical(const Mat*, const Mat*);
 bool areApproximatelyIdentical(const cpuMat*, const cpuMat*);
 bool areApproximatelyIdentical(const vector3f*, const vector3f*);
@@ -27,7 +32,7 @@ bool areApproximatelyIdentical(float, float);
 
 
 
-//
+// tests
 
 bool test_add_v_f();
 bool test_add_v_v();
@@ -52,8 +57,8 @@ bool test_divide_m_f();
 bool test_divide_f_m();
 bool test_divide_v_f();
 bool test_divide_f_v();
-bool test_divide_m_f();
-bool test_divide_f_m();
+bool test_divide_m_v();
+bool test_divide_v_m();
 bool test_divide_m_m();
 bool test_divide_v_v();
 
@@ -89,8 +94,6 @@ bool test_LeakyReLU();
 bool test_dLeakyReLU();
 bool test_Tanh();
 bool test_dTanh();
-bool test_nonLinearity();
-bool test_dnonLinearity();
 
 bool test_fliplr();
 bool test_rot90();
@@ -100,6 +103,7 @@ bool test_reduce();
 bool test_interpolation();
 bool test_repmat();
 bool test_kron();
+bool test_conv2_kernel();
 bool test_conv2();
 bool test_getRange();
 bool test_downSample();

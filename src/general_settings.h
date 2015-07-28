@@ -32,6 +32,7 @@ class vector2i;
 class vector3f;
 
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
+#define RC2IDX(R,C,COLS) (((R)*(COLS))+(C))
 
 #define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
 	printf("Error at %s:%d\n",__FILE__,__LINE__);\

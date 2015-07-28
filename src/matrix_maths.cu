@@ -454,7 +454,7 @@ vector3f* divide(float numerator, const vector3f* denominator){
 		return dst;
 	}
 	for(int i = 0; i < 3; ++i){
-		if(dst -> get(i) == 0.0){
+		if(denominator -> get(i) == 0.0){
 			std::cout<<"invalid denominator..."<<std::endl;
 			exit(0);
 		}
@@ -513,7 +513,7 @@ Mat* divide(const Mat* numerator, const Mat* denominator){
 vector3f* divide(const vector3f* numerator, const vector3f* denominator){
 	vector3f *dst = new vector3f();
 	for(int i = 0; i < 3; ++i){
-		if(dst -> get(i) == 0.0){
+		if(denominator -> get(i) == 0.0){
 			std::cout<<"invalid denominator..."<<std::endl;
 			exit(0);
 		}
@@ -1222,8 +1222,8 @@ Mat* interpolation(const Mat* src, int _size){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-    int stride = _size / src -> rows;
-    if(_size % src -> rows > 0) ++ stride;
+    int stride = _size / src -> cols;
+    if(_size % src -> cols > 0) ++ stride;
     if(stride == 0 || stride == 1) {
     	Mat *dst = new Mat();
     	src -> copyTo(*dst);
@@ -1235,7 +1235,7 @@ Mat* interpolation(const Mat* src, int _size){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_interpolation<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, dst -> rows, stride, lensrc);
+		cu_interpolation<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> cols, dst -> cols, stride, lensrc);
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1361,10 +1361,10 @@ Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 	safeGetPt(src, dopadding(m, kernel -> cols / 2 + 1));
 	safeGetPt(src, dopadding(src, pad));
 	safeGetPt(res, conv2(src, kernel));
-	safeGetPt(res, getRange(res, (res -> cols - (m -> cols + kernel -> cols - 1)) / 2, 
-								 (res -> cols - (m -> cols + kernel -> cols - 1)) / 2 + m -> cols + kernel -> cols - 1 - 1,
-								 (res -> rows - (m -> rows + kernel -> rows - 1)) / 2, 
-								 (res -> rows - (m -> rows + kernel -> rows - 1)) / 2 + m -> rows + kernel -> rows - 1 - 1));
+	safeGetPt(res, getRange(res, (res -> cols - (m -> cols + kernel -> cols - 1 + pad * 2)) / 2,
+								 (res -> cols - (m -> cols + kernel -> cols - 1 + pad * 2)) / 2 + m -> cols + kernel -> cols - 1 + pad * 2 - 1,
+								 (res -> rows - (m -> rows + kernel -> rows - 1 + pad * 2)) / 2,
+								 (res -> rows - (m -> rows + kernel -> rows - 1 + pad * 2)) / 2 + m -> rows + kernel -> rows - 1 + pad * 2 - 1));
 	if(CONV_SAME == convtype){
 		safeGetPt(res, getRange(res, kernel -> cols / 2, 
 									 res -> cols - 1 - kernel -> cols / 2, 
@@ -1399,7 +1399,7 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_getRange<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, dst -> devData + i * len, xstart, xend, ystart, yend, src -> rows, len);
+		cu_getRange<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, dst -> devData + i * len, xstart, xend, ystart, yend, src -> cols, len);
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1424,7 +1424,7 @@ Mat* downSample(const Mat* src, int y_stride, int x_stride){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_downSample<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, res -> devData + i * len, y_stride, x_stride, src -> rows, len);
+		cu_downSample<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, res -> devData + i * len, y_stride, x_stride, src -> cols, len);
 	}
 	res -> deviceToHost();
 	return res;

@@ -113,7 +113,7 @@ void cpuMat::set(int pos_y, int pos_x, int pos_channel, float val){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	Data[IDX2C(pos_y, pos_x, rows) + pos_channel * (rows * cols)] = val;
+	Data[RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols)] = val;
 }
 
 void cpuMat::set(int pos_y, int pos_x, const vector3f& val){
@@ -171,7 +171,7 @@ float cpuMat::get(int pos_y, int pos_x, int pos_channel) const{
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	return Data[IDX2C(pos_y, pos_x, rows) + pos_channel * (rows * cols)];
+	return Data[RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols)];
 }
 
 vector3f cpuMat::get(int pos_y, int pos_x) const{
@@ -182,7 +182,7 @@ vector3f cpuMat::get(int pos_y, int pos_x) const{
 	}
 	vector3f res;
 	for(int i = 0; i < 3; ++i){
-		res.set(i, Data[IDX2C(pos_y, pos_x, rows) + i * (rows * cols)]);
+		res.set(i, Data[RC2IDX(pos_y, pos_x, cols) + i * (rows * cols)]);
 	}
 	return res;
 }
@@ -552,14 +552,13 @@ void cpuMat::print(const std::string &str) const{
 		std::cout<<"invalid cpuMatrix..."<<std::endl;
 		exit(0);
 	}
-	cpuMat show = t();
 	int counter = 0;
 	std::cout<<"cpuMatrix with "<<channels<<" channels, "<<rows<<" rows, "<<cols<<"columns."<<std::endl;
 	for(int i = 0; i < channels; ++i){
 		std::cout<<"Channel "<<i<<" : "<<std::endl;
 		for(int j = 0; j < rows; ++j){
 			for(int k = 0; k < cols; ++k){
-				std::cout<<show.Data[counter]<<" ";
+				std::cout<<Data[counter]<<" ";
 				++ counter;
 			}
 			std::cout<<std::endl;
