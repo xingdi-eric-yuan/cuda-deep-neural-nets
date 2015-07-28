@@ -318,30 +318,30 @@ __global__ void cu_fliplr(const float* src, float* dst, const int rows, const in
 	}
 }
 
-__global__ void cu_padding(const float* src, float* dst, const int rows1, const int cols1, const int rows2, const int n){
+__global__ void cu_padding(const float* src, float* dst, const int rows1, const int cols1, const int cols2, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		int pad = (rows2 - rows1) / 2;
-		int r1 = tid % rows1;
-		int c1 = tid / rows1;
+		int pad = (cols2 - cols1) / 2;
+		int c1 = tid % cols1;
+		int r1 = tid / cols1;
 		int r2 = r1 + pad;
 		int c2 = c1 + pad;
-		dst[r2 + rows2 * c2] = src[tid];
+		dst[r2 * cols2 + c2] = src[tid];
 		tid += stride;
 	}
 }
 
-__global__ void cu_depadding(const float* src, float* dst, const int rows1, const int cols1, const int rows2, const int n){
+__global__ void cu_depadding(const float* src, float* dst, const int rows1, const int cols1, const int cols2, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		int pad = (rows1 - rows2) / 2;
-		int r2 = tid % rows2;
-		int c2 = tid / rows2;
+		int pad = (cols1 - cols2) / 2;
+		int c2 = tid % cols2;
+		int r2 = tid / cols2;
 		int r1 = r2 + pad;
 		int c1 = c2 + pad;
-		dst[tid] = src[r1 + rows1 * c1];
+		dst[tid] = src[r1 * cols1 + c1];
 		tid += stride;
 	}
 }

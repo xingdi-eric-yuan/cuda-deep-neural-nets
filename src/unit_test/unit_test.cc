@@ -1715,7 +1715,6 @@ bool test_conv2(){
 
 /*
 
-bool test_conv2();
 bool test_pooling_with_overlap();
 bool test_unpooling_with_overlap();
 bool test_pooling();

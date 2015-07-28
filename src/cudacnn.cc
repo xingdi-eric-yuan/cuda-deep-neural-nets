@@ -32,10 +32,10 @@ void run(){
     std::vector<network_layer*> flow;
     buildNetworkFromConfigFile("config.txt", flow);
 
-//    trainX[0] -> print("matrix 0");
-//    trainX[1] -> print("matrix 1");
+    trainX[0] -> print("matrix 0");
+    trainX[1] -> print("matrix 1");
 
-    trainNetwork(trainX, trainY, testX, testY, flow);
+//    trainNetwork(trainX, trainY, testX, testY, flow);
 
     flow.clear();
     std::vector<network_layer*>().swap(flow);

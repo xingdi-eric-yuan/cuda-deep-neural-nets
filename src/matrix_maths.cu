@@ -1157,7 +1157,7 @@ Mat* dopadding(const Mat *src, int pad){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_padding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> rows, lensrc);
+		cu_padding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lensrc);
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1179,7 +1179,7 @@ Mat* depadding(const Mat *src, int pad){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_depadding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> rows, lendst);
+		cu_depadding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lendst);
 	}
 	dst -> deviceToHost();
 	return dst;

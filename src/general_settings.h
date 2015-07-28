@@ -31,7 +31,7 @@ class cpuMat;
 class vector2i;
 class vector3f;
 
-#define IDX2C(i,j,ld) (((j)*(ld))+(i))
+//#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define RC2IDX(R,C,COLS) (((R)*(COLS))+(C))
 
 #define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
@@ -44,10 +44,6 @@ class vector3f;
 
 #define elif else if
 #define threadsPerBlock 128
-//#define Point2i vector2i;
-//#define Size2i vector2i;
-//typedef vector2i Size2i;
-//typedef vector2i Point2i;
 
 // non-linearity
 #define NL_SIGMOID 0
@@ -57,7 +53,7 @@ class vector3f;
 // convolution
 #define CONV_SAME 0
 #define CONV_VALID 1
-#define CONV_FULL 2 //TODO...
+#define CONV_FULL 2
 // Pooling methods
 #define POOL_MAX 0
 #define POOL_MEAN 1
