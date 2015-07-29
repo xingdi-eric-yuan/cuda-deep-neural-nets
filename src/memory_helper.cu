@@ -5,7 +5,7 @@ void* MemoryMonitor::cpuMalloc(int size){
 	cpuMemory += size;
 	void* p = malloc(size);
 	cpuPoint[p] = 1.0f * size;
- 	//if(size >= 1024 * 1024){
+ 	//if(size >= Mb){
  	//	printf("******************************* cpu malloc memory %fMb\n", 1.0 * size / Mb);
  	//}
 	return p;
@@ -14,7 +14,7 @@ void* MemoryMonitor::cpuMalloc(int size){
 void MemoryMonitor::freeCpuMemory(void* ptr)
 {
 	if(cpuPoint.find(ptr) != cpuPoint.end()){
- 		//if(cpuPoint[ptr] >= 1024 * 1024){
+ 		//if(cpuPoint[ptr] >= Mb){
  		//	printf("+++++++++++++++++++++++++++++++ free cpu memory %fMb\n", cpuPoint[ptr] / Mb);
  		//}
 		cpuMemory -= cpuPoint[ptr];
@@ -29,14 +29,14 @@ cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
 	gpuMemory += size;
 	gpuPoint[*devPtr] = (float)size;
 	return error;
- 	//if(size >= 1024 * 1024){
+ 	//if(size >= Mb){
  	//	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / Mb);
  	//}
 }
 
 void MemoryMonitor::freeGpuMemory(void* ptr){
 	if(gpuPoint.find(ptr) != gpuPoint.end()){
- 		//if(gpuPoint[ptr] >= 1024 * 1024){
+ 		//if(gpuPoint[ptr] >= Mb){
  		//	printf("+++++++++++++++++++++++++++++++ free gpu memory %fMb\n", gpuPoint[ptr] / Mb);
  		//}
 		gpuMemory -= gpuPoint[ptr];

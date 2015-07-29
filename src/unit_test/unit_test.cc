@@ -79,6 +79,7 @@ void runAllTest(){
 	if(test_kron()){ ++ success;} ++ counter;
 	if(test_conv2_kernel()){ ++ success;} ++ counter;
 	if(test_conv2()){ ++ success;} ++ counter;
+	if(test_pooling()){ ++ success;} ++ counter;
 
 
 
@@ -118,6 +119,45 @@ Mat *getTestMatrix_3_rand(){
 	res -> hostToDevice();
 	return res;
 }
+
+Mat *getTestMatrix_10_rand(){
+	const float array_data[300] = {
+			 0.5377,  0.8884, -1.0891, -1.1480,  2.9080,  0.5201, -1.3617, -0.5320, -1.0667,  0.3271,
+			 1.8339, -1.1471,  0.0326,  0.1049,  0.8252, -0.0200,  0.4550,  1.6821,  0.9337,  1.0826,
+			-2.2588, -1.0689,  0.5525,  0.7223,  1.3790, -0.0348, -0.8487, -0.8757,  0.3503,  1.0061,
+			 0.8622, -0.8095,  1.1006,  2.5855, -1.0582, -0.7982, -0.3349, -0.4838, -0.0290, -0.6509,
+			 0.3188, -2.9443,  1.5442, -0.6669, -0.4686,  1.0187,  0.5528, -0.7120,  0.1825,  0.2571,
+			-1.3077,  1.4384,  0.0859,  0.1873, -0.2725, -0.1332,  1.0391, -1.1742, -1.5651, -0.9444,
+			-0.4336,  0.3252, -1.4916, -0.0825,  1.0984, -0.7145, -1.1176, -0.1922, -0.0845, -1.3218,
+			 0.3426, -0.7549, -0.7423, -1.9330, -0.2779,  1.3514,  1.2607, -0.2741,  1.6039,  0.9248,
+			 3.5784,  1.3703, -1.0616, -0.4390,  0.7015, -0.2248,  0.6601,  1.5301,  0.0983,  0.0000,
+			 2.7694, -1.7115,  2.3505, -1.7947, -2.0518, -0.5890, -0.0679, -0.2490,  0.0414, -0.0549,
+			-1.3499, -0.1022, -0.6156,  0.8404, -0.3538, -0.2938, -0.1952, -1.0642, -0.7342,  0.9111,
+			 3.0349, -0.2414,  0.7481, -0.8880, -0.8236, -0.8479, -0.2176,  1.6035, -0.0308,  0.5946,
+			 0.7254,  0.3192, -0.1924,  0.1001, -1.5771, -1.1201, -0.3031,  1.2347,  0.2323,  0.3502,
+			-0.0631,  0.3129,  0.8886, -0.5445,  0.5080,  2.5260,  0.0230, -0.2296,  0.4264,  1.2503,
+			 0.7147, -0.8649, -0.7648,  0.3035,  0.2820,  1.6555,  0.0513, -1.5062, -0.3728,  0.9298,
+			-0.2050, -0.0301, -1.4023, -0.6003,  0.0335,  0.3075,  0.8261, -0.4446, -0.2365,  0.2398,
+			-0.1241, -0.1649, -1.4224,  0.4900, -1.3337, -1.2571,  1.5270, -0.1559,  2.0237, -0.6904,
+			 1.4897,  0.6277,  0.4882,  0.7394,  1.1275, -0.8655,  0.4669,  0.2761, -2.2584, -0.6516,
+			 1.4090,  1.0933, -0.1774,  1.7119,  0.3502, -0.1765, -0.2097, -0.2612,  2.2294,  1.1921,
+			 1.4172,  1.1093, -0.1961, -0.1941, -0.2991,  0.7914,  0.6252,  0.4434,  0.3376, -1.6118,
+			 0.6715, -0.8637,  1.4193, -2.1384,  0.0229, -1.3320,  0.1832,  0.3919,  1.0001, -0.0245,
+			-1.2075,  0.0774,  0.2916, -0.8396, -0.2620, -2.3299, -1.0298, -1.2507, -1.6642, -1.9488,
+			 0.7172, -1.2141,  0.1978,  1.3546, -1.7502, -1.4491,  0.9492, -0.9480, -0.5900,  1.0205,
+			 1.6302, -1.1135,  1.5877, -1.0722, -0.2857,  0.3335,  0.3071, -0.7411, -0.2781,  0.8617,
+			 0.4889, -0.0068, -0.8045,  0.9610, -0.8314,  0.3914,  0.1352, -0.5078,  0.4227,  0.0012,
+			 1.0347,  1.5326,  0.6966,  0.1240, -0.9792,  0.4517,  0.5152, -0.3206, -1.6702, -0.0708,
+			 0.7269, -0.7697,  0.8351,  1.4367, -1.1564, -0.1303,  0.2614,  0.0125,  0.4716, -2.4863,
+			-0.3034,  0.3714, -0.2437, -1.9609, -0.5336,  0.1837, -0.9415, -3.0292, -1.2128,  0.5812,
+			 0.2939, -0.2256,  0.2157, -0.1977, -2.0026, -0.4762, -0.1623, -0.4570,  0.0662, -2.1924,
+			-0.7873,  1.1174, -1.1658, -1.2078,  0.9642,  0.8620, -0.1461,  1.2424,  0.6524, -2.3193};
+	Mat *res = new Mat(10, 10, 3);
+	memcpy(res -> hostData, array_data, res -> getLength() * sizeof(float));
+	res -> hostToDevice();
+	return res;
+}
+
 
 vector3f* getTestVector3f_0(){
 	vector3f *v = new vector3f();
@@ -175,6 +215,14 @@ bool areIdentical(const std::vector<std::vector<Mat*> >& a, const std::vector<st
 	return true;
 }
 
+bool areIdentical(const std::vector<vector3f*>& a, const std::vector<vector3f*>& b){
+	if(a.size() != b.size()) return false;
+	for(int i = 0; i < a.size(); ++i){
+		if(!areIdentical(a[i], b[i])) return false;
+	}
+	return true;
+}
+
 bool areIdentical(const Mat* a, const Mat* b){
 	if(NULL == a || NULL == b) return false;
 	if(NULL == a -> hostData && NULL == a -> devData && NULL == b -> hostData && NULL == b -> devData){
@@ -226,6 +274,18 @@ bool areApproximatelyIdentical(const std::vector<std::vector<Mat*> >& a, const s
 			if(!areApproximatelyIdentical(a[i][j], b[i][j])) {
 				return false;
 			}
+		}
+	}
+	return true;
+}
+
+bool areApproximatelyIdentical(const std::vector<vector3f*>& a, const std::vector<vector3f*>& b){
+	if(a.size() != b.size()) {
+		return false;
+	}
+	for(int i = 0; i < a.size(); ++i){
+		if(!areApproximatelyIdentical(a[i], b[i])) {
+			return false;
 		}
 	}
 	return true;
@@ -1721,7 +1781,6 @@ bool test_conv2_kernel(){
 }
 
 bool test_conv2(){
-
 	const float array_conv2_valid[27] = {
 			0.0800,    0.4100,    0.5600,
 		    1.5900,    3.3600,    3.0300,
@@ -1794,7 +1853,87 @@ bool test_conv2(){
 	return result;
 }
 
+bool test_pooling(){
+	// I did this array by hand lol
+	const float array_pooling_max[58] = {
+			1.8339, 2.9080, 1.6821, 1.0826,
+			1.5442, 2.5855, 1.0391, 0.2571,
+			3.5784, 1.3514, 1.6039, 0.9248,
+			2.7694,-0.5890, 0.0414,-0.0549,
 
+			3.0349, 0.8404, 1.6035, 0.9111,
+			0.8886, 2.5260, 0.8261, 1.2503,
+			1.4897, 1.7119, 2.2294, 1.1921,
+			1.4172, 0.7914, 0.6252,-1.6118,
+
+			1.4193, 1.3546, 1.0001, 1.0205,
+			1.6302, 0.9610, 0.5152, 0.8617,
+			0.8351, 1.4367, 0.4716, 0.5812,
+			1.1174, 0.9642, 1.2424,-2.3193
+	};
+	const float array_pooling_max_loc_ch0[16] = {
+			10, 4, 17, 19,
+			42, 33, 56, 49,
+			80, 75, 78, 79,
+			90, 95, 98, 99};
+	const float array_pooling_max_loc_ch1[16] = {
+			10, 3, 17, 9,
+			32, 35, 56, 39,
+			70, 83, 88, 89,
+			90, 95, 96, 99};
+	const float array_pooling_max_loc_ch2[16] = {
+			2, 23, 8, 29,
+			30, 43, 56, 39,
+			62, 63, 68, 79,
+			91, 94, 97, 99};
+	std::vector<vector3f*> expect_loc_max(16);
+	for(int i = 0; i < 16; ++i){
+		expect_loc_max[i] = new vector3f(array_pooling_max_loc_ch0[i], array_pooling_max_loc_ch1[i], array_pooling_max_loc_ch2[i]);
+	}
+	// 10, 4, 17, 19
+	// 42, 33, 56, 49
+	// 80, 75, 78, 79
+	// 90, 93, 98, 99
+
+	// 10, 3, 17, 9
+	// 32, 35, 56, 39
+	// 70, 83, 88, 89
+	// 90, 95, 96, 99
+
+	// 2, 23, 8, 29
+	// 30, 43, 48, 39
+	// 62, 63, 68, 79
+	// 91, 94, 97, 99
+
+	cout<<"testing pooling --- ";
+	Mat *a = getTestMatrix_10_rand();
+	Mat *res_max = NULL;
+	std::vector<vector3f*> res_loc_max;
+	safeGetPt(res_max, pooling(a, 3, POOL_MAX, res_loc_max));
+	Mat *expect_max = new Mat(4, 4, a -> channels);
+	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
+	expect_max -> hostToDevice();
+	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
+/*
+	for(int i = 0; i < 16; ++i){
+		cout<<"i = "<<i<<endl;
+		res_loc_max[i] ->print(" ");
+		expect_loc_max[i] ->print(" ");
+	}
+*/
+	a -> release();
+	res_max -> release();
+	expect_max -> release();
+	res_loc_max.clear();
+	expect_loc_max.clear();
+	std::vector<vector3f*>().swap(res_loc_max);
+	std::vector<vector3f*>().swap(expect_loc_max);
+	cout<<(result ? "success" : "failed")<<endl;
+	return result;
+
+
+
+}
 
 
 /*

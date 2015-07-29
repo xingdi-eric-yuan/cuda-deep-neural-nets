@@ -1480,12 +1480,12 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
         	}
         	vector3f *tmpr = new vector3f();
         	vector3f *tmpc = new vector3f();
-        	tmpr = div_rem(loc, window_size -> get(1));
-        	tmpc = div_no_rem(loc, window_size -> get(1));
+        	tmpc = div_rem(loc, window_size -> get(0));
+        	tmpr = div_no_rem(loc, window_size -> get(0));
         	tmpr = add(tmpr, i);
         	tmpc = add(tmpc, j);
-        	loc = multiply_elem(tmpc, src -> rows);
-        	loc = add(loc, tmpr);	
+        	loc = multiply_elem(tmpr, src -> cols);
+        	loc = add(loc, tmpc);
             tmplocat.push_back(loc);
             tmpres -> set(i, j, *val);
         }
@@ -1554,10 +1554,8 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
         	int ystart = i * stride;
         	int yend = (i * stride + stride  - 1) < (src -> rows - 1) ? (i * stride + stride  - 1) : (src -> rows - 1);
         	safeGetPt(tmp, getRange(src, xstart, xend, ystart, yend));
-
         	vector3f *val = new vector3f();
         	vector3f *loc = new vector3f();
-
         	if(POOL_MAX == poolingMethod){
         		// max poling
         		max(tmp, val, loc);
@@ -1568,10 +1566,12 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
             }
         	vector3f *tmpr = new vector3f();
         	vector3f *tmpc = new vector3f();
+        	tmpc = div_rem(loc, tmp -> cols);
+        	tmpr = div_no_rem(loc, tmp -> cols);
         	tmpr = add(tmpr, i * stride);
         	tmpc = add(tmpc, j * stride);
-        	loc = multiply_elem(tmpc, src -> rows);
-        	loc = add(loc, tmpr);
+        	loc = multiply_elem(tmpr, src -> cols);
+        	loc = add(loc, tmpc);
             locat.push_back(loc);
             res -> set(i, j, *val);
         }

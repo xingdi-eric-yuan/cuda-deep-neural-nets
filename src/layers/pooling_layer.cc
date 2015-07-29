@@ -34,45 +34,38 @@ void pooling_layer::init_config(string namestr, int _method, string outputformat
 }
 
 void pooling_layer::forwardPass(int nsamples, network_layer* previous_layer){
-/*
+
 	if(previous_layer -> output_format == "matrix"){
         cout<<"??? Can not do pooling with matrix... give me an image..."<<endl;
         return;
-	}cout<<"pooling   foward 1111"<<endl;
+	}
 	std::vector<std::vector<Mat*> > input;
 	copyVector(previous_layer -> output_vector, input);
+	vector2i *_size = NULL;
+	if(overlap) _size = new vector2i(window_size, window_size);
+
+    releaseVector(output_vector);
+    output_vector.clear();
+    output_vector.resize(input.size());
     location.clear();
-	output_vector.clear();
-    location.resize(previous_layer -> output_vector.size());
-    output_vector.resize(previous_layer -> output_vector.size());
-    cout<<"pooling   foward 2222"<<endl;
-    for(int i = 0; i < previous_layer -> output_vector.size(); i++){
+    location.resize(input.size());
+    for(int i = 0; i < input.size(); i++){
     	location[i].clear();
     	output_vector[i].clear();
-        location[i].resize(previous_layer -> output_vector[i].size());
-        output_vector[i].resize(previous_layer -> output_vector[i].size());
-        for(int j = 0; j < previous_layer -> output_vector[i].size(); ++j){
+        output_vector[i].resize(input[i].size());
+        location[i].resize(input[i].size());
+        for(int j = 0; j < input[i].size(); ++j){
         	output_vector[i][j] = new Mat();
+        	if(overlap){
+				safeGetPt(output_vector[i][j], pooling_with_overlap(input[i][j], _size, stride, method, location[i][j]));
+        	}else{
+				safeGetPt(output_vector[i][j], pooling(input[i][j], stride, method, location[i][j]));
+        	}
         }
     }
-	if(overlap){
-		vector2i _size(window_size, window_size);
-		for(int i = 0; i < input.size(); i++){
-			for(int j = 0; j < input[i].size(); j++){
-				pooling_with_overlap(input[i][j], _size, stride, method, location[i][j]) -> copyTo(*(output_vector[i][j]));
-			}
-		}
-	}else{
-		for(int i = 0; i < input.size(); i++){
-			for(int j = 0; j < input[i].size(); j++){
-			    cout<<"pooling   foward 3333 --- "<<i<<", "<<j<<endl;
-				pooling(input[i][j], stride, method, location[i][j]) -> copyTo(*(output_vector[i][j]));
-			}
-		}
-	}
+    releaseVector(input);
 	input.clear();
 	std::vector<std::vector<Mat*> >().swap(input);
-	*/
 }
 
 void pooling_layer::forwardPassTest(int nsamples, network_layer* previous_layer){
@@ -80,69 +73,56 @@ void pooling_layer::forwardPassTest(int nsamples, network_layer* previous_layer)
 }
 
 void pooling_layer::backwardPass(int nsamples, network_layer* previous_layer, network_layer* next_layer){
-/*
-    if(previous_layer -> output_format != "image"){
+
+    std::vector<std::vector<Mat*> > input;
+    if(previous_layer -> output_format == "image"){
+    	copyVector(previous_layer -> output_vector, input);
+    }else{
         cout<<"??? image after matrix??? I can't do that for now..."<<endl;
         return;
     }
     std::vector<std::vector<Mat*> > derivative;
     std::vector<std::vector<Mat*> > deriv2;
-    std::vector<std::vector<Mat*> > input;
-	copyVector(previous_layer -> output_vector, input);
-	if(next_layer -> output_format == "matrix"){
+	vector2i *up_size = new vector2i(input[0][0] -> rows, input[0][0] -> cols);
+	vector2i *_size = NULL;
+	if(overlap) _size = new vector2i(window_size, window_size);
+    if(next_layer -> output_format == "matrix"){
         convert(next_layer -> delta_matrix, derivative, nsamples, output_vector[0][0] -> rows);
         convert(next_layer -> d2_matrix, deriv2, nsamples, output_vector[0][0] -> rows);
     }else{
     	copyVector(next_layer -> delta_vector, derivative);
     	copyVector(next_layer -> d2_vector, deriv2);
     }
+    releaseVector(delta_vector);
+    releaseVector(d2_vector);
     delta_vector.clear();
     d2_vector.clear();
     delta_vector.resize(derivative.size());
     d2_vector.resize(derivative.size());
     for(int i = 0; i < delta_vector.size(); i++){
-        delta_vector[i].clear();
-        d2_vector[i].clear();
         delta_vector[i].resize(derivative[i].size());
         d2_vector[i].resize(derivative[i].size());
         for(int j = 0; j < derivative[i].size(); ++j){
         	delta_vector[i][j] = new Mat();
         	d2_vector[i][j] = new Mat();
+        	if(overlap){
+        		safeGetPt(delta_vector[i][j], unpooling_with_overlap(derivative[i][j], _size, stride, method, location[i][j], up_size));
+        		safeGetPt(d2_vector[i][j], unpooling_with_overlap(deriv2[i][j], _size, stride, method, location[i][j], up_size));
+        	}else{
+        		safeGetPt(delta_vector[i][j], unpooling(derivative[i][j], stride, method, location[i][j], up_size));
+        		safeGetPt(d2_vector[i][j], unpooling(deriv2[i][j], stride, method, location[i][j], up_size));
+        	}
         }
     }
-	vector2i up_size(input[0][0] -> rows, input[0][0] -> cols);
-	if(overlap){
-		vector2i _size(window_size, window_size);
-	    for(int i = 0; i < derivative.size(); i++){
-	        for(int j = 0; j < derivative[i].size(); j++){
-				unpooling_with_overlap(derivative[i][j], _size, stride, method, location[i][j], up_size) -> copyTo(*(delta_vector[i][j]));
-				unpooling_with_overlap(deriv2[i][j], _size, stride, method, location[i][j], up_size) -> copyTo(*(d2_vector[i][j]));
-	        }
-	    }
-	}else{
-	    for(int i = 0; i < derivative.size(); i++){
-	        for(int j = 0; j < derivative[i].size(); j++){
-				unpooling(derivative[i][j], stride, method, location[i][j], up_size) -> copyTo(*(delta_vector[i][j]));
-				unpooling(deriv2[i][j], stride, method, location[i][j], up_size) -> copyTo(*(d2_vector[i][j]));
-	        }
-	    }
-	}
+    releaseVector(derivative);
     derivative.clear();
     std::vector<std::vector<Mat*> >().swap(derivative);
+    releaseVector(deriv2);
     deriv2.clear();
     std::vector<std::vector<Mat*> >().swap(deriv2);
+    releaseVector(input);
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
-    */
 }
-
-/*
-
-void pooling_layer::update(){}
-
-void pooling_layer::init_weight(network_layer* previous_layer){}
-
-*/
-
 
 

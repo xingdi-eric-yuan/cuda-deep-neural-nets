@@ -12,6 +12,8 @@ void runAllTest();
 
 Mat* getTestMatrix_5();
 Mat* getTestMatrix_3();
+Mat* getTestMatrix_3_rand();
+Mat* getTestMatrix_10_rand();
 vector3f* getTestVector3f_0();
 vector3f* getTestVector3f_1();
 float getTestFloat();
@@ -20,11 +22,13 @@ void getTestVectorVectorMat(std::vector<std::vector<Mat*> >&);
 
 bool hostEqualToDevice(const Mat*);
 bool areIdentical(const std::vector<std::vector<Mat*> >&, const std::vector<std::vector<Mat*> >&);
+bool areIdentical(const std::vector<vector3f*>&, const std::vector<vector3f*>&);
 bool areIdentical(const Mat*, const Mat*);
 bool areIdentical(const cpuMat*, const cpuMat*);
 bool areIdentical(const vector3f*, const vector3f*);
 bool areIdentical(float, float);
 bool areApproximatelyIdentical(const std::vector<std::vector<Mat*> >&, const std::vector<std::vector<Mat*> >&);
+bool areApproximatelyIdentical(const std::vector<vector3f*>&, const std::vector<vector3f*>&);
 bool areApproximatelyIdentical(const Mat*, const Mat*);
 bool areApproximatelyIdentical(const cpuMat*, const cpuMat*);
 bool areApproximatelyIdentical(const vector3f*, const vector3f*);
