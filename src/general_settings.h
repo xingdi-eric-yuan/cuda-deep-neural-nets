@@ -44,7 +44,7 @@ class vector3f;
 	return EXIT_FAILURE;}} while(0)
 
 #define elif else if
-#define threadsPerBlock 128
+#define threadsPerBlock 256
 
 // non-linearity
 #define NL_SIGMOID 0

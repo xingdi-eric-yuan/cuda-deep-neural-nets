@@ -44,8 +44,7 @@ Mat* add(const Mat* src, float a){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(src -> rows, src -> cols, src -> channels);
+	Mat* tmp = new Mat(src -> rows, src -> cols, src -> channels);
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -59,8 +58,7 @@ Mat* add(const Mat* src, const vector3f *val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(src -> rows, src -> cols, src -> channels);
+	Mat* tmp = new Mat(src -> rows, src -> cols, src -> channels);
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -78,8 +76,7 @@ Mat* add(const Mat* a, const Mat* b){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(a -> rows, a -> cols, a -> channels);
+	Mat* tmp = new Mat(a -> rows, a -> cols, a -> channels);
 	int len = a -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -117,8 +114,7 @@ Mat* subtract(const Mat* src, float a){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(src -> rows, src -> cols, src -> channels);
+	Mat* tmp = new Mat(src -> rows, src -> cols, src -> channels);
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -132,8 +128,7 @@ Mat* subtract(const Mat* src, const vector3f *val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(src -> rows, src -> cols, src -> channels);
+	Mat* tmp = new Mat(src -> rows, src -> cols, src -> channels);
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -151,8 +146,7 @@ Mat* subtract(const Mat* a, const Mat* b){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(a -> rows, a -> cols, a -> channels);
+	Mat* tmp = new Mat(a -> rows, a -> cols, a -> channels);
 	int len = a -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
@@ -195,10 +189,10 @@ Mat* multiply_elem(const Mat* src, float a){
 	src -> copyTo(*tmp);
 	int len = src -> getLength();
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, len, &val, tmp -> devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, len, &val, tmp -> devData, 1));
 	tmp -> deviceToHost();
-    cublasDestroy(handle);
+	checkCudaErrors(cublasDestroy(handle));
 	return tmp;
 }
 
@@ -211,13 +205,13 @@ Mat* multiply_elem(const Mat* src, const vector3f *a){
 	src -> copyTo(*tmp);
 	int len = src -> rows * src -> cols;
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int ch = 0; ch < src -> channels; ++ch){
 		float val = a -> get(ch);
-		cublasSscal(handle, len, &val, tmp -> devData + ch * len, 1);
+		checkCudaErrors(cublasSscal(handle, len, &val, tmp -> devData + ch * len, 1));
 	}
 	tmp -> deviceToHost();
-    cublasDestroy(handle);
+	checkCudaErrors(cublasDestroy(handle));
 	return tmp;
 }
 
@@ -229,19 +223,18 @@ Mat* multiply(const Mat* a, const Mat* b){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat* tmp = new Mat();
-	tmp -> setSize(a -> rows, b -> cols, a -> channels);
+	Mat* tmp = new Mat(a -> rows, b -> cols, a -> channels);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	float alpha = 1.0;
 	float beta = 1.0;
 	for(int i = 0; i < a -> channels; ++i){
-		cublasSetMatrix (a -> rows, a -> cols, sizeof(float), a -> hostData + i * (a -> rows * a -> cols), a -> rows, a -> devData + i * (a -> rows * a -> cols), a -> rows); // cp x- >d_x
-		cublasSetMatrix (b -> rows, b -> cols, sizeof(float), b -> hostData + i * (b -> rows * b -> cols), b -> rows, b -> devData + i * (b -> rows * b -> cols), b -> rows); // cp y- >d_y
-		cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, a -> rows, b -> cols, a -> cols, &alpha, a -> devData + i * (a -> rows * a -> cols), a -> rows, b -> devData + i * (b -> rows * b -> cols), a -> cols, &beta, tmp -> devData + i * (tmp -> rows * tmp -> cols), a -> rows);
-		cublasGetMatrix (a -> rows, b -> cols, sizeof(float), tmp -> devData + i * (tmp -> rows * tmp -> cols), a -> rows, tmp -> hostData + i * (tmp -> rows * tmp -> cols), a -> rows);
+		checkCudaErrors(cublasSetMatrix (a -> rows, a -> cols, sizeof(float), a -> hostData + i * (a -> rows * a -> cols), a -> rows, a -> devData + i * (a -> rows * a -> cols), a -> rows)); // cp x- >d_x
+		checkCudaErrors(cublasSetMatrix (b -> rows, b -> cols, sizeof(float), b -> hostData + i * (b -> rows * b -> cols), b -> rows, b -> devData + i * (b -> rows * b -> cols), b -> rows)); // cp y- >d_y
+		checkCudaErrors(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, a -> rows, b -> cols, a -> cols, &alpha, a -> devData + i * (a -> rows * a -> cols), a -> rows, b -> devData + i * (b -> rows * b -> cols), a -> cols, &beta, tmp -> devData + i * (tmp -> rows * tmp -> cols), a -> rows));
+		checkCudaErrors(cublasGetMatrix (a -> rows, b -> cols, sizeof(float), tmp -> devData + i * (tmp -> rows * tmp -> cols), a -> rows, tmp -> hostData + i * (tmp -> rows * tmp -> cols), a -> rows));
 	}
-	cublasDestroy (handle); // destroy CUBLAS context
+	checkCudaErrors(cublasDestroy (handle)); // destroy CUBLAS context
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -271,18 +264,17 @@ Mat* t(const Mat* a){
 	}
 	Mat* tmp = new Mat();
 	a -> copyTo(*tmp);
-	//tmpmat.zeros();
     float const alpha(1.0);
     float const beta(0.0);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < a -> channels; ++i){
-		cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, a -> cols, a -> rows, &alpha, a -> devData + i * (a -> rows * a -> cols), a -> rows, &beta, a -> devData + i * (a -> rows * a -> cols), a -> cols, tmp -> devData + i * (a -> rows * a -> cols), a -> cols);
+		checkCudaErrors(cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, a -> cols, a -> rows, &alpha, a -> devData + i * (a -> rows * a -> cols), a -> rows, &beta, a -> devData + i * (a -> rows * a -> cols), a -> cols, tmp -> devData + i * (a -> rows * a -> cols), a -> cols));
 	}
 	int _swap = tmp -> rows;
 	tmp -> rows = tmp -> cols;
 	tmp -> cols = _swap;
-	cublasDestroy(handle);
+	checkCudaErrors(cublasDestroy(handle));
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -618,11 +610,11 @@ vector3f* sum(const Mat* src){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		float *devRes = 0;
-		cudaMalloc((void**)&devRes, sizeof(float));
+		checkCudaErrors(cudaMalloc((void**)&devRes, sizeof(float)));
 		cu_sum<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len, devRes, len);
 		float hostRes = 0;
-		cudaMemcpy(&hostRes, devRes, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaFree(devRes);
+		checkCudaErrors(cudaMemcpy(&hostRes, devRes, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(devRes));
 		res -> set(i, hostRes);
 	}
 	return res;
@@ -713,23 +705,23 @@ vector3f* max(const Mat* src){
 		float *dev_minVal = 0;
 		int *dev_maxLoc = 0;
 		int *dev_minLoc = 0;
-		cudaMalloc((void**)&dev_maxVal, sizeof(float));
-		cudaMalloc((void**)&dev_minVal, sizeof(float));
-		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
-		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaFree(dev_maxVal);
-		cudaFree(dev_minVal);
-		cudaFree(dev_maxLoc);
-		cudaFree(dev_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal));
+		checkCudaErrors(cudaFree(dev_minVal));
+		checkCudaErrors(cudaFree(dev_maxLoc));
+		checkCudaErrors(cudaFree(dev_minLoc));
 		res -> set(i, host_maxVal);
 	}
 	return res;
@@ -749,23 +741,23 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 		float *dev_minVal = 0;
 		int *dev_maxLoc = 0;
 		int *dev_minLoc = 0;
-		cudaMalloc((void**)&dev_maxVal, sizeof(float));
-		cudaMalloc((void**)&dev_minVal, sizeof(float));
-		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
-		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaFree(dev_maxVal);
-		cudaFree(dev_minVal);
-		cudaFree(dev_maxLoc);
-		cudaFree(dev_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal));
+		checkCudaErrors(cudaFree(dev_minVal));
+		checkCudaErrors(cudaFree(dev_maxLoc));
+		checkCudaErrors(cudaFree(dev_minLoc));
 		max_val -> set(i, host_maxVal);
 		max_loc -> set(i, host_maxLoc);
 	}
@@ -793,23 +785,23 @@ vector3f* min(const Mat* src){
 		float *dev_minVal = 0;
 		int *dev_maxLoc = 0;
 		int *dev_minLoc = 0;
-		cudaMalloc((void**)&dev_maxVal, sizeof(float));
-		cudaMalloc((void**)&dev_minVal, sizeof(float));
-		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
-		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaFree(dev_maxVal);
-		cudaFree(dev_minVal);
-		cudaFree(dev_maxLoc);
-		cudaFree(dev_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal));
+		checkCudaErrors(cudaFree(dev_minVal));
+		checkCudaErrors(cudaFree(dev_maxLoc));
+		checkCudaErrors(cudaFree(dev_minLoc));
 		res -> set(i, host_minVal);
 	}
 	return res;
@@ -829,23 +821,23 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 		float *dev_minVal = 0;
 		int *dev_maxLoc = 0;
 		int *dev_minLoc = 0;
-		cudaMalloc((void**)&dev_maxVal, sizeof(float));
-		cudaMalloc((void**)&dev_minVal, sizeof(float));
-		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
-		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaFree(dev_maxVal);
-		cudaFree(dev_minVal);
-		cudaFree(dev_maxLoc);
-		cudaFree(dev_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal));
+		checkCudaErrors(cudaFree(dev_minVal));
+		checkCudaErrors(cudaFree(dev_maxLoc));
+		checkCudaErrors(cudaFree(dev_minLoc));
 		min_val -> set(i, host_minVal);
 		min_loc -> set(i, host_minLoc);
 	}
@@ -866,23 +858,23 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 		float *dev_minVal = 0;
 		int *dev_maxLoc = 0;
 		int *dev_minLoc = 0;
-		cudaMalloc((void**)&dev_maxVal, sizeof(float));
-		cudaMalloc((void**)&dev_minVal, sizeof(float));
-		cudaMalloc((void**)&dev_maxLoc, sizeof(int));
-		cudaMalloc((void**)&dev_minLoc, sizeof(int));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost);
-		cudaFree(dev_maxVal);
-		cudaFree(dev_minVal);
-		cudaFree(dev_maxLoc);
-		cudaFree(dev_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal));
+		checkCudaErrors(cudaFree(dev_minVal));
+		checkCudaErrors(cudaFree(dev_maxLoc));
+		checkCudaErrors(cudaFree(dev_minLoc));
 		max_val -> set(i, host_maxVal);
 		max_loc -> set(i, host_maxLoc);
 		min_val -> set(i, host_minVal);

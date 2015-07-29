@@ -218,7 +218,7 @@ void cpuMat::copyTo(Mat &m) const{
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, Data, getLength() * sizeof(float));
-	cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+	checkCudaErrors(cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void cpuMat::moveTo(cpuMat &m){
@@ -249,7 +249,7 @@ void cpuMat::moveTo(Mat &m){
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, Data, getLength() * sizeof(float));
-	cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+	checkCudaErrors(cudaMemcpy(m.devData, Data, getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	release();
 }
 

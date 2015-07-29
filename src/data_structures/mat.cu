@@ -19,7 +19,7 @@ Mat::Mat(const Mat &m){
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 }
 
 Mat::Mat(const cpuMat &m){
@@ -31,7 +31,7 @@ Mat::Mat(const cpuMat &m){
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.Data, getLength() * sizeof(float));
-	cudaMemcpy(devData, m.Data, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+	checkCudaErrors(cudaMemcpy(devData, m.Data, getLength() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 Mat::Mat(int height, int width, int nchannels){
@@ -84,7 +84,7 @@ Mat& Mat::operator=(const Mat &m){
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
     return *this;
 }
 
@@ -103,7 +103,7 @@ Mat& Mat::operator<<=(Mat &m){
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 	m.release();
     return *this;
 }
@@ -138,13 +138,13 @@ void Mat::randu(){
 	if(NULL == devData) mallocDevice();
 	curandGenerator_t gen;
 	// Create pseudo-random number generator
-	curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+	checkCudaErrors(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
 	// Set seed
-	curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+	checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, 1234ULL));
 	// Generate n floats on device
-	curandGenerateUniform(gen, devData, getLength());
+	checkCudaErrors(curandGenerateUniform(gen, devData, getLength()));
 	// Cleanup generator
-	curandDestroyGenerator(gen);
+	checkCudaErrors(curandDestroyGenerator(gen));
 	deviceToHost();
 	for(int i = 0; i < getLength(); ++i){
 		hostData[i] = hostData[i] * 2.0 - 1.0;
@@ -266,7 +266,7 @@ void Mat::deviceToHost(){
 		exit(0);
 	}
 	// Copy device memory to host
-	cudaMemcpy(hostData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost);
+	checkCudaErrors(cudaMemcpy(hostData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 void Mat::hostToDevice(){
@@ -276,7 +276,7 @@ void Mat::hostToDevice(){
 		exit(0);
 	}
 	// Copy host memory to device
-	cudaMemcpy(devData, hostData, getLength() * sizeof(float), cudaMemcpyHostToDevice);
+	checkCudaErrors(cudaMemcpy(devData, hostData, getLength() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void Mat::copyTo(Mat &m) const{
@@ -294,7 +294,7 @@ void Mat::copyTo(Mat &m) const{
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, hostData, getLength() * sizeof(float));
-	cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	checkCudaErrors(cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 }
 
 void Mat::copyTo(cpuMat &m) const{
@@ -324,7 +324,7 @@ void Mat::moveTo(Mat &m){
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, hostData, getLength() * sizeof(float));
-	cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice);
+	checkCudaErrors(cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 	release();
 }
 
@@ -351,14 +351,14 @@ Mat Mat::operator+(const Mat &m) const{
 	int n = getLength();
 	Mat tmpmat(m);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSetVector (n, sizeof (float), hostData, 1, devData, 1); // cp x- >d_x
-	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
+	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
 	float alpha = 1.0;
 	// multiply the vector d_x by the scalar alpha and add to d_y
-	cublasSaxpy(handle, n, &alpha, devData, 1, tmpmat.devData, 1);
-	cublasGetVector (n, sizeof (float), tmpmat.devData, 1, tmpmat.hostData, 1); // cp d_y - >y
-	cublasDestroy ( handle ); // destroy CUBLAS context
+	checkCudaErrors(cublasSaxpy(handle, n, &alpha, devData, 1, tmpmat.devData, 1));
+	checkCudaErrors(cublasGetVector (n, sizeof (float), tmpmat.devData, 1, tmpmat.hostData, 1)); // cp d_y - >y
+	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -406,14 +406,14 @@ Mat& Mat::operator+=(const Mat &m){
 	int n = getLength();
 	Mat tmpmat(m);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSetVector (n, sizeof (float), hostData, 1, devData, 1); // cp x- >d_x
-	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
+	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
 	float alpha = 1.0;
 	// multiply the vector d_x by the scalar alpha and add to d_y
-	cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1);
-	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
-	cublasDestroy ( handle ); // destroy CUBLAS context
+	checkCudaErrors(cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1));
+	checkCudaErrors(cublasGetVector (n, sizeof (float), devData, 1, hostData, 1)); // cp d_y - >y
+	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
 	deviceToHost();
 	tmpmat.release();
     return *this;
@@ -459,14 +459,14 @@ Mat Mat::operator-(const Mat &m) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSetVector (n, sizeof (float), m.hostData, 1, m.devData, 1); // cp x- >d_x
-	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSetVector (n, sizeof (float), m.hostData, 1, m.devData, 1)); // cp x- >d_x
+	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
 	float alpha = -1.0;
 	// multiply the vector d_x by the scalar alpha and add to d_y
-	cublasSaxpy(handle, n, &alpha, m.devData, 1, tmpmat.devData, 1);
-	cublasGetVector (n, sizeof (float) ,tmpmat.devData, 1, tmpmat.hostData, 1); // cp d_y - >y
-	cublasDestroy ( handle ); // destroy CUBLAS context
+	checkCudaErrors(cublasSaxpy(handle, n, &alpha, m.devData, 1, tmpmat.devData, 1));
+	checkCudaErrors(cublasGetVector (n, sizeof (float) ,tmpmat.devData, 1, tmpmat.hostData, 1)); // cp d_y - >y
+	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -513,14 +513,14 @@ Mat& Mat::operator-=(const Mat &m){
 	int n = getLength();
 	Mat tmpmat(m);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSetVector (n, sizeof (float), hostData, 1, devData, 1); // cp x- >d_x
-	cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1); // cp y- >d_y
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
+	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
 	float alpha = -1.0;
 	// multiply the vector d_x by the scalar alpha and add to d_y
-	cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1);
-	cublasGetVector (n, sizeof (float), devData, 1, hostData, 1); // cp d_y - >y
-	cublasDestroy ( handle ); // destroy CUBLAS context
+	checkCudaErrors(cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1));
+	checkCudaErrors(cublasGetVector (n, sizeof (float), devData, 1, hostData, 1)); // cp d_y - >y
+	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
 	deviceToHost();
 	tmpmat.release();
     return *this;
@@ -563,16 +563,16 @@ Mat Mat::operator*(const Mat &m) const{
 	}
 	Mat tmpmat(rows, m.cols, channels);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	float alpha = 1.0;
 	float beta = 1.0;
 	for(int i = 0; i < channels; ++i){
-		cublasSetMatrix (rows, cols, sizeof(float), hostData + i * (rows * cols), rows, devData + i * (rows * cols), rows); // cp x- >d_x
-		cublasSetMatrix (m.rows, m.cols, sizeof(float), m.hostData + i * (m.rows * m.cols), m.rows, m.devData + i * (m.rows * m.cols), m.rows); // cp y- >d_y
-		cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, rows, m.cols, cols, &alpha, devData + i * (rows * cols), rows, m.devData + i * (m.rows * m.cols), cols, &beta, tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows);
-		cublasGetMatrix (rows, m.cols, sizeof(float), tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows, tmpmat.hostData + i * (tmpmat.rows * tmpmat.cols), rows);
+		checkCudaErrors(cublasSetMatrix (rows, cols, sizeof(float), hostData + i * (rows * cols), rows, devData + i * (rows * cols), rows)); // cp x- >d_x
+		checkCudaErrors(cublasSetMatrix (m.rows, m.cols, sizeof(float), m.hostData + i * (m.rows * m.cols), m.rows, m.devData + i * (m.rows * m.cols), m.rows)); // cp y- >d_y
+		checkCudaErrors(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, rows, m.cols, cols, &alpha, devData + i * (rows * cols), rows, m.devData + i * (m.rows * m.cols), cols, &beta, tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows));
+		checkCudaErrors(cublasGetMatrix (rows, m.cols, sizeof(float), tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows, tmpmat.hostData + i * (tmpmat.rows * tmpmat.cols), rows));
 	}
-	cublasDestroy (handle); // destroy CUBLAS context
+	checkCudaErrors(cublasDestroy (handle)); // destroy CUBLAS context
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -586,10 +586,10 @@ Mat Mat::operator*(float val) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, n, &val, tmpmat.devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, n, &val, tmpmat.devData, 1));
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -601,13 +601,13 @@ Mat Mat::operator*(const vector3f &v) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
 		float tmp = v.get(i);
-		cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1);
+		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
 	}
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -618,10 +618,10 @@ Mat& Mat::operator*=(float val){
 	}
 	int n = getLength();
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, n, &val, devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, n, &val, devData, 1));
 	deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return *this;
 }
 
@@ -631,13 +631,13 @@ Mat& Mat::operator*=(const vector3f &v){
 		exit(0);
 	}
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
 		float tmp = v.get(i);
-		cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1);
+		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1));
 	}
 	deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return *this;
 }
 
@@ -651,10 +651,10 @@ Mat Mat::operator/(float val) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, n, &tmp, tmpmat.devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, n, &tmp, tmpmat.devData, 1));
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -666,13 +666,13 @@ Mat Mat::operator/(const vector3f &v) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
 		float tmp = 1 / v.get(i);
-		cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1);
+		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
 	}
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -684,10 +684,10 @@ Mat& Mat::operator/=(float val){
 	int n = getLength();
 	float tmp = 1 / val;
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, n, &tmp, devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, n, &tmp, devData, 1));
 	deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return *this;
 }
 
@@ -697,13 +697,13 @@ Mat& Mat::operator/=(const vector3f &v){
 		exit(0);
 	}
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
 		float tmp = 1 / v.get(i);
-		cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1);
+		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1));
 	}
 	deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return *this;
 }
 
@@ -732,10 +732,10 @@ Mat Mat::mul(float val) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
-	cublasSscal(handle, n, &val, tmpmat.devData, 1);
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
+	checkCudaErrors(cublasSscal(handle, n, &val, tmpmat.devData, 1));
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -747,13 +747,13 @@ Mat Mat::mul(const vector3f &v) const{
 	Mat tmpmat;
 	copyTo(tmpmat);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
 		float tmp = v.get(i);
-		cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1);
+		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
 	}
 	tmpmat.deviceToHost();
-    cublasDestroy(handle);
+    checkCudaErrors(cublasDestroy(handle));
 	return tmpmat;
 }
 
@@ -768,14 +768,14 @@ Mat Mat::t() const{
     float const alpha(1.0);
     float const beta(0.0);
 	cublasHandle_t handle; // CUBLAS context
-	cublasCreate (&handle); // initialize CUBLAS context
+	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
 	for(int i = 0; i < channels; ++i){
-		cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, cols, rows, &alpha, devData + i * (rows * cols), rows, &beta, devData + i * (rows * cols), cols, tmpmat.devData + i * (rows * cols), cols);
+		checkCudaErrors(cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, cols, rows, &alpha, devData + i * (rows * cols), rows, &beta, devData + i * (rows * cols), cols, tmpmat.devData + i * (rows * cols), cols));
 	}
 	int tmp = tmpmat.rows;
 	tmpmat.rows = tmpmat.cols;
 	tmpmat.cols = tmp;
-	cublasDestroy(handle);
+	checkCudaErrors(cublasDestroy(handle));
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -802,11 +802,7 @@ void Mat::mallocDevice(){
 			std::cout<<"device memory allocation failed... because of error number : "<<(int)cudaStat<<std::endl;
 			exit(0);
 		}
-		cudaStat = cudaMemset(devData, 0, sizeof(float) * cols * rows * channels);
-		if(cudaStat != cudaSuccess) {
-			std::cout<<"device memory cudaMemset failed... because of error number : "<<(int)cudaStat<<std::endl;
-			exit(0);
-		}
+		checkCudaErrors(cudaMemset(devData, 0, sizeof(float) * cols * rows * channels));
 	}
 }
 
@@ -841,7 +837,7 @@ void Mat::printDevice(const std::string &str) const{
 	}
 	float *host_data = 0;
 	host_data = (float*)MemoryMonitor::instance()->cpuMalloc(getLength() * sizeof(float));
-	cudaMemcpy(host_data, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost);
+	checkCudaErrors(cudaMemcpy(host_data, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 	int counter = 0;
 	std::cout<<"Matrix with "<<channels<<" channels, "<<rows<<" rows, "<<cols<<"columns."<<std::endl;
 	for(int i = 0; i < channels; ++i){

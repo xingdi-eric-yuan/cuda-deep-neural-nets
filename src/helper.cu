@@ -101,7 +101,7 @@ void showGpuProperty(){
 
 	cudaDeviceProp prop;
 	int count;
-	cudaGetDeviceCount(&count);
+	checkCudaErrors(cudaGetDeviceCount(&count));
 	for(int i = 0; i < count; ++i){
 		cudaGetDeviceProperties(&prop, i);
 		cout<<"--- general information for device "<<i<<endl;
