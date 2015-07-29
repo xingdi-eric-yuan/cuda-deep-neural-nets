@@ -33,24 +33,19 @@ void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
         }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }*/
-        if(flow[i] -> output_format == "matrix"){
-            //cout<<"output dimension is "<<flow[i] -> output_matrix.size()<<endl;
-        }else{
-            //cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
-        }
     }
 }
 
 void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
-    cout<<"---------------- forward "<<endl;
+    //cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
     Mat *tmp = new Mat();
 	vector3f *tmpvec3 = new vector3f();
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
-        cout<<flow[i] -> layer_name<<endl;
+        //cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             batch_size = ((input_layer*)flow[i]) -> batch_size;
             ((input_layer*)flow[i]) -> forwardPass(batch_size, x, y);
@@ -96,21 +91,11 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
         }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }*/
-        if(flow[i] -> output_format == "matrix"){
-            //cout<<flow[i] -> output_matrix.size()<<endl;
-            //cout<<flow[i] -> output_matrix<<endl;
-        }else{
-            //cout<<flow[i] -> output_vector.size()<<", "<<flow[i] -> output_vector[0].size()<<", "<<flow[i] -> output_vector[0][0].size()<<endl;
-            //cout<<flow[i] -> output_vector[0][0]<<endl;
-        }
     }
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
-    	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost<<endl;
+    	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost;//endl;
     tmp -> release();
-
-	//printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
-	//printf("------------------------------- using cpu memory %fMb\n", MemoryMonitor::instance() -> getCpuMemory() / 1024 / 1024);
 }
 
 void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
@@ -118,7 +103,6 @@ void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
     // forward pass
     int batch_size = x.size();
     for(int i = 0; i < flow.size(); i++){
-
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> forwardPassTest(batch_size, x, y);
         }elif(flow[i] -> layer_type == "convolutional"){
@@ -139,13 +123,12 @@ void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
             ((local_response_normalization_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
         }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
-        }
-*/
+        }*/
     }
 }
 
 void backwardPass(std::vector<network_layer*> &flow){
-    cout<<"---------------- backward"<<endl;
+    //cout<<"---------------- backward"<<endl;
     // backward pass
     int batch_size = ((input_layer*)flow[0]) -> batch_size;
     Mat *groundTruth = new Mat(((softmax_layer*)flow[flow.size() - 1]) -> output_size, batch_size, 1);
@@ -153,7 +136,7 @@ void backwardPass(std::vector<network_layer*> &flow){
     	groundTruth -> set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
     }
     for(int i = flow.size() - 1; i >= 0; --i){
-        cout<<flow[i] -> layer_name<<endl;
+        //cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> backwardPass();
         }elif(flow[i] -> layer_type == "convolutional"){
@@ -175,20 +158,14 @@ void backwardPass(std::vector<network_layer*> &flow){
         }/*elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }*/
-        if(flow[i] -> layer_name == "input") break;
-        if(flow[i] -> output_format == "matrix"){
-            //cout<<"delta dimension is "<<flow[i] -> delta_matrix.size()<<endl;
-        }else{
-            //cout<<"delta dimension is "<<flow[i] -> delta_vector.size()<<" * "<<flow[i] -> delta_vector[0].size()<<" * "<<flow[i] -> delta_vector[0][0].size()<<endl;
-        }
     }
     groundTruth -> release();
 }
 
 void updateNetwork(std::vector<network_layer*> &flow, int iter){
-    cout<<"---------------- update"<<endl;
+    //cout<<"---------------- update"<<endl;
     for(int i = 0; i < flow.size(); ++i){
-        cout<<flow[i] -> layer_name<<endl;
+        //cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "convolutional"){
             ((convolutional_layer*)flow[i]) -> update(iter);
         }elif(flow[i] -> layer_type == "fully_connected"){
@@ -293,27 +270,20 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
     forwardPassInit(x, y, flow);
     printNetwork(flow);
 
-
-    //forwardPass(x, y, flow);
-    //forwardPass(x, y, flow);
-    //return;
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);
     }else{
     cout<<"****************************************************************************"<<endl
         <<"**                       TRAINING NETWORK......                             "<<endl
         <<"****************************************************************************"<<endl<<endl;
-
         int k = 0;
         for(int epo = 1; epo <= training_epochs; epo++){
-
             for(; k <= iter_per_epo * epo; k++){
                 cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;
                 forwardPass(x, y, flow);
                 backwardPass(flow);
                 updateNetwork(flow, k);
-
-        		printf("******************************* using gpu memory %fMb\n", MemoryMonitor::instance() -> getGpuMemory() / 1024 / 1024);
+                cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
             }
 
             //cout<<"Test training data: "<<endl;

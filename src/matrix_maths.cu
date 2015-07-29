@@ -1290,7 +1290,6 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     fComplex *d_DataSpectrum0, *d_KernelSpectrum0;
     cufftHandle fftPlan;
     float *host_result_tmp, *host_result;
-	
     const int kernelH = kernel -> rows;
     const int kernelW = kernel -> cols;
     const int kernelY = kernel -> rows / 2;
@@ -1301,37 +1300,36 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     const int fftW = snapTransformSize(dataW + kernelW - 1);
     host_result = (float *)malloc(dataH * dataW * sizeof(float));
     host_result_tmp = (float *)malloc(fftH * fftW * sizeof(float));
-    cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float));
-    cudaMalloc((void **)&d_Kernel, kernelH * kernelW * sizeof(float));
-    cudaMalloc((void **)&d_PaddedData,   fftH * fftW * sizeof(float));
-    cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float));
-    cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex));
-    cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex));
+    checkCudaErrors(cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_Kernel, kernelH * kernelW * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_PaddedData,   fftH * fftW * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex)));
+    checkCudaErrors(cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex)));
     // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
-    cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C);
+    checkCudaErrors(cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C));
     for(int i = 0; i < m -> channels; ++i){
-        cudaMemcpy(d_Data, m -> devData + m -> rows * m -> cols * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice);
-        cudaMemcpy(d_Kernel, kernel -> devData + kernel -> rows * kernel -> cols * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice);
-        cudaMemset(d_PaddedData,   0, fftH * fftW * sizeof(float));
-        cudaMemset(d_PaddedKernel, 0, fftH * fftW * sizeof(float));
+    	checkCudaErrors(cudaMemcpy(d_Data, m -> devData + dataH * dataW * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice));
+    	checkCudaErrors(cudaMemcpy(d_Kernel, kernel -> devData + kernelH * kernelW * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice));
+    	checkCudaErrors(cudaMemset(d_PaddedData,   0, fftH * fftW * sizeof(float)));
+    	checkCudaErrors(cudaMemset(d_PaddedKernel, 0, fftH * fftW * sizeof(float)));
         padDataClampToBorder(d_PaddedData, d_Data, fftH, fftW,
         					dataH, dataW, kernelH, kernelW, kernelY, kernelX);
-        padKernel(d_PaddedKernel, d_Kernel, fftH, fftW,
-            kernelH, kernelW, kernelY, kernelX);
+        padKernel(d_PaddedKernel, d_Kernel, fftH, fftW, kernelH, kernelW, kernelY, kernelX);
         //CUFFT_INVERSE works just as well...
         const int FFT_DIR = CUFFT_FORWARD;
         //Not including kernel transformation into time measurement,
         //since convolution kernel is not changed very frequently
         // std::cout<<"...transforming convolution kernel"<<std::endl;
-        cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedKernel, (cufftComplex *)d_KernelSpectrum0, FFT_DIR);
+        checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedKernel, (cufftComplex *)d_KernelSpectrum0, FFT_DIR));
         // std::cout<<"...running GPU FFT convolution: "<<std::endl;
-        cudaDeviceSynchronize();
-        cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedData, (cufftComplex *)d_DataSpectrum0, FFT_DIR);
+        checkCudaErrors(cudaDeviceSynchronize());
+        checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedData, (cufftComplex *)d_DataSpectrum0, FFT_DIR));
         spProcess2D(d_DataSpectrum0, d_DataSpectrum0, d_KernelSpectrum0, fftH, fftW / 2, FFT_DIR);
-        cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR);
-        cudaDeviceSynchronize();
+        checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR));
+        checkCudaErrors(cudaDeviceSynchronize());
         // std::cout<<"...reading back GPU FFT results"<<std::endl;
-        cudaMemcpy(host_result_tmp, d_PaddedData, fftH * fftW * sizeof(float), cudaMemcpyDeviceToHost);
+        checkCudaErrors(cudaMemcpy(host_result_tmp, d_PaddedData, fftH * fftW * sizeof(float), cudaMemcpyDeviceToHost));
         for(int y = 0; y < dataH; y++){
             for(int x = 0; x < dataW; x++){
                 host_result[y * dataW + x] = host_result_tmp[y * fftW  + x];
@@ -1340,12 +1338,13 @@ Mat* conv2(const Mat *m, const Mat *kernel){
         memcpy(res -> hostData + i * res -> rows * res -> cols, host_result, res -> rows * res -> cols * sizeof(float));
     }
     res -> hostToDevice();
-    cudaFree(d_KernelSpectrum0);
-    cudaFree(d_DataSpectrum0);
-    cudaFree(d_PaddedKernel);
-    cudaFree(d_PaddedData);
-    cudaFree(d_Kernel);
-    cudaFree(d_Data);
+    checkCudaErrors(cufftDestroy(fftPlan));
+    checkCudaErrors(cudaFree(d_KernelSpectrum0));
+    checkCudaErrors(cudaFree(d_DataSpectrum0));
+    checkCudaErrors(cudaFree(d_PaddedKernel));
+    checkCudaErrors(cudaFree(d_PaddedData));
+    checkCudaErrors(cudaFree(d_Kernel));
+    checkCudaErrors(cudaFree(d_Data));
     free(host_result);
     free(host_result_tmp);
     return res;
@@ -1453,6 +1452,9 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 	return dst;
 }
 
+
+// THE FOLLOWING POOLING METHOD SUCKS, NEED TO SPEED UP!!!!
+
 // Pooling with overlap
 // Max pooling and stochastic pooling supported
 // output size = (input size - window size) / stride + 1
@@ -1490,7 +1492,6 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
     }
     Mat *dst = new Mat();
     safeGetPt(dst, downSample(tmpres, stride, stride));
-    /////////THE FORMER METHOD SUCKS!!!
     for(int i = 0; i < dst -> cols; ++i){
     	for(int j = 0; j < dst -> rows; ++j){
     		locat.push_back(tmplocat[i * stride * tmpres -> rows + j * stride]);
@@ -1502,9 +1503,6 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
     std::vector<vector3f*>().swap(tmplocat);
     return dst;
 }
-
-
-//RNN START & END
 
 // Max pooling and stochastic pooling supported
 Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, int poolingMethod, std::vector<vector3f*> &locat, vector2i* up_size){

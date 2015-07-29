@@ -13,6 +13,7 @@
 #include <cufft.h>
 #include <time.h>
 
+#include "check_cuda_error.h"
 #include "data_structures/data_structure.h"
 #include "layers/layer_bank.h"
 #include "ios/read_data.h"
@@ -69,6 +70,7 @@ class vector3f;
 using namespace std;
 
 static float leaky_relu_alpha = 100.0;
+const size_t Mb = 1 << 20; // Assuming a 1Mb page size here
 extern bool is_gradient_checking;
 extern bool use_log;
 extern int training_epochs;
