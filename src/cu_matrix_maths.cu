@@ -349,8 +349,6 @@ __global__ void cu_depadding(const float* src, float* dst, const int rows1, cons
 __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	//int scale_x = colsdst / colsa;
-	//int scale_y = rowsdst / rowsa;
 	while(tid < n){
 		int c2 = tid % colsdst;
 		int r2 = tid / colsdst;
@@ -424,7 +422,6 @@ __global__ void cu_copyMakeBorder(const float *src, float* dst, const int rowssr
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	int colsdst = colssrc + left + right;
-	//int colsdst = colssrc + left + right;
 	while(tid < n){
 		int csrc = tid % colssrc;
 		int rsrc = tid / colssrc;

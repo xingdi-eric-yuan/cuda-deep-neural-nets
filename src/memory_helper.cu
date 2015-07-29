@@ -37,7 +37,7 @@ cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
 	while(1){
 		error = cudaMalloc(devPtr,  size);
 		if(cudaSuccess != error){
-		 	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / 1024 / 1024);
+		 	printf("******************************* gpu malloc memory %fMb, totally %fMb\n", 1.0 * size / 1024 / 1024, gpuMemory / 1024 / 1024);
 		}
 		if(cudaErrorMemoryAllocation != error) break;
 	    nwords -= words_per_Mb;

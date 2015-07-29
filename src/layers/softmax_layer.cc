@@ -190,8 +190,8 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     safeGetPt(bd2, divide(bd2, nsamples));
 
     safeGetPt(tmp1, t(w));
-    safeGetPt(tmp1, multiply_elem(tmp1, -1));
     safeGetPt(delta_matrix, multiply(tmp1, derivative));
+    safeGetPt(delta_matrix, multiply_elem(delta_matrix, -1));
     safeGetPt(tmp1, square(tmp1));
     safeGetPt(tmp2, square(derivative));
     safeGetPt(d2_matrix, multiply(tmp1, tmp2));

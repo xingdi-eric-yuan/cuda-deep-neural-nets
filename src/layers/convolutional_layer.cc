@@ -207,11 +207,9 @@ void convolutional_layer::forwardPass(int nsamples, network_layer* previous_laye
                 tmpvec[k] = new Mat();
                 Mat *temp = new Mat();
                 safeGetPt(temp, rot90(kernels[k] -> w, 2));
-                Mat *tmpconv = new Mat();
-                safeGetPt(tmpconv, conv2(input[i][j], temp, CONV_VALID, padding, stride));
-                safeGetPt(tmpvec[k], add(tmpconv, kernels[k] -> b));
+                safeGetPt(tmpvec[k], conv2(input[i][j], temp, CONV_VALID, padding, stride));
+                safeGetPt(tmpvec[k], add(tmpvec[k], kernels[k] -> b));
                 temp -> release();
-                tmpconv -> release();
             }
             if(combine_feature_map > 0){
                 std::vector<Mat*> outputvec(combine_feature_map);
@@ -282,6 +280,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
         	d2_vector[i][j] = new Mat();
         }
     }
+    cout<<"---------------------------------            1111111"<<endl;
     Mat *tmp = new Mat();
     Mat *tmp2 = new Mat();
     Mat *tmp3 = new Mat();
@@ -298,6 +297,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	tmpgradb[m] = new vector3f();
     	tmpbd2[m] = new vector3f();
     }
+    cout<<"---------------------------------            222222"<<endl;
     Mat *c_weight = NULL;
     Mat *c_weightgrad = NULL;
     Mat *c_weightd2 = NULL;
@@ -312,11 +312,13 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     }
     for(int i = 0; i < nsamples; i++){
         for(int j = 0; j < previous_layer -> output_vector[i].size(); j++){
+            cout<<"---------------------------------            33333    "<<i<<", "<<j<<endl;
             std::vector<Mat*> sensi(kernels.size());
             std::vector<Mat*> sensid2(kernels.size());
             Mat *tmp_delta = new Mat();
             Mat *tmp_d2 = new Mat();
             for(int m = 0; m < kernels.size(); m++) {
+                cout<<"---------------------------------            4444444    "<<i<<", "<<j<<", "<<m<<endl;
             	sensi[m] = new Mat(output_vector[0][0] -> rows, output_vector[0][0] -> cols, 3);
             	sensid2[m] = new Mat(output_vector[0][0] -> rows, output_vector[0][0] -> cols, 3);
                 if(combine_feature_map > 0){
@@ -333,14 +335,18 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                 	safeGetPt(sensi[m], add(sensi[m], derivative[i][j * kernels.size() + m]));
                 	safeGetPt(sensid2[m], add(sensid2[m], deriv2[i][j * kernels.size() + m]));
                 }
+                cout<<"---------------------------------            555555    "<<i<<", "<<j<<", "<<m<<endl;
                 if(stride > 1){
                     int len = previous_layer -> output_vector[0][0] -> rows + padding * 2 - kernels[0] -> w -> rows + 1;
                 	safeGetPt(sensi[m], interpolation(sensi[m], len));
                 	safeGetPt(sensid2[m], interpolation(sensid2[m], len));
                 }
+                cout<<"---------------------------------            5   111    "<<i<<", "<<j<<", "<<m<<endl;
             	safeGetPt(tmp3, square(kernels[m] -> w));
                 if(m == 0){
+                    cout<<"---------------------------------            5   222    "<<i<<", "<<j<<", "<<m<<endl;
                 	safeGetPt(tmp_delta, conv2(sensi[m], kernels[m] -> w, CONV_FULL, 0, 1));
+                    cout<<"---------------------------------            5   333    "<<i<<", "<<j<<", "<<m<<endl;
                 	safeGetPt(tmp_d2, conv2(sensid2[m], tmp3, CONV_FULL, 0, 1));
                 }else{
                 	safeGetPt(tmp, conv2(sensi[m], kernels[m] -> w, CONV_FULL, 0, 1));
@@ -348,6 +354,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                 	safeGetPt(tmp_delta, add(tmp_delta, tmp));
                 	safeGetPt(tmp_d2, add(tmp_d2, tmp2));
                 }
+                cout<<"---------------------------------            666666    "<<i<<", "<<j<<", "<<m<<endl;
                 Mat *input = new Mat();
                 if(padding > 0){
                 	safeGetPt(input, dopadding(previous_layer -> output_vector[i][j], padding));
@@ -366,6 +373,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                 safeGetPt(tmp_wgrad[m], add(tmp_wgrad[m], tmp2));
                 safeGetPt(tmp_wd2[m], add(tmp_wd2[m], tmp3));
 
+                cout<<"---------------------------------            7777777    "<<i<<", "<<j<<", "<<m<<endl;
                 if(combine_feature_map > 0){
                     // combine feature map weight matrix (after softmax)
                     // previous_layer -> output_vector[i][j] -> copyTo(input);
@@ -400,6 +408,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
             std::vector<Mat*>().swap(sensid2);
         }
     }
+    cout<<"---------------------------------            8888888    "<<endl;
     for(int i = 0; i < kernels.size(); i++){
     	tmpvec3_1 -> setAll(kernels[i] -> weight_decay);
     	safeGetPt(kernels[i] -> wgrad, divide(tmp_wgrad[i], nsamples));

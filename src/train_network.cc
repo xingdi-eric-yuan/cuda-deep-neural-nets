@@ -43,14 +43,14 @@ void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
 
 void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
-    //cout<<"---------------- forward "<<endl;
+    cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
     Mat *tmp = new Mat();
 	vector3f *tmpvec3 = new vector3f();
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             batch_size = ((input_layer*)flow[i]) -> batch_size;
             ((input_layer*)flow[i]) -> forwardPass(batch_size, x, y);
@@ -145,7 +145,7 @@ void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
 }
 
 void backwardPass(std::vector<network_layer*> &flow){
-    //cout<<"---------------- backward"<<endl;
+    cout<<"---------------- backward"<<endl;
     // backward pass
     int batch_size = ((input_layer*)flow[0]) -> batch_size;
     Mat *groundTruth = new Mat(((softmax_layer*)flow[flow.size() - 1]) -> output_size, batch_size, 1);
@@ -153,7 +153,7 @@ void backwardPass(std::vector<network_layer*> &flow){
     	groundTruth -> set(((input_layer*)flow[0]) -> label -> get(0, i, 0), i, 0, 1.0);
     }
     for(int i = flow.size() - 1; i >= 0; --i){
-        //cout<<flow[i] -> layer_name<<endl;
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> backwardPass();
         }elif(flow[i] -> layer_type == "convolutional"){
