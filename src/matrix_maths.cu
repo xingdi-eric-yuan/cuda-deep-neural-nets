@@ -918,6 +918,20 @@ Mat* lessThan(const Mat *src, float val){
 	return dst;
 }
 
+Mat* equalTo(const Mat *src, float val){
+	if(NULL == src -> hostData || NULL == src -> devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_equalTo<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+	dst -> deviceToHost();
+	return dst;
+}
+
 // convert from vector of img to matrix
 // vec.size() == nsamples
 void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
@@ -1452,7 +1466,6 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 	return dst;
 }
 
-
 // THE FOLLOWING POOLING METHOD SUCKS, NEED TO SPEED UP!!!!
 
 // Pooling with overlap
@@ -1466,6 +1479,8 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 	Mat *tmpres = new Mat(src -> rows - window_size -> get(1) + 1, src -> cols - window_size -> get(0) + 1, src -> channels);
 	std::vector<vector3f*> tmplocat;
 	Mat *tmp = NULL;
+	vector3f *tmpr = new vector3f();
+	vector3f *tmpc = new vector3f();
     for(int i = 0; i < tmpres -> rows; ++i){
         for(int j = 0; j < tmpres -> cols; ++j){
         	int xstart = j;
@@ -1478,8 +1493,6 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
         	if(POOL_MAX == poolingMethod){
         		max(tmp, val, loc);
         	}
-        	vector3f *tmpr = new vector3f();
-        	vector3f *tmpc = new vector3f();
         	tmpc = div_rem(loc, window_size -> get(0));
         	tmpr = div_no_rem(loc, window_size -> get(0));
         	tmpr = add(tmpr, i);
@@ -1546,7 +1559,8 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
 	if(src -> cols % stride > 0) ++dst_cols;
 	Mat *res = new Mat(dst_rows, dst_cols, src -> channels);
 	Mat *tmp = NULL;
-
+	vector3f *tmpr = new vector3f();
+	vector3f *tmpc = new vector3f();
     for(int i = 0; i < res -> rows; ++i){
         for(int j = 0; j < res -> cols; ++j){
         	int xstart = j * stride;
@@ -1564,8 +1578,6 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
         		val = average(tmp);
         		loc -> setAll(0.0);
             }
-        	vector3f *tmpr = new vector3f();
-        	vector3f *tmpc = new vector3f();
         	tmpc = div_rem(loc, tmp -> cols);
         	tmpr = div_no_rem(loc, tmp -> cols);
         	tmpr = add(tmpr, i * stride);
@@ -1613,8 +1625,36 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, std::vector<vector
     }
 }
 
+Mat* findMax(const Mat* m){
+	if(NULL == m -> hostData || NULL == m -> devData){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat *res = new Mat(1, m -> cols, 1);
+	Mat *tmp = NULL;
+	vector3f *val = new vector3f();
+	vector3f *loc = new vector3f();
+	for(int i = 0; i < m -> cols; ++i){
+		safeGetPt(tmp, getRange(m, i, i, 0, m -> rows - 1));
+		max(tmp, val, loc);
+		res -> set(0, i, 0, loc -> get(0));
+	}
+	tmp -> release();
+	return res;
+}
 
-
-
-
+// only calculates first channel.
+int sameValuesInMat(const Mat* a, const Mat* b){
+	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData ||
+			a -> getLength() != b -> getLength()){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+	Mat *tmp = NULL;
+	safeGetPt(tmp, subtract(a, b));
+	safeGetPt(tmp, equalTo(tmp, 0.0));
+	int res = (int)(sum(tmp) -> get(0));
+	tmp -> release();
+	return res;
+}
 

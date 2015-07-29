@@ -70,16 +70,15 @@ void input_layer::getSample(const std::vector<cpuMat*>& src1, std::vector<std::v
 
 void input_layer::forwardPassTest(int nsamples, const std::vector<cpuMat*>& input_data, const cpuMat* input_label){
 
+	releaseVector(output_vector);
     output_vector.resize(input_data.size());
+    label -> zeros();
     for(int i = 0; i < output_vector.size(); i++){
         output_vector[i].resize(1);
-    }
-    for(int i = 0; i < input_data.size(); i++){
     	output_vector[i][0] = new Mat();
         input_data[i] -> copyTo(*(output_vector[i][0]));
     }
     input_label -> copyTo(*label);
-
 }
 
 void input_layer::backwardPass(){

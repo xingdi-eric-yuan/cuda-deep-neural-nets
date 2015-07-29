@@ -60,6 +60,9 @@ void minMaxLoc(const Mat*, vector3f*, vector3f*, vector3f*, vector3f*);
 
 Mat* greaterThan(const Mat*, float);
 Mat* lessThan(const Mat*, float);
+Mat* equalTo(const Mat*, float);
+Mat* findMax(const Mat*);
+int sameValuesInMat(const Mat*, const Mat*);
 
 void convert(std::vector<std::vector<Mat*> >&, Mat*);
 void convert(Mat*, std::vector<std::vector<Mat*> >&, int, int);
@@ -98,6 +101,8 @@ Mat* pooling_with_overlap(const Mat*, vector2i*, int, int, std::vector<vector3f*
 Mat* unpooling_with_overlap(const Mat*, vector2i*, int, int, std::vector<vector3f*>&, vector2i*);
 Mat* pooling(const Mat*, int, int, std::vector<vector3f*>&);
 Mat* unpooling(const Mat*, int, int, std::vector<vector3f*>&, vector2i*);
+
+
 
 // cpu math
 vector3f* average(const cpuMat*);

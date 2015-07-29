@@ -35,7 +35,6 @@ bool areApproximatelyIdentical(const vector3f*, const vector3f*);
 bool areApproximatelyIdentical(float, float);
 
 
-
 // tests
 
 bool test_add_v_f();
@@ -86,6 +85,9 @@ bool test_minLoc();
 bool test_minMaxLoc();
 bool test_greaterThan();
 bool test_lessThan();
+bool test_equalTo();
+bool test_findMax();
+bool test_sameValuesInMat();
 
 bool test_convert_vv();
 bool test_convert_m();

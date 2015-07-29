@@ -53,6 +53,10 @@ void runAllTest(){
 	if(test_minMaxLoc()){ ++ success;} ++ counter;
 	if(test_greaterThan()){ ++ success;} ++ counter;
 	if(test_lessThan()){ ++ success;} ++ counter;
+	if(test_equalTo()){ ++ success;} ++ counter;
+	if(test_findMax()){ ++ success;} ++ counter;
+	if(test_sameValuesInMat()){ ++ success;} ++ counter;
+
 
 	if(test_convert_vv()){ ++ success;} ++ counter;
 	if(test_convert_m()){ ++ success;} ++ counter;
@@ -1137,6 +1141,27 @@ bool test_lessThan(){
 	return result;
 }
 
+bool test_equalTo(){
+	const float array_equalTo[27] = {
+			0, 0, 0, 0, 0, 1, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0};
+	cout<<"testing equalTo --- ";
+	Mat *a = getTestMatrix_3();
+	float b = getTestFloat();
+	Mat *res = NULL;
+	safeGetPt(res, equalTo(a, b));
+	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
+	memcpy(expect -> hostData, array_equalTo, expect -> getLength() * sizeof(float));
+	expect -> hostToDevice();
+	bool result = areApproximatelyIdentical(res, expect);
+	a -> release();
+	res -> release();
+	expect -> release();
+	cout<<(result ? "success" : "failed")<<endl;
+	return result;
+}
+
 bool test_convert_vv(){
 	cout<<"testing convert_vv --- ";
 	const float array_convert_vv[162] = {
@@ -1871,6 +1896,7 @@ bool test_pooling(){
 			0.8351, 1.4367, 0.4716, 0.5812,
 			1.1174, 0.9642, 1.2424,-2.3193
 	};
+	// and this...
 	const float array_pooling_max_loc_ch0[16] = {
 			10, 4, 17, 19,
 			42, 33, 56, 49,
@@ -1890,21 +1916,6 @@ bool test_pooling(){
 	for(int i = 0; i < 16; ++i){
 		expect_loc_max[i] = new vector3f(array_pooling_max_loc_ch0[i], array_pooling_max_loc_ch1[i], array_pooling_max_loc_ch2[i]);
 	}
-	// 10, 4, 17, 19
-	// 42, 33, 56, 49
-	// 80, 75, 78, 79
-	// 90, 93, 98, 99
-
-	// 10, 3, 17, 9
-	// 32, 35, 56, 39
-	// 70, 83, 88, 89
-	// 90, 95, 96, 99
-
-	// 2, 23, 8, 29
-	// 30, 43, 48, 39
-	// 62, 63, 68, 79
-	// 91, 94, 97, 99
-
 	cout<<"testing pooling --- ";
 	Mat *a = getTestMatrix_10_rand();
 	Mat *res_max = NULL;
@@ -1914,13 +1925,11 @@ bool test_pooling(){
 	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
 	expect_max -> hostToDevice();
 	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
-/*
-	for(int i = 0; i < 16; ++i){
-		cout<<"i = "<<i<<endl;
-		res_loc_max[i] ->print(" ");
-		expect_loc_max[i] ->print(" ");
-	}
-*/
+//	for(int i = 0; i < 16; ++i){
+//		cout<<"i = "<<i<<endl;
+//		res_loc_max[i] ->print(" ");
+//		expect_loc_max[i] ->print(" ");
+//	}
 	a -> release();
 	res_max -> release();
 	expect_max -> release();
@@ -1930,16 +1939,54 @@ bool test_pooling(){
 	std::vector<vector3f*>().swap(expect_loc_max);
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
-
-
-
 }
 
+
+
+bool test_findMax(){
+	const float array_findMax[3] = {2, 2, 1};
+	cout<<"testing findMax --- ";
+	Mat *a = getTestMatrix_3_rand();
+	Mat *res = NULL;
+	safeGetPt(res, findMax(a));
+	Mat *expect = new Mat(1, a -> cols, 1);
+	memcpy(expect -> hostData, array_findMax, expect -> getLength() * sizeof(float));
+	expect -> hostToDevice();
+	bool result = areApproximatelyIdentical(res, expect);
+	a -> release();
+	res -> release();
+	expect -> release();
+	cout<<(result ? "success" : "failed")<<endl;
+	return result;
+}
+
+// only calculates first channel.
+bool test_sameValuesInMat(){
+	const float array_sameValuesInMat[27] = {
+            0.2916, -1.1480, -1.8888,
+            0.3434,  0.2323,  0.8404,
+            1.5877,  0.7223, -0.8880,
+           -0.8045,  2.5855,  0.1001,
+            0.6966, -0.2284, -0.5445,
+            0.6565,  0.1873,  0.6666,
+           -0.2437, -0.0825, -0.6003,
+            0.2157, -1.5656,  0.4900,
+           -1.1658, -0.4390,  0.7394};
+	cout<<"testing sameValuesInMat --- ";
+	Mat *sameMat = new Mat(3, 3, 3);
+	memcpy(sameMat -> hostData, array_sameValuesInMat, sameMat -> getLength() * sizeof(float));
+	sameMat -> hostToDevice();
+	Mat *a = getTestMatrix_3_rand();
+	int res = sameValuesInMat(a, sameMat);
+	bool result = (res == 6);
+	a -> release();
+	cout<<(result ? "success" : "failed")<<endl;
+	return result;
+}
 
 /*
 
 bool test_pooling_with_overlap();
 bool test_unpooling_with_overlap();
-bool test_pooling();
 bool test_unpooling();
  */

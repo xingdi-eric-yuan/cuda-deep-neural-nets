@@ -3,7 +3,7 @@
 using namespace std;
 
 void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
-     //cout<<"---------------- forward init"<<endl;
+    //cout<<"---------------- forward init"<<endl;
     // forward pass
     int batch_size = 0;
     for(int i = 0; i < flow.size(); i++){
@@ -88,9 +88,9 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             ((pooling_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }/*elif(flow[i] -> layer_type == "dropout"){
-            ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }*/
+        }//elif(flow[i] -> layer_type == "dropout"){
+         //   ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
+        //}
     }
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
@@ -100,9 +100,11 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
 
 void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
+    cout<<"---------------- test "<<endl;
     // forward pass
     int batch_size = x.size();
     for(int i = 0; i < flow.size(); i++){
+        cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> forwardPassTest(batch_size, x, y);
         }elif(flow[i] -> layer_type == "convolutional"){
@@ -226,43 +228,54 @@ void printNetwork(std::vector<network_layer*> &flow){
 }
 
 void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
-/*
-    int batch_size = 100;
 
+    int batch_size = 100;
+    //int batch_amount = 5;
     int batch_amount = x.size() / batch_size;
     int correct = 0;
+    Mat *tmp = new Mat();
+    Mat *tmp2 = new Mat();
     for(int i = 0; i < batch_amount; i++){
-        std::vector<Mat> batchX(batch_size);
-        Mat batchY = Mat::zeros(1, batch_size, CV_64FC1);
+    	cout<<"processing batch number "<<i<<endl;
+        std::vector<cpuMat*> batchX;
+        cpuMat* batchY = new cpuMat(1, batch_size, 1);
         for(int j = 0; j < batch_size; j++){
-            x[i * batch_size + j].copyTo(batchX[j]);
+        	cpuMat *tmpmat = new cpuMat();
+        	x[i * batch_size + j] -> copyTo(*tmpmat);
+            batchX.push_back(tmpmat);
+            batchY -> set(0, j, 0, y -> get(0, i * batch_size + j, 0));
         }
-        y(Rect(i * batch_size, 0, batch_size, 1)).copyTo(batchY);
         forwardPassTest(batchX, batchY, flow);
-        Mat res = findMax(flow[flow.size() - 1] -> output_matrix);
-
-        //if(i < 3)
-        //cout<<" "<<flow[flow.size() - 1] -> output_matrix<<endl<<endl<<endl;
-        //cout<<" "<<res<<endl;
-        correct += compareMatrix(res, batchY);
+        safeGetPt(tmp, findMax(flow[flow.size() - 1] -> output_matrix));
+        batchY -> copyTo(*tmp2);
+        correct += sameValuesInMat(tmp, tmp2);
+        batchY -> release();
+        releaseVector(batchX);
         batchX.clear();
-        std::vector<Mat>().swap(batchX);
+        std::vector<cpuMat*>().swap(batchX);
+        cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
     }
     if(x.size() % batch_size){
-        std::vector<Mat> batchX(x.size() % batch_size);
-        Mat batchY = Mat::zeros(1, x.size() % batch_size, CV_64FC1);
-        for(int j = 0; j < batchX.size(); j++){
-            x[batch_amount * batch_size + j].copyTo(batchX[j]);
+        std::vector<cpuMat*> batchX;
+        cpuMat* batchY = new cpuMat(1, x.size() % batch_size, 1);
+        for(int j = 0; j < x.size() % batch_size; j++){
+        	cpuMat *tmpmat = new cpuMat();
+        	x[batch_amount * batch_size + j] -> copyTo(*tmpmat);
+            batchX.push_back(tmpmat);
+            batchY -> set(0, j, 0, y -> get(0, batch_amount * batch_size + j, 0));
         }
-        y(Rect(batch_amount * batch_size, 0, batchX.size(), 1)).copyTo(batchY);
         forwardPassTest(batchX, batchY, flow);
-        Mat res = findMax(flow[flow.size() - 1] -> output_matrix);
-        correct += compareMatrix(res, batchY);
+        safeGetPt(tmp, findMax(flow[flow.size() - 1] -> output_matrix));
+        batchY -> copyTo(*tmp2);
+        correct += sameValuesInMat(tmp, tmp2);
+        batchY -> release();
+        releaseVector(batchX);
         batchX.clear();
-        std::vector<Mat>().swap(batchX);
+        std::vector<cpuMat*>().swap(batchX);
     }
+    tmp -> release();
+    tmp2 -> release();
     cout<<"correct: "<<correct<<", total: "<<x.size()<<", accuracy: "<<float(correct) / (float)(x.size())<<endl;
-    */
 }
 
 void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vector<cpuMat*> &tx, const cpuMat *ty, std::vector<network_layer*> &flow){
@@ -288,15 +301,13 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
 
             //cout<<"Test training data: "<<endl;
             //testNetwork(x, y, flow);
-            //cout<<"Test testing data: "<<endl;
-            //testNetwork(tx, ty, flow);
+            cout<<"Test testing data: "<<endl;
+            testNetwork(tx, ty, flow);
 
             //if(use_log){
             //    save2XML("log", i2str(k), flow);
             //}
-
         }
-
     }
     //*/
 

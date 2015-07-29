@@ -116,7 +116,6 @@ void softmax_layer::update(int iter_num){
 }
 
 void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
-
     Mat *input = new Mat();
     if(previous_layer -> output_format == "image"){
         convert(previous_layer -> output_vector, input);
@@ -135,7 +134,6 @@ void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
     safeGetPt(tmp, reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_SUM));
     safeGetPt(tmp, repmat(tmp, M -> rows, 1));
     safeGetPt(output_matrix, divide(M, tmp));
-
     M -> release();
     input -> release();
     tmp -> release();
