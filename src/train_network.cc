@@ -100,11 +100,11 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
 
 void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
-    cout<<"---------------- test "<<endl;
+    //cout<<"---------------- test "<<endl;
     // forward pass
     int batch_size = x.size();
     for(int i = 0; i < flow.size(); i++){
-        cout<<flow[i] -> layer_name<<endl;
+        //cout<<flow[i] -> layer_name<<endl;
         if(flow[i] -> layer_type == "input"){
             ((input_layer*)flow[i]) -> forwardPassTest(batch_size, x, y);
         }elif(flow[i] -> layer_type == "convolutional"){

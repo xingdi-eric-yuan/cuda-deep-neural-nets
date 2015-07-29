@@ -100,6 +100,7 @@ void local_response_normalization_layer::backwardPass(int nsamples, network_laye
         }
     }
     tmp -> release();
+    tmp2 -> release();
     releaseVector(derivative);
     derivative.clear();
     std::vector<std::vector<Mat*> >().swap(derivative);
