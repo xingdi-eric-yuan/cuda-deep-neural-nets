@@ -116,7 +116,8 @@ public:
     int window_size;
     int method;
     bool overlap;
-    std::vector<std::vector<std::vector<vector3f*> > > location;
+    std::vector<std::vector<Mat*> > location;
+    //std::vector<std::vector<std::vector<vector3f*> > > location;
 };
 
 class fully_connected_layer : public network_layer{

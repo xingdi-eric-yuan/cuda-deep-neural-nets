@@ -100,11 +100,10 @@ Mat* getRange(const Mat*, int, int, int, int);
 Mat* downSample(const Mat*, int, int);
 Mat* copyMakeBorder(const Mat*, int, int, int, int, const vector3f*);
 
-Mat* pooling_with_overlap(const Mat*, vector2i*, int, int, std::vector<vector3f*>&);
-Mat* unpooling_with_overlap(const Mat*, vector2i*, int, int, std::vector<vector3f*>&, vector2i*);
-Mat* pooling(const Mat*, int, int, std::vector<vector3f*>&);
-Mat* unpooling(const Mat*, int, int, std::vector<vector3f*>&, vector2i*);
-
+Mat* pooling_with_overlap(const Mat*, vector2i*, int, int, Mat*&);
+Mat* unpooling_with_overlap(const Mat*, vector2i*, int, int, const Mat*, vector2i*);
+Mat* pooling(const Mat*, int, int, Mat*&);
+Mat* unpooling(const Mat*, int, int, const Mat*, vector2i*);
 
 
 // cpu math

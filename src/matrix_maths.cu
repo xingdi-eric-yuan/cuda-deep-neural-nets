@@ -1487,7 +1487,7 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 // Pooling with overlap
 // Max pooling and stochastic pooling supported
 // output size = (input size - window size) / stride + 1
-Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int poolingMethod, std::vector<vector3f*> &locat){
+Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int poolingMethod, Mat*& locat){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -1499,11 +1499,6 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 	safeGetPt(res, getRange(src, 0, src -> cols - window_size -> get(0), 0, src -> rows - window_size -> get(1)));
 	int lensrc = src -> rows * src -> cols;
 	int lenres = res -> rows * res -> cols;
-	std::vector<vector3f*> tmplocat;
-	for(int i = 0; i < lenres; ++i){
-		vector3f* tmp = new vector3f();
-		tmplocat.push_back(tmp);
-	}
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
@@ -1511,80 +1506,16 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 	}
 	res -> deviceToHost();
 	loc -> deviceToHost();
-	for(int j = 0; j < lenres; ++j){
-		loc -> get(j).copyTo(*(tmplocat[j]));
-	}
     Mat *dst = new Mat();
     safeGetPt(dst, downSample(res, stride, stride));
-    for(int i = 0; i < dst -> cols; ++i){
-    	for(int j = 0; j < dst -> rows; ++j){
-    		vector3f *tmpvec = new vector3f();
-    		tmplocat[i * stride * res -> rows + j * stride] -> copyTo(*tmpvec);
-    		locat.push_back(tmpvec);
-    	}
-    }
+    safeGetPt(locat, downSample(loc, stride, stride));
     res -> release();
 	loc -> release();
-	releaseVector(tmplocat);
-    tmplocat.clear();
-    std::vector<vector3f*>().swap(tmplocat);
-    return dst;
-}
-
-Mat* pooling_with_overlap_slow(const Mat *src, vector2i *window_size, int stride, int poolingMethod, std::vector<vector3f*> &locat){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
-		std::cout<<"invalid input..."<<std::endl;
-		exit(0);
-	}
-	Mat *tmpres = new Mat(src -> rows - window_size -> get(1) + 1, src -> cols - window_size -> get(0) + 1, src -> channels);
-	std::vector<vector3f*> tmplocat;
-	Mat *tmp = NULL;
-	vector3f *tmpr = new vector3f();
-	vector3f *tmpc = new vector3f();
-    for(int i = 0; i < tmpres -> rows; ++i){
-        for(int j = 0; j < tmpres -> cols; ++j){
-        	int xstart = j;
-        	int xend = j + window_size -> get(0) - 1 < src -> cols - 1 ? j + window_size -> get(0) - 1 : src -> cols - 1;
-        	int ystart = i;
-        	int yend = i + window_size -> get(1) - 1 < src -> rows - 1 ? i + window_size -> get(1) - 1 : src -> rows - 1;
-        	safeGetPt(tmp, getRange(src, xstart, xend, ystart, yend));
-        	vector3f *val = new vector3f();
-        	vector3f *loc = new vector3f();
-        	if(POOL_MAX == poolingMethod){
-        		max(tmp, val, loc);
-        	}
-        	tmpc = div_rem(loc, window_size -> get(0));
-        	tmpr = div_no_rem(loc, window_size -> get(0));
-        	tmpr = add(tmpr, i);
-        	tmpc = add(tmpc, j);
-        	loc = multiply_elem(tmpr, src -> cols);
-        	loc = add(loc, tmpc);
-            tmplocat.push_back(loc);
-            tmpres -> set(i, j, *val);
-            val -> release();
-        }
-    }
-    Mat *dst = new Mat();
-    safeGetPt(dst, downSample(tmpres, stride, stride));
-    for(int i = 0; i < dst -> cols; ++i){
-    	for(int j = 0; j < dst -> rows; ++j){
-    		vector3f *tmpvec = new vector3f();
-    		tmplocat[i * stride * tmpres -> rows + j * stride] -> copyTo(*tmpvec);
-    		locat.push_back(tmpvec);
-    	}
-    }
-    tmpr -> release();
-    tmpc -> release();
-    tmpres -> release();
-    tmp -> release();
-    releaseVector(tmplocat);
-    tmplocat.clear();
-    std::vector<vector3f*>().swap(tmplocat);
     return dst;
 }
 
 // Max pooling and stochastic pooling supported
-Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, int poolingMethod, std::vector<vector3f*> &locat, vector2i* up_size){
+Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -1595,26 +1526,28 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
         return res;
     }
     Mat *res = new Mat(up_size -> get(1), up_size -> get(0), src -> channels);
-    for(int i = 0; i < src -> rows; i++){
-        for(int j = 0; j < src -> cols; j++){
-        	for(int ch = 0; ch < src -> channels; ++ch){
-            	res -> set(locat[i * src -> cols + j] -> get(ch), ch, src -> get(i, j, ch));
-        	}
-        }
-    }
-    return res;
+	int lenres = res -> rows * res -> cols;
+	int lensrc = src -> rows * src -> cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
+	for(int i = 0; i < src -> channels; ++i){
+		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+	}
+	res -> deviceToHost();
+	return res;
 }
 
-
-Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*> &locat){
+Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
     if(stride == 1){
+    	locat = new Mat(src -> rows, src -> cols, src -> channels);
     	for(int i = 0; i < src -> rows * src -> cols; ++i){
     		vector3f* tmp = new vector3f(i, i, i);
-    		locat.push_back(tmp);
+    		locat -> set(i, *tmp);
+    		tmp -> release();
     	}
     	Mat *res = new Mat();
     	src -> copyTo(*res);
@@ -1629,10 +1562,6 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
 	if(POOL_MAX == poolingMethod) safeGetPt(res, downSample(src, stride, stride));
 	int lensrc = src -> rows * src -> cols;
 	int lenres = res -> rows * res -> cols;
-	for(int i = 0; i < lenres; ++i){
-		vector3f* tmp = new vector3f();
-		locat.push_back(tmp);
-	}
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
@@ -1644,70 +1573,12 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f
 	}
 	res -> deviceToHost();
 	loc -> deviceToHost();
-	for(int j = 0; j < lenres; ++j){
-		loc -> get(j).copyTo(*(locat[j]));
-	}
+	loc -> copyTo(*locat);
 	loc -> release();
     return res;
 }
 
-Mat* pooling_slow(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*> &locat){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
-		std::cout<<"invalid input..."<<std::endl;
-		exit(0);
-	}
-    if(stride == 1){
-    	for(int i = 0; i < src -> rows * src -> cols; ++i){
-    		vector3f* tmp = new vector3f(i, i, i);
-    		locat.push_back(tmp);
-    	}
-    	Mat *res = new Mat();
-    	src -> copyTo(*res);
-        return res;
-    }
-	int dst_rows = src -> rows / stride;
-	if(src -> rows % stride > 0) ++dst_rows;
-	int dst_cols = src -> cols / stride;
-	if(src -> cols % stride > 0) ++dst_cols;
-	Mat *res = new Mat(dst_rows, dst_cols, src -> channels);
-	Mat *tmp = NULL;
-	vector3f *tmpr = new vector3f();
-	vector3f *tmpc = new vector3f();
-    for(int i = 0; i < res -> rows; ++i){
-        for(int j = 0; j < res -> cols; ++j){
-        	int xstart = j * stride;
-        	int xend = (j * stride + stride  - 1) < (src -> cols - 1) ? (j * stride + stride  - 1) : (src -> cols - 1);
-        	int ystart = i * stride;
-        	int yend = (i * stride + stride  - 1) < (src -> rows - 1) ? (i * stride + stride  - 1) : (src -> rows - 1);
-        	safeGetPt(tmp, getRange(src, xstart, xend, ystart, yend));
-        	vector3f *val = new vector3f();
-        	vector3f *loc = new vector3f();
-        	if(POOL_MAX == poolingMethod){
-        		// max poling
-        		max(tmp, val, loc);
-        	}elif(POOL_MEAN == poolingMethod){
-        		// Mean Pooling
-        		val = average(tmp);
-        		loc -> setAll(0.0);
-            }
-        	tmpc = div_rem(loc, tmp -> cols);
-        	tmpr = div_no_rem(loc, tmp -> cols);
-        	tmpr = add(tmpr, i * stride);
-        	tmpc = add(tmpc, j * stride);
-        	loc = multiply_elem(tmpr, src -> cols);
-        	loc = add(loc, tmpc);
-            locat.push_back(loc);
-            res -> set(i, j, *val);
-            val -> release();
-        }
-    }
-    tmpr -> release();
-    tmpc -> release();
-    tmp -> release();
-    return res;
-}
-
-Mat* unpooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*>& locat, vector2i* up_size){
+Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -1729,14 +1600,15 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, std::vector<vector
         return res;
     }else{ //(POOL_MAX == poolingMethod || POOL_STOCHASTIC == poolingMethod)
         Mat *res = new Mat(up_size -> get(1), up_size -> get(0), src -> channels);
-        for(int i = 0; i < src -> rows; i++){
-            for(int j = 0; j < src -> cols; j++){
-            	for(int ch = 0; ch < src -> channels; ++ch){
-                	res -> set(locat[i * src -> cols + j] -> get(ch), ch, src -> get(i, j, ch));
-            	}
-            }
-        }
-        return res;
+    	int lenres = res -> rows * res -> cols;
+    	int lensrc = src -> rows * src -> cols;
+    	const size_t block_size = threadsPerBlock;
+    	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
+    	for(int i = 0; i < src -> channels; ++i){
+    		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+    	}
+    	res -> deviceToHost();
+    	return res;
     }
 }
 

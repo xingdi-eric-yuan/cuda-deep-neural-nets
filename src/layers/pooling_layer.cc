@@ -11,7 +11,7 @@ pooling_layer::pooling_layer(){
 pooling_layer::~pooling_layer(){
 	releaseVector(location);
 	location.clear();
-    std::vector<std::vector<std::vector<vector3f*> > >().swap(location);
+    std::vector<std::vector<Mat*> >().swap(location);
 }
 // with overlap
 void pooling_layer::init_config(string namestr, int _method, string outputformat, int _stride, int windowsize){
@@ -46,17 +46,19 @@ void pooling_layer::forwardPass(int nsamples, network_layer* previous_layer){
 	if(overlap) _size = new vector2i(window_size, window_size);
 
     releaseVector(output_vector);
+    releaseVector(location);
     output_vector.clear();
     output_vector.resize(input.size());
     location.clear();
     location.resize(input.size());
     for(int i = 0; i < input.size(); i++){
     	location[i].clear();
+        location[i].resize(input[i].size());
     	output_vector[i].clear();
         output_vector[i].resize(input[i].size());
-        location[i].resize(input[i].size());
         for(int j = 0; j < input[i].size(); ++j){
         	output_vector[i][j] = new Mat();
+        	location[i][j] = new Mat();
         	if(overlap){
 				safeGetPt(output_vector[i][j], pooling_with_overlap(input[i][j], _size, stride, method, location[i][j]));
         	}else{

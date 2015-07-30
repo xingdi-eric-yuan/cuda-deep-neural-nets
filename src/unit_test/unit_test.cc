@@ -2003,34 +2003,33 @@ bool test_pooling_max(){
 			1.1174, 0.9642, 1.2424,-2.3193
 	};
 	// and this...
-	const float array_pooling_max_loc_ch0[16] = {
+	const float array_pooling_max_loc[58] = {
 			10, 4, 17, 19,
 			42, 33, 56, 49,
 			80, 75, 78, 79,
-			90, 95, 98, 99};
-	const float array_pooling_max_loc_ch1[16] = {
+			90, 95, 98, 99,
+
 			10, 3, 17, 9,
 			32, 35, 56, 39,
 			70, 83, 88, 89,
-			90, 95, 96, 99};
-	const float array_pooling_max_loc_ch2[16] = {
+			90, 95, 96, 99,
+
 			2, 23, 8, 29,
 			30, 43, 56, 39,
 			62, 63, 68, 79,
 			91, 94, 97, 99};
-	std::vector<vector3f*> expect_loc_max(16);
-	for(int i = 0; i < 16; ++i){
-		expect_loc_max[i] = new vector3f(array_pooling_max_loc_ch0[i], array_pooling_max_loc_ch1[i], array_pooling_max_loc_ch2[i]);
-	}
 	cout<<"testing pooling max --- ";
 	Mat *a = getTestMatrix_10_rand();
-	Mat *res_max = NULL;
-	std::vector<vector3f*> res_loc_max;
+	Mat *res_max = new Mat();
+	Mat *res_loc_max = new Mat();
 	safeGetPt(res_max, pooling(a, 3, POOL_MAX, res_loc_max));
 	Mat *expect_max = new Mat(4, 4, a -> channels);
+	Mat *expect_loc = new Mat(4, 4, a -> channels);
 	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
+	memcpy(expect_loc -> hostData, array_pooling_max_loc, expect_loc -> getLength() * sizeof(float));
 	expect_max -> hostToDevice();
-	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
+	expect_loc -> hostToDevice();
+	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc);
 
 //	expect_max -> printHost("EXP");
 //	res_max -> printHost("RES");
@@ -2046,12 +2045,8 @@ bool test_pooling_max(){
 	a -> release();
 	res_max -> release();
 	expect_max -> release();
-	releaseVector(res_loc_max);
-	releaseVector(expect_loc_max);
-	res_loc_max.clear();
-	expect_loc_max.clear();
-	std::vector<vector3f*>().swap(res_loc_max);
-	std::vector<vector3f*>().swap(expect_loc_max);
+	res_loc_max -> release();
+	expect_loc -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -2076,34 +2071,31 @@ bool test_pooling_mean(){
 		-0.2786, 0.2061, 0.5829, -2.3193
 	};
 	// and this...
-	const float array_pooling_mean_loc_ch0[16] = {
+	const float array_pooling_mean_loc[58] = {
+			0, 3, 6, 9,
+			30, 33, 36, 39,
+			60, 63, 66, 69,
+			90, 93, 96, 99,
+			0, 3, 6, 9,
+			30, 33, 36, 39,
+			60, 63, 66, 69,
+			90, 93, 96, 99,
 			0, 3, 6, 9,
 			30, 33, 36, 39,
 			60, 63, 66, 69,
 			90, 93, 96, 99};
-	const float array_pooling_mean_loc_ch1[16] = {
-			0, 3, 6, 9,
-			30, 33, 36, 39,
-			60, 63, 66, 69,
-			90, 93, 96, 99};
-	const float array_pooling_mean_loc_ch2[16] = {
-			0, 3, 6, 9,
-			30, 33, 36, 39,
-			60, 63, 66, 69,
-			90, 93, 96, 99};
-	std::vector<vector3f*> expect_loc_mean(16);
-	for(int i = 0; i < 16; ++i){
-		expect_loc_mean[i] = new vector3f(array_pooling_mean_loc_ch0[i], array_pooling_mean_loc_ch1[i], array_pooling_mean_loc_ch2[i]);
-	}
 	cout<<"testing pooling mean --- ";
 	Mat *a = getTestMatrix_10_rand();
-	Mat *res_mean = NULL;
-	std::vector<vector3f*> res_loc_mean;
+	Mat *res_mean = new Mat();
+	Mat *res_loc_mean = new Mat();
 	safeGetPt(res_mean, pooling(a, 3, POOL_MEAN, res_loc_mean));
 	Mat *expect_mean = new Mat(4, 4, a -> channels);
 	memcpy(expect_mean -> hostData, array_pooling_mean, expect_mean -> getLength() * sizeof(float));
 	expect_mean -> hostToDevice();
-	bool result = areApproximatelyIdentical(res_mean, expect_mean) && areApproximatelyIdentical(res_loc_mean, expect_loc_mean);
+	Mat *expect_loc = new Mat(4, 4, a -> channels);
+	memcpy(expect_loc -> hostData, array_pooling_mean_loc, expect_loc -> getLength() * sizeof(float));
+	expect_loc -> hostToDevice();
+	bool result = areApproximatelyIdentical(res_mean, expect_mean) && areApproximatelyIdentical(res_loc_mean, expect_loc);
 
 //	expect_mean -> printHost("EXP");
 //	res_mean -> printHost("RES");
@@ -2118,12 +2110,8 @@ bool test_pooling_mean(){
 	a -> release();
 	res_mean -> release();
 	expect_mean -> release();
-	releaseVector(res_loc_mean);
-	releaseVector(expect_loc_mean);
-	res_loc_mean.clear();
-	expect_loc_mean.clear();
-	std::vector<vector3f*>().swap(res_loc_mean);
-	std::vector<vector3f*>().swap(expect_loc_mean);
+	res_loc_mean -> release();
+	expect_loc -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -2139,32 +2127,27 @@ bool test_pooling_overlap_max(){
 		1.4367, 1.4367, 1.4367
 	};
 	// and this...
-	const float array_pooling_max_loc_ch0[6] = {
+	const float array_pooling_max_loc[18] = {
 		17, 8, 8, 
-		21, 8, 8
-	};
-	const float array_pooling_max_loc_ch1[6] = {
+		21, 8, 8,
 		5, 17, 17, 
-		20, 17, 17
-	};
-	const float array_pooling_max_loc_ch2[6] = {
+		20, 17, 17,
 		12, 12, 12, 
 		12, 12, 12
 	};
-	std::vector<vector3f*> expect_loc_max(6);
-	for(int i = 0; i < 6; ++i){
-		expect_loc_max[i] = new vector3f(array_pooling_max_loc_ch0[i], array_pooling_max_loc_ch1[i], array_pooling_max_loc_ch2[i]);
-	}
 	cout<<"testing pooling overlap max--- ";
 	Mat *a = getTestMatrix_5_rand();
-	Mat *res_max = NULL;
-	std::vector<vector3f*> res_loc_max;
+	Mat *res_max = new Mat();
+	Mat *res_loc_max = new Mat();
 	vector2i *window_size = new vector2i(3, 4);
 	safeGetPt(res_max, pooling_with_overlap(a, window_size, 1, POOL_MAX, res_loc_max));
 	Mat *expect_max = new Mat(2, 3, a -> channels);
 	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
 	expect_max -> hostToDevice();
-	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
+	Mat *expect_max_loc = new Mat(2, 3, a -> channels);
+	memcpy(expect_max_loc -> hostData, array_pooling_max_loc, expect_max_loc -> getLength() * sizeof(float));
+	expect_max_loc -> hostToDevice();
+	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_max_loc);
 //	expect_max -> printHost("EXP");
 //	res_max -> printHost("RES");
 //	Mat *tmp = new Mat();
@@ -2175,16 +2158,11 @@ bool test_pooling_overlap_max(){
 //		res_loc_max[i] ->print(" ");
 //		expect_loc_max[i] ->print(" ");
 //	}
-
 	a -> release();
 	res_max -> release();
 	expect_max -> release();
-	releaseVector(res_loc_max);
-	releaseVector(expect_loc_max);
-	res_loc_max.clear();
-	expect_loc_max.clear();
-	std::vector<vector3f*>().swap(res_loc_max);
-	std::vector<vector3f*>().swap(expect_loc_max);
+	res_loc_max -> release();
+	expect_max_loc -> release();
 	window_size -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;

@@ -39,8 +39,8 @@ __global__ void cu_getRange(const float*, float*, const int, const int, const in
 __global__ void cu_copyMakeBorder(const float*, float*, const int, const int, const int, const int, const int, const int, const int);
 __global__ void cu_pooling_max(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
 __global__ void cu_pooling_mean(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
-
 __global__ void cu_pooling_overlap_max(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
+__global__ void cu_unpooling(const float*, const float*, float*, const int, const int);
 
 
 
