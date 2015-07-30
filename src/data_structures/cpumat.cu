@@ -412,16 +412,9 @@ cpuMat& cpuMat::operator-=(const vector3f &v){
 	}
 	return *this;
 }
-/*
-cpuMat cpuMat::operator*(const cpuMat &m){
-	if(NULL == Data  ||
-	   NULL == m.Data ||
-	   cols != m.rows || channels != m.channels){
-		std::cout<<"invalid vectors..."<<std::endl;
-		exit(0);
-	}
-}
-*/
+
+//cpuMat cpuMat::operator*(const cpuMat &m){}
+
 
 cpuMat cpuMat::operator*(float val) const{
 	if(NULL == Data ){

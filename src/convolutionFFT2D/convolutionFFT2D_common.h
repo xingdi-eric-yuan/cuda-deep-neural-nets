@@ -9,8 +9,12 @@
  *
  */
 
+
+
 #ifndef CONVOLUTIONFFT2D_COMMON_H
 #define CONVOLUTIONFFT2D_COMMON_H
+
+
 
 typedef unsigned int uint;
 
@@ -110,5 +114,7 @@ extern "C" void spProcess2D(
     uint DX,
     int dir
 );
+
+
 
 #endif //CONVOLUTIONFFT2D_COMMON_H

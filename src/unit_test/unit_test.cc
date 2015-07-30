@@ -661,18 +661,32 @@ bool test_multiply_elem_m_m(){
 
 bool test_multiply(){
 	const float array_multiply[27] = {	
-		0.1500,  0.1800,  0.2100,  0.4200,  0.5400,  0.6600,  0.6900,  0.9000,  1.1100, 
-		3.6600,  3.9600,  4.2600,  4.7400,  5.1300,  5.5200,  5.8200,  6.3000,  6.7800, 
-		12.0300, 12.6000, 13.1700, 13.9200, 14.5800, 15.2400, 15.8100, 16.5600, 17.3100};
+			 0.3373,  0.1550, -0.0936,
+			 0.9605,  0.0587, -0.6462,
+			 1.5836, -0.0375, -1.1989,
+
+			 0.8912,  1.8661, -0.1206,
+			 1.1093,  2.4979, -0.1628,
+			 1.3275,  3.1296, -0.2051,
+
+			-2.3604, -4.6992,  1.3293,
+			-2.7186, -5.4356,  1.5180,
+			-3.0767, -6.1719,  1.7067};
 	cout<<"testing multiply --- ";
 	Mat *a = getTestMatrix_3();
-	Mat *b = getTestMatrix_3();
+	Mat *b = getTestMatrix_3_rand();
 	Mat *res = NULL;
 	safeGetPt(res, multiply(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
 	memcpy(expect -> hostData, array_multiply, expect -> getLength() * sizeof(float));
 	expect -> hostToDevice();
 	bool result = areApproximatelyIdentical(res, expect);
+
+//	a ->printHost("A");
+//	b ->printHost("B");
+//	res ->printHost("RES");
+//	expect ->printHost("EXP");
+
 	a -> release();
 	b -> release();
 	res -> release();

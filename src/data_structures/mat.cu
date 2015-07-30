@@ -369,17 +369,11 @@ Mat Mat::operator+(const Mat &m) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
 	Mat tmpmat(m);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
-	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
-	float alpha = 1.0;
-	// multiply the vector d_x by the scalar alpha and add to d_y
-	checkCudaErrors(cublasSaxpy(handle, n, &alpha, devData, 1, tmpmat.devData, 1));
-	checkCudaErrors(cublasGetVector (n, sizeof (float), tmpmat.devData, 1, tmpmat.hostData, 1)); // cp d_y - >y
-	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
+	int tmp = getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	cu_plus<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -424,20 +418,12 @@ Mat& Mat::operator+=(const Mat &m){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	Mat tmpmat(m);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
-	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
-	float alpha = 1.0;
-	// multiply the vector d_x by the scalar alpha and add to d_y
-	checkCudaErrors(cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1));
-	checkCudaErrors(cublasGetVector (n, sizeof (float), devData, 1, hostData, 1)); // cp d_y - >y
-	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
-	deviceToHost();
-	tmpmat.release();
-    return *this;
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_plus<<<num_blocks, block_size>>>(devData, m.devData, len);
+    deviceToHost();
+	return *this;
 }
 
 Mat& Mat::operator+=(float val){
@@ -476,18 +462,11 @@ Mat Mat::operator-(const Mat &m) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSetVector (n, sizeof (float), m.hostData, 1, m.devData, 1)); // cp x- >d_x
-	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
-	float alpha = -1.0;
-	// multiply the vector d_x by the scalar alpha and add to d_y
-	checkCudaErrors(cublasSaxpy(handle, n, &alpha, m.devData, 1, tmpmat.devData, 1));
-	checkCudaErrors(cublasGetVector (n, sizeof (float) ,tmpmat.devData, 1, tmpmat.hostData, 1)); // cp d_y - >y
-	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
+	Mat tmpmat(m);
+	int tmp = getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
+	cu_minus<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
 	tmpmat.deviceToHost();
 	return tmpmat;
 }
@@ -531,20 +510,12 @@ Mat& Mat::operator-=(const Mat &m){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	Mat tmpmat(m);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSetVector (n, sizeof (float), hostData, 1, devData, 1)); // cp x- >d_x
-	checkCudaErrors(cublasSetVector (n, sizeof (float), tmpmat.hostData, 1, tmpmat.devData, 1)); // cp y- >d_y
-	float alpha = -1.0;
-	// multiply the vector d_x by the scalar alpha and add to d_y
-	checkCudaErrors(cublasSaxpy(handle, n, &alpha, tmpmat.devData, 1, devData, 1));
-	checkCudaErrors(cublasGetVector (n, sizeof (float), devData, 1, hostData, 1)); // cp d_y - >y
-	checkCudaErrors(cublasDestroy ( handle )); // destroy CUBLAS context
-	deviceToHost();
-	tmpmat.release();
-    return *this;
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_minus<<<num_blocks, block_size>>>(devData, m.devData, len);
+    deviceToHost();
+	return *this;
 }
 
 Mat& Mat::operator-=(float val){
@@ -582,20 +553,20 @@ Mat Mat::operator*(const Mat &m) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat(rows, m.cols, channels);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	float alpha = 1.0;
-	float beta = 1.0;
-	for(int i = 0; i < channels; ++i){
-		checkCudaErrors(cublasSetMatrix (rows, cols, sizeof(float), hostData + i * (rows * cols), rows, devData + i * (rows * cols), rows)); // cp x- >d_x
-		checkCudaErrors(cublasSetMatrix (m.rows, m.cols, sizeof(float), m.hostData + i * (m.rows * m.cols), m.rows, m.devData + i * (m.rows * m.cols), m.rows)); // cp y- >d_y
-		checkCudaErrors(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, rows, m.cols, cols, &alpha, devData + i * (rows * cols), rows, m.devData + i * (m.rows * m.cols), cols, &beta, tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows));
-		checkCudaErrors(cublasGetMatrix (rows, m.cols, sizeof(float), tmpmat.devData + i * (tmpmat.rows * tmpmat.cols), rows, tmpmat.hostData + i * (tmpmat.rows * tmpmat.cols), rows));
+	Mat res(rows, m.cols, channels);
+	int lena = rows * cols;
+	int lenb = m.rows * m.cols;
+	int lenres = res.rows * res.cols;
+	int TILE_WIDTH = 32;
+    dim3 dimGrid((res.cols - 1) / TILE_WIDTH + 1, (res.rows - 1) / TILE_WIDTH + 1, 1);
+    dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
+	for(int ch = 0; ch < channels; ++ch){
+		cu_multiply<<<dimGrid, dimBlock>>>(devData + ch * lena , m.devData + ch * lenb, res.devData + ch * lenres,
+													rows, cols, m.rows, m.cols, res.rows, res.cols);
+		checkCudaErrors(cudaThreadSynchronize());
 	}
-	checkCudaErrors(cublasDestroy (handle)); // destroy CUBLAS context
-	tmpmat.deviceToHost();
-	return tmpmat;
+	res.deviceToHost();
+	return res;
 }
 
 Mat Mat::operator*(float val) const{
@@ -603,15 +574,13 @@ Mat Mat::operator*(float val) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSscal(handle, n, &val, tmpmat.devData, 1));
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, res.devData, len);
+    res.deviceToHost();
+    return res;
 }
 
 Mat Mat::operator*(const vector3f &v) const{
@@ -619,17 +588,16 @@ Mat Mat::operator*(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		float tmp = v.get(i);
-		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
-	}
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = rows * cols;
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    for(int ch = 0; ch < channels; ++ch){
+        float val = v.get(ch);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, res.devData + ch * len, len);
+    }
+    res.deviceToHost();
+    return res;
 }
 
 Mat& Mat::operator*=(float val){
@@ -637,12 +605,11 @@ Mat& Mat::operator*=(float val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSscal(handle, n, &val, devData, 1));
-	deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, len);
+    deviceToHost();
 	return *this;
 }
 
@@ -651,14 +618,13 @@ Mat& Mat::operator*=(const vector3f &v){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		float tmp = v.get(i);
-		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1));
-	}
-	deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
+    int len = rows * cols;
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    for(int ch = 0; ch < channels; ++ch){
+        float val = v.get(ch);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, len);
+    }
 	return *this;
 }
 
@@ -667,16 +633,13 @@ Mat Mat::operator/(float val) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	float tmp = 1 / val;
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSscal(handle, n, &tmp, tmpmat.devData, 1));
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_divide<<<num_blocks, block_size>>>(devData, res.devData, val, len);
+    res.deviceToHost();
+    return res;
 }
 
 Mat Mat::operator/(const vector3f &v) const{
@@ -684,17 +647,16 @@ Mat Mat::operator/(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		float tmp = 1 / v.get(i);
-		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
-	}
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = rows * cols;
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    for(int ch = 0; ch < channels; ++ch){
+        float val = v.get(ch);
+        cu_divide<<<num_blocks, block_size>>>(devData + ch * len, res.devData + ch * len, val, len);
+    }
+    res.deviceToHost();
+    return res;
 }
 
 Mat& Mat::operator/=(float val){
@@ -702,13 +664,11 @@ Mat& Mat::operator/=(float val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	float tmp = 1 / val;
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSscal(handle, n, &tmp, devData, 1));
-	deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_divide<<<num_blocks, block_size>>>(devData, val, len);
+    deviceToHost();
 	return *this;
 }
 
@@ -717,14 +677,13 @@ Mat& Mat::operator/=(const vector3f &v){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		float tmp = 1 / v.get(i);
-		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, devData + i * rows * cols, 1));
-	}
-	deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
+    int len = rows * cols;
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    for(int ch = 0; ch < channels; ++ch){
+        float val = v.get(ch);
+        cu_divide<<<num_blocks, block_size>>>(devData + ch * len, val, len);
+    }
 	return *this;
 }
 
@@ -749,15 +708,13 @@ Mat Mat::mul(float val) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	int n = getLength();
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	checkCudaErrors(cublasSscal(handle, n, &val, tmpmat.devData, 1));
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = getLength();
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, res.devData, len);
+    res.deviceToHost();
+    return res;
 }
 
 Mat Mat::mul(const vector3f &v) const{
@@ -765,17 +722,16 @@ Mat Mat::mul(const vector3f &v) const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat;
-	copyTo(tmpmat);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		float tmp = v.get(i);
-		checkCudaErrors(cublasSscal(handle, rows * cols, &tmp, tmpmat.devData + i * rows * cols, 1));
-	}
-	tmpmat.deviceToHost();
-    checkCudaErrors(cublasDestroy(handle));
-	return tmpmat;
+    Mat res(rows, cols, channels);
+    int len = rows * cols;
+    const size_t block_size = threadsPerBlock;
+    const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+    for(int ch = 0; ch < channels; ++ch){
+        float val = v.get(ch);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, res.devData + ch * len, len);
+    }
+    res.deviceToHost();
+    return res;
 }
 
 Mat Mat::t() const{
@@ -783,22 +739,15 @@ Mat Mat::t() const{
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
-	Mat tmpmat;
-	copyTo(tmpmat);
-	//tmpmat.zeros();
-    float const alpha(1.0);
-    float const beta(0.0);
-	cublasHandle_t handle; // CUBLAS context
-	checkCudaErrors(cublasCreate (&handle)); // initialize CUBLAS context
-	for(int i = 0; i < channels; ++i){
-		checkCudaErrors(cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, cols, rows, &alpha, devData + i * (rows * cols), rows, &beta, devData + i * (rows * cols), cols, tmpmat.devData + i * (rows * cols), cols));
+	Mat res(cols, rows, channels);
+	int len = res.rows * res.cols;
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	for(int ch = 0; ch < channels; ++ch){
+		cu_transpose<<<num_blocks, block_size>>>(devData + ch * len, res.devData + ch * len, cols, res.cols, len);
 	}
-	int tmp = tmpmat.rows;
-	tmpmat.rows = tmpmat.cols;
-	tmpmat.cols = tmp;
-	checkCudaErrors(cublasDestroy(handle));
-	tmpmat.deviceToHost();
-	return tmpmat;
+	res.deviceToHost();
+	return res;
 }
 
 // memory

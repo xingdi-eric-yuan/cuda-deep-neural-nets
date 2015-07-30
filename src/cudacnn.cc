@@ -32,6 +32,9 @@ void run(){
     std::vector<network_layer*> flow;
     buildNetworkFromConfigFile("config.txt", flow);
 
+    //trainX[0] -> print("trainx0");
+    //trainX[1] -> print("trainx1");
+
     trainNetwork(trainX, trainY, testX, testY, flow);
 
     flow.clear();
@@ -56,6 +59,7 @@ int main(void){
 //	runAllTest();
 
 	run();
+
 
 	return 0;
 }

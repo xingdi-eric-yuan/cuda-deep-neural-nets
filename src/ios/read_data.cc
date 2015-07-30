@@ -31,7 +31,7 @@ void read_CIFAR10_data(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX
     filename = "cifar-10-batches-bin/data_batch_";
     std::vector<cpuMat*> labels;
     std::vector<std::vector<cpuMat*> > batches;
-	int number_batch = 5;
+	int number_batch = 1;
     for(int i = 1; i <= number_batch; i++){
     	std::vector<cpuMat*> tpbatch;
         cpuMat *tplabel = new cpuMat(1, 10000, 1);

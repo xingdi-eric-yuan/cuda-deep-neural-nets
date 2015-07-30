@@ -7,8 +7,6 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include <math.h>
-#include <cublas.h>
-#include <cublas_v2.h>
 #include <curand.h>
 #include <cufft.h>
 #include <time.h>
@@ -32,19 +30,10 @@ class cpuMat;
 class vector2i;
 class vector3f;
 
-//#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define RC2IDX(R,C,COLS) (((R)*(COLS))+(C))
 
-#define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
-	printf("Error at %s:%d\n",__FILE__,__LINE__);\
-	return EXIT_FAILURE;}} while(0)
-
-#define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
-	printf("Error at %s:%d\n",__FILE__,__LINE__);\
-	return EXIT_FAILURE;}} while(0)
-
 #define elif else if
-#define threadsPerBlock 256
+#define threadsPerBlock 128
 
 // non-linearity
 #define NL_SIGMOID 0

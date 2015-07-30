@@ -124,16 +124,29 @@ void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
     }
     Mat *tmp = new Mat();
     Mat *M = new Mat();
+
+
+    //w -> printHost("W");
+    //input -> printHost("INPUT");
+
     safeGetPt(M, multiply(w, input));
+    	//M -> printHost("M -1");
     safeGetPt(tmp, repmat(b, 1, nsamples));
+    	//tmp -> printHost("TMP0");
     safeGetPt(M, add(M, tmp));
+    	//M -> printHost("M0");
     safeGetPt(tmp, reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_MAX));
+    	//tmp -> printHost("TMP1");
     safeGetPt(tmp, repmat(tmp, M -> rows, 1));
+    	//tmp -> printHost("TMP2");
     safeGetPt(M, subtract(M, tmp));
+    	//M -> printHost("M1");
     safeGetPt(M, exp(M));
+    	//M -> printHost("M2");
     safeGetPt(tmp, reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_SUM));
     safeGetPt(tmp, repmat(tmp, M -> rows, 1));
     safeGetPt(output_matrix, divide(M, tmp));
+    	//output_matrix -> printHost("OUTPUT");
     M -> release();
     input -> release();
     tmp -> release();

@@ -54,14 +54,14 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             // get cost
             for(int k = 0; k < ((convolutional_layer*)flow[i]) -> kernels.size(); ++k){
             	safeGetPt(tmp, square(((convolutional_layer*)flow[i]) -> kernels[k] -> w));
-            	tmpvec3 = sum(tmp);
+            	safeGetPt(tmpvec3, sum(tmp));
                 J4 += sum(tmpvec3) * ((convolutional_layer*)flow[i]) -> kernels[k] -> weight_decay / 2.0;
             }
         }elif(flow[i] -> layer_type == "fully_connected"){
             ((fully_connected_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
             // get cost
             safeGetPt(tmp, square(((fully_connected_layer*)flow[i]) -> w));
-        	tmpvec3 = sum(tmp);
+        	safeGetPt(tmpvec3, sum(tmp));
             J3 += sum(tmpvec3) * ((fully_connected_layer*)flow[i]) -> weight_decay / 2.0;
         }elif(flow[i] -> layer_type == "softmax"){
         	((softmax_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
@@ -72,10 +72,10 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             }
             safeGetPt(tmp, log(flow[i] -> output_matrix));
             safeGetPt(tmp, multiply_elem(tmp, groundTruth));
-        	tmpvec3 = sum(tmp);
+        	safeGetPt(tmpvec3, sum(tmp));
             J1 += -sum(tmpvec3) / batch_size;
             safeGetPt(tmp, square(((softmax_layer*)flow[i]) -> w));
-            tmpvec3 = sum(tmp);
+        	safeGetPt(tmpvec3, sum(tmp));
             J2 += sum(tmpvec3) * ((softmax_layer*)flow[i]) -> weight_decay / 2.0;
             groundTruth -> release();
         }elif(flow[i] -> layer_type == "combine"){
@@ -91,7 +91,20 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
         }elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }
+
+/*
+        if(flow[i] -> output_format == "matrix"){
+        	flow[i] -> output_matrix -> printHost("OUTPUT MATRIX");
+        }else{
+        	flow[i] -> output_vector[0][0] -> printHost("OUTPUT VECTOR 00");
+            //cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
+        } //*/
     }
+//   cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<endl;
+
+
+
+
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost;//endl;
@@ -283,6 +296,10 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
 
     forwardPassInit(x, y, flow);
     printNetwork(flow);
+
+
+    //forwardPass(x, y, flow);
+    //return;
 
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);

@@ -135,9 +135,9 @@ void gradient_checking_network_layers(std::vector<network_layer*> &flow, const s
             tmpflow.erase(tmpflow.begin() + i);
         }else ++i;
     }
-    gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
+    //gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
     //gradientChecking_FullyConnectedLayer(tmpflow, sampleX, sampleY);
-    //gradientChecking_SoftmaxLayer(tmpflow, sampleX, sampleY);
+    gradientChecking_SoftmaxLayer(tmpflow, sampleX, sampleY);
 }
 
 

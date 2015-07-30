@@ -99,11 +99,29 @@ __global__ void cu_elementWiseMultiply(float *A, const float *B, const int n){
 	}
 }
 
+__global__ void cu_elementWiseMultiply(float *A, float B, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		A[tid] = __fmul_rd(A[tid], B);
+		tid += stride;
+	}
+}
+
 __global__ void cu_elementWiseMultiply(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
 		C[tid] = __fmul_rd(A[tid], B[tid]);
+		tid += stride;
+	}
+}
+
+__global__ void cu_elementWiseMultiply(const float *A, const float B, float *C, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		C[tid] = __fmul_rd(A[tid], B);
 		tid += stride;
 	}
 }
@@ -140,6 +158,15 @@ __global__ void cu_pow(const float* src, float* dst, const float power, const in
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
 		dst[tid] = powf(src[tid], power);
+		tid += stride;
+	}
+}
+
+__global__ void cu_divide(float *A, float B, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		A[tid] = __fdividef(A[tid], B);
 		tid += stride;
 	}
 }
@@ -505,6 +532,54 @@ __global__ void cu_unpooling(const float* src, const float* loc, float* dst, con
 		int cdst = (int)(loc[tid]) % colsdst;
 		int rdst = (int)(loc[tid]) / colsdst;
 		dst[rdst * colsdst + cdst] = src[tid];
+		tid += stride;
+	}
+}
+
+__global__ void cu_multiply(const float* A, const float* B, float * C,
+                                    int rowsa, int colsa,
+                                    int rowsb, int colsb,
+                                    int rowsc, int colsc){
+    __shared__ float sA[32][32];   // Tile size of 32x32
+    __shared__ float sB[32][32];
+    int Row = blockDim.y*blockIdx.y + threadIdx.y;
+    int Col = blockDim.x*blockIdx.x + threadIdx.x;
+    float Cvalue = 0.0;
+    sA[threadIdx.y][threadIdx.x] = 0.0;
+    sB[threadIdx.y][threadIdx.x] = 0.0;
+    for (int k = 0; k < (((colsa - 1)/ 32) + 1); k++){
+        if ( (Row < rowsa) && (threadIdx.x + (k*32)) < colsa){
+            sA[threadIdx.y][threadIdx.x] = A[(Row*colsa) + threadIdx.x + (k*32)];
+        }
+        else{
+            sA[threadIdx.y][threadIdx.x] = 0.0;
+        }
+        if ( Col < colsb && (threadIdx.y + k*32) < rowsb){
+            sB[threadIdx.y][threadIdx.x] = B[(threadIdx.y + k*32)*colsb + Col];
+        }
+        else{
+            sB[threadIdx.y][threadIdx.x] = 0.0;
+        }
+        __syncthreads();
+
+        for (int j = 0; j < 32; ++j){
+            Cvalue += sA[threadIdx.y][j] * sB[j][threadIdx.x];
+        }
+    }
+    if (Row < rowsc && Col < colsc){
+        C[Row*colsc + Col] = Cvalue;
+    }
+}
+
+__global__ void cu_transpose(const float* src, float* dst, int colssrc, int colsdst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		int cdst = tid % colsdst;
+		int rdst = tid / colsdst;
+		int rsrc = cdst;
+		int csrc = rdst;
+		dst[tid] = src[rsrc * colssrc + csrc];
 		tid += stride;
 	}
 }
