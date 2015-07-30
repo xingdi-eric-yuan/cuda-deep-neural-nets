@@ -938,6 +938,16 @@ Mat* equalTo(const Mat *src, float val){
 	return dst;
 }
 
+Mat* getBernoulliMatrix(int height, int width, int nchannels, float prob){
+	Mat *ran = new Mat(height, width, nchannels);
+	ran -> rand();
+	Mat *res = NULL;
+	safeGetPt(res, greaterThan(ran, prob));
+	ran -> release();
+	return res;
+}
+
+
 // convert from vector of img to matrix
 // vec.size() == nsamples
 void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){

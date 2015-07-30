@@ -65,6 +65,7 @@ Mat* lessThan(const Mat*, float);
 Mat* equalTo(const Mat*, float);
 Mat* findMax(const Mat*);
 int sameValuesInMat(const Mat*, const Mat*);
+Mat* getBernoulliMatrix(int, int, int, float);
 
 void convert(std::vector<std::vector<Mat*> >&, Mat*);
 void convert(Mat*, std::vector<std::vector<Mat*> >&, int, int);

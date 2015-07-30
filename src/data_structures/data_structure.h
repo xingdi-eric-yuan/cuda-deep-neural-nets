@@ -122,6 +122,7 @@ public:
 	void setSize(int, int, int);
 	void zeros();
 	void ones();
+	void rand();
 	void randu();
 	void set(int, int, int, float);
 	void set(int, int, float);

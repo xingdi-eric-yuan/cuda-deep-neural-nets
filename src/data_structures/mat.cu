@@ -133,7 +133,7 @@ void Mat::ones(){
 	setAll(1.0);
 }
 
-void Mat::randu(){
+void Mat::rand(){
 	if(NULL == hostData) mallocHost();
 	if(NULL == devData) mallocDevice();
 	curandGenerator_t gen;
@@ -146,6 +146,14 @@ void Mat::randu(){
 	// Cleanup generator
 	checkCudaErrors(curandDestroyGenerator(gen));
 	deviceToHost();
+	for(int i = 0; i < getLength(); ++i){
+		hostData[i] = hostData[i] * 2.0 - 1.0;
+	}
+	hostToDevice();
+}
+
+void Mat::randu(){
+	Mat::rand();
 	for(int i = 0; i < getLength(); ++i){
 		hostData[i] = hostData[i] * 2.0 - 1.0;
 	}

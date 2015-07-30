@@ -206,7 +206,6 @@ public:
     int n;
 };
 
-/*
 class dropout_layer : public network_layer{
 public:
     dropout_layer();
@@ -218,11 +217,10 @@ public:
     void backwardPass(int, network_layer*, network_layer*);
 
     float dropout_rate;
-    Mat bernoulli_matrix;
-    std::vector<std::vector<Mat> > bernoulli_vector;
+    Mat* bernoulli_matrix;
+    std::vector<std::vector<Mat*> > bernoulli_vector;
 };
 
-//*/
 class non_linearity_layer : public network_layer{
 public:
     non_linearity_layer();

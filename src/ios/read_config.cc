@@ -181,7 +181,6 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
     for(int i = 0; i < layers.size(); i++){
         int type = get_word_type(layers[i], "LAYER");
         switch(type){
-
             case 0:{ // input layer
                 input_layer *tmp = new input_layer();
                 string namestr = get_word_string(layers[i], "NAME");
@@ -202,10 +201,8 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 int st = get_word_int(layers[i], "STRIDE");
                 tmp -> init_config(namestr, ka, ks, cm, pa, st, wd, of);
                 flow.push_back(tmp);
-
                 break;
             }case 2:{ // full_connectedlayer
-
                 fully_connected_layer *tmp = new fully_connected_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
@@ -216,7 +213,6 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 break;
             }
             case 3:{ // softmax layer
-
                 softmax_layer *tmp = new softmax_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 int classes = get_word_int(layers[i], "NUM_CLASSES");
@@ -226,14 +222,11 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
                 flow.push_back(tmp);
                 break;
             }case 4:{ // combine layer
-
                 break;
             }case 5:{ // branch layer
-
                 break;
             }
             case 6:{ // non linearity layer
-
                 non_linearity_layer *tmp = new non_linearity_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
@@ -279,15 +272,12 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
 
                 break;
             }case 9:{ // dropout layer
-/*
                 dropout_layer *tmp = new dropout_layer();
                 string namestr = get_word_string(layers[i], "NAME");
                 string of = get_word_string(layers[i], "OUTPUT_TYPE");
                 double dor = get_word_double(layers[i], "DROPOUT_RATE");
-
                 tmp -> init_config(namestr, of, dor);
                 flow.push_back(tmp);
-*/
                 break;
             }
         }

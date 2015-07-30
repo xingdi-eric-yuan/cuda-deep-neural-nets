@@ -30,9 +30,9 @@ void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
             ((pooling_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }/*elif(flow[i] -> layer_type == "dropout"){
+        }elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }*/
+        }
     }
 }
 
@@ -88,9 +88,9 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             ((pooling_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        }//elif(flow[i] -> layer_type == "dropout"){
-         //   ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
-        //}
+        }elif(flow[i] -> layer_type == "dropout"){
+            ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
+        }
     }
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
@@ -123,9 +123,9 @@ void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
             ((pooling_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
-        }/*elif(flow[i] -> layer_type == "dropout"){
+        }elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> forwardPassTest(batch_size, flow[i - 1]);
-        }*/
+        }
     }
 }
 
@@ -157,9 +157,9 @@ void backwardPass(std::vector<network_layer*> &flow){
             ((pooling_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
         }elif(flow[i] -> layer_type == "local_response_normalization"){
             ((local_response_normalization_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
-        }/*elif(flow[i] -> layer_type == "dropout"){
+        }elif(flow[i] -> layer_type == "dropout"){
             ((dropout_layer*)flow[i]) -> backwardPass(batch_size, flow[i - 1], flow[i + 1]);
-        }*/
+        }
     }
     groundTruth -> release();
 }
@@ -215,9 +215,9 @@ void printNetwork(std::vector<network_layer*> &flow){
             cout<<"beta = "<<((local_response_normalization_layer*)flow[i]) -> beta<<endl;
             cout<<"k = "<<((local_response_normalization_layer*)flow[i]) -> k<<endl;
             cout<<"n = "<<((local_response_normalization_layer*)flow[i]) -> n<<endl;
-        }/*elif(flow[i] -> layer_type == "dropout"){
+        }elif(flow[i] -> layer_type == "dropout"){
             cout<<"dropout rate = "<<((dropout_layer*)flow[i]) -> dropout_rate<<endl;
-        }*/
+        }
         if(flow[i] -> output_format == "matrix"){
             cout<<"output matrix size is ["<<flow[i] -> output_matrix -> rows<<", "<<flow[i] -> output_matrix -> cols<<"]"<<endl;
         }else{
