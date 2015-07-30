@@ -1925,11 +1925,19 @@ bool test_pooling(){
 	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
 	expect_max -> hostToDevice();
 	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
-//	for(int i = 0; i < 16; ++i){
-//		cout<<"i = "<<i<<endl;
-//		res_loc_max[i] ->print(" ");
-//		expect_loc_max[i] ->print(" ");
-//	}
+
+
+	expect_max -> printHost("EXP");
+	res_max -> printHost("RES");
+	Mat *tmp = new Mat();
+	safeGetPt(tmp, subtract(expect_max, res_max));
+	tmp -> printHost("TMP");
+
+	for(int i = 0; i < 16; ++i){
+		cout<<"i = "<<i<<endl;
+		res_loc_max[i] ->print(" ");
+		expect_loc_max[i] ->print(" ");
+	}
 	a -> release();
 	res_max -> release();
 	expect_max -> release();

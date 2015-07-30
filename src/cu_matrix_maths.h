@@ -38,6 +38,7 @@ __global__ void cu_downSample(const float*, float*, const int, const int, const 
 __global__ void cu_interpolation(const float*, float*, const int, const int, const int, const int);
 __global__ void cu_getRange(const float*, float*, const int, const int, const int, const int, const int, const int);
 __global__ void cu_copyMakeBorder(const float*, float*, const int, const int, const int, const int, const int, const int, const int);
+__global__ void cu_pooling_max(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
 
 
 

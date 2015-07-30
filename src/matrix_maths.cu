@@ -1531,7 +1531,101 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
     return res;
 }
 
+
 Mat* pooling(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*> &locat){
+	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    if(stride == 1){
+    	for(int i = 0; i < src -> rows * src -> cols; ++i){
+    		vector3f* tmp = new vector3f(i, i, i);
+    		locat.push_back(tmp);
+    	}
+    	Mat *res = new Mat();
+    	src -> copyTo(*res);
+        return res;
+    }
+	int dst_rows = src -> rows / stride;
+	if(src -> rows % stride > 0) ++dst_rows;
+	int dst_cols = src -> cols / stride;
+	if(src -> cols % stride > 0) ++dst_cols;
+	Mat *res = new Mat(dst_rows, dst_cols, src -> channels);
+	Mat *loc = new Mat(dst_rows, dst_cols, src -> channels);
+	safeGetPt(res, downSample(src, stride, stride));
+	int lensrc = src -> rows * src -> cols;
+	int lenres = res -> rows * res -> cols;
+	for(int i = 0; i < lenres; ++i){
+		vector3f* tmp = new vector3f();
+		locat.push_back(tmp);
+	}
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
+	for(int i = 0; i < src -> channels; ++i){
+		float *devLoc = NULL;
+		checkCudaErrors(cudaMalloc((void**)&devLoc, lenres * sizeof(float)));
+		cu_pooling_max<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  devLoc, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
+
+		float *hostLoc = (float *)malloc(lenres * sizeof(float));
+		checkCudaErrors(cudaMemcpy(hostLoc, devLoc, lenres * sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(devLoc));
+		for(int j = 0; j < lenres; ++j){
+			locat[j] -> set(i, hostLoc[j]);
+		}
+		free(hostLoc);
+	}
+	res -> deviceToHost();
+    return res;
+}
+
+Mat* pooling2(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*> &locat){
+	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+		std::cout<<"invalid input..."<<std::endl;
+		exit(0);
+	}
+    if(stride == 1){
+    	for(int i = 0; i < src -> rows * src -> cols; ++i){
+    		vector3f* tmp = new vector3f(i, i, i);
+    		locat.push_back(tmp);
+    	}
+    	Mat *res = new Mat();
+    	src -> copyTo(*res);
+        return res;
+    }
+	int dst_rows = src -> rows / stride;
+	if(src -> rows % stride > 0) ++dst_rows;
+	int dst_cols = src -> cols / stride;
+	if(src -> cols % stride > 0) ++dst_cols;
+	Mat *res = new Mat(dst_rows, dst_cols, src -> channels);
+	Mat *loc = new Mat(dst_rows, dst_cols, src -> channels);
+	safeGetPt(res, downSample(src, stride, stride));
+	int lensrc = src -> rows * src -> cols;
+	int lenres = res -> rows * res -> cols;
+	for(int i = 0; i < lenres; ++i){
+		vector3f* tmp = new vector3f();
+		locat.push_back(tmp);
+	}
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
+	for(int i = 0; i < src -> channels; ++i){
+		float *devLoc = NULL;
+		checkCudaErrors(cudaMalloc((void**)&devLoc, lenres * sizeof(float)));
+		cu_pooling_max<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  devLoc, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lensrc);
+
+		float *hostLoc = (float *)malloc(lenres * sizeof(float));
+		checkCudaErrors(cudaMemcpy(hostLoc, devLoc, lenres * sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(devLoc));
+		for(int j = 0; j < lenres; ++j){
+			locat[j] -> set(i, hostLoc[j]);
+		}
+		free(hostLoc);
+	}
+	res -> deviceToHost();
+    return res;
+}
+
+
+Mat* pooling1(const Mat* src, int stride, int poolingMethod, std::vector<vector3f*> &locat){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);

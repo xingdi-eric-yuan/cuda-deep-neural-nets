@@ -15,8 +15,8 @@
 
 #if(USE_TEXTURE)
 texture<float, 1, cudaReadModeElementType> texFloat;
-#define   LOAD_FLOAT(i) tex1Dfetch(texFloat, i)
-#define  SET_FLOAT_BASE cudaBindTexture(0, texFloat, d_Src)
+#define   LOAD_FLOAT(i) (checkCudaErrorstex1Dfetch(texFloat, i)))
+#define  SET_FLOAT_BASE (checkCudaErrorscudaBindTexture(0, texFloat, d_Src)))
 #else
 #define  LOAD_FLOAT(i) d_Src[i]
 #define SET_FLOAT_BASE
@@ -105,13 +105,13 @@ __global__ void modulateAndNormalize_kernel(
 #if(USE_TEXTURE)
 texture<fComplex, 1, cudaReadModeElementType> texComplexA;
 texture<fComplex, 1, cudaReadModeElementType> texComplexB;
-#define    LOAD_FCOMPLEX(i) tex1Dfetch(texComplexA, i)
-#define  LOAD_FCOMPLEX_A(i) tex1Dfetch(texComplexA, i)
-#define  LOAD_FCOMPLEX_B(i) tex1Dfetch(texComplexB, i)
+#define    LOAD_FCOMPLEX(i) (checkCudaErrorstex1Dfetch(texComplexA, i)))
+#define  LOAD_FCOMPLEX_A(i) (checkCudaErrorstex1Dfetch(texComplexA, i)))
+#define  LOAD_FCOMPLEX_B(i) (checkCudaErrorstex1Dfetch(texComplexB, i)))
 
-#define   SET_FCOMPLEX_BASE ( cudaBindTexture(0, texComplexA,  d_Src) )
-#define SET_FCOMPLEX_BASE_A ( cudaBindTexture(0, texComplexA, d_SrcA) )
-#define SET_FCOMPLEX_BASE_B ( cudaBindTexture(0, texComplexB, d_SrcB) )
+#define   SET_FCOMPLEX_BASE ( checkCudaErrorscudaBindTexture(0, texComplexA,  d_Src) ))
+#define SET_FCOMPLEX_BASE_A ( checkCudaErrorscudaBindTexture(0, texComplexA, d_SrcA) ))
+#define SET_FCOMPLEX_BASE_B ( checkCudaErrorscudaBindTexture(0, texComplexB, d_SrcB) ))
 #else
 #define    LOAD_FCOMPLEX(i)  d_Src[i]
 #define  LOAD_FCOMPLEX_A(i) d_SrcA[i]
