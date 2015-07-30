@@ -14,6 +14,20 @@ void safeGetPt(cpuMat* &dst, cpuMat* src){
 	dst = src;
 }
 
+void safeGetPt(vector3f* &dst, vector3f* src){
+	if(dst){
+		dst -> release();
+	}
+	dst = src;
+}
+
+void safeGetPt(vector2i* &dst, vector2i* src){
+	if(dst){
+		dst -> release();
+	}
+	dst = src;
+}
+
 ///
 vector3f* add(const vector3f* src, float a){
 	if(NULL == src){
@@ -1494,11 +1508,14 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
     safeGetPt(dst, downSample(res, stride, stride));
     for(int i = 0; i < dst -> cols; ++i){
     	for(int j = 0; j < dst -> rows; ++j){
-    		locat.push_back(tmplocat[i * stride * res -> rows + j * stride]);
+    		vector3f *tmpvec = new vector3f();
+    		tmplocat[i * stride * res -> rows + j * stride] -> copyTo(*tmpvec);
+    		locat.push_back(tmpvec);
     	}
     }
     res -> release();
 	loc -> release();
+	releaseVector(tmplocat);
     tmplocat.clear();
     std::vector<vector3f*>().swap(tmplocat);
     return dst;
@@ -1534,17 +1551,23 @@ Mat* pooling_with_overlap_slow(const Mat *src, vector2i *window_size, int stride
         	loc = add(loc, tmpc);
             tmplocat.push_back(loc);
             tmpres -> set(i, j, *val);
+            val -> release();
         }
     }
     Mat *dst = new Mat();
     safeGetPt(dst, downSample(tmpres, stride, stride));
     for(int i = 0; i < dst -> cols; ++i){
     	for(int j = 0; j < dst -> rows; ++j){
-    		locat.push_back(tmplocat[i * stride * tmpres -> rows + j * stride]);
+    		vector3f *tmpvec = new vector3f();
+    		tmplocat[i * stride * tmpres -> rows + j * stride] -> copyTo(*tmpvec);
+    		locat.push_back(tmpvec);
     	}
     }
+    tmpr -> release();
+    tmpc -> release();
     tmpres -> release();
     tmp -> release();
+    releaseVector(tmplocat);
     tmplocat.clear();
     std::vector<vector3f*>().swap(tmplocat);
     return dst;
@@ -1665,8 +1688,11 @@ Mat* pooling_slow(const Mat* src, int stride, int poolingMethod, std::vector<vec
         	loc = add(loc, tmpc);
             locat.push_back(loc);
             res -> set(i, j, *val);
+            val -> release();
         }
     }
+    tmpr -> release();
+    tmpc -> release();
     tmp -> release();
     return res;
 }
@@ -1719,6 +1745,8 @@ Mat* findMax(const Mat* m){
 		res -> set(0, i, 0, loc -> get(0));
 	}
 	tmp -> release();
+	val -> release();
+	loc -> release();
 	return res;
 }
 

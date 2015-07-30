@@ -3,29 +3,43 @@
 using namespace std;
 
 vector3f::vector3f(){
-	for(int i = 0; i < 3; ++i){
-		set(i, 0.0);
-	}
+	Data = NULL;
+	mallocVector3f();
 }
 
 vector3f::vector3f(float a, float b, float c){
+	Data = NULL;
+	mallocVector3f();
 	set(0, a);
 	set(1, b);
 	set(2, c);
 }
 
 vector3f::vector3f(const vector3f &v){
-	for(int i = 0; i < 3; ++i){
-		set(i, v.get(i));
-	}
+	Data = NULL;
+	mallocVector3f();
+	memcpy(Data, v.Data, 3 * sizeof(float));
 }
 
-vector3f::~vector3f(){}
+vector3f::~vector3f(){
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+	Data = NULL;
+}
+
+void vector3f::release(){
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+	Data = NULL;
+}
 
 vector3f& vector3f::operator=(const vector3f &v){
-	for(int i = 0; i < 3; ++i){
-		set(i, v.get(i));
+	if(NULL != Data){
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+		Data = NULL;
 	}
+	mallocVector3f();
+	memcpy(Data, v.Data, 3 * sizeof(float));
     return *this;
 }
 
@@ -42,10 +56,7 @@ void vector3f::ones(){
 }
 
 void vector3f::set(int pos, float val){
-	if(0 == pos) val0 = val;
-	elif(1 == pos) val1 = val;
-	elif(2 == pos) val2 = val;
-	else ;
+	Data[pos] = val;
 }
 
 void vector3f::setAll(float val){
@@ -55,15 +66,16 @@ void vector3f::setAll(float val){
 }
 
 float vector3f::get(int pos) const{
-	if(0 == pos) return val0;
-	elif(1 == pos) return val1;
-	elif(2 == pos) return val2;
-	else return 0.0;
+	return Data[pos];
 }
+
 void vector3f::copyTo(vector3f &v) const{
-	for(int i = 0; i < 3; ++i){
-		v.set(i, get(i));
+	if(NULL != v.Data){
+		MemoryMonitor::instance()->freeCpuMemory(v.Data);
+		v.Data = NULL;
 	}
+	v.mallocVector3f();
+	memcpy(v.Data, Data, 3 * sizeof(float));
 }
 
 vector3f vector3f::operator+(const vector3f &v) const{
@@ -235,6 +247,18 @@ vector3f vector3f::mul(float a) const{
 		tmp.set(i, tmp.get(i) * a);
 	}
 	return tmp;
+}
+
+void vector3f::mallocVector3f(){
+	if(NULL == Data){
+		// malloc data
+		Data = (float*)MemoryMonitor::instance()->cpuMalloc(3 * sizeof(float));
+		if(NULL == Data) {
+			std::cout<<"host memory allocation failed..."<<std::endl;
+			exit(0);
+		}
+		memset(Data, 0, 3 * sizeof(float));
+	}
 }
 
 void vector3f::print(const std::string& str) const{

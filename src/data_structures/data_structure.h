@@ -14,6 +14,7 @@ public:
 	vector2i(int, int);
 	vector2i(const vector2i&);
 	~vector2i();
+	void release();
 	vector2i& operator=(const vector2i&);
 
 	void zeros();
@@ -39,10 +40,10 @@ public:
 
 	vector2i mul(const vector2i&) const;
 	vector2i mul(const int) const;
+	void mallocVector2i();
 	void print(const std::string&) const;
 
-	int val0;
-	int val1;
+	int *Data;
 };
 // Scalar3
 class vector3f{
@@ -51,6 +52,7 @@ public:
 	vector3f(float, float, float);
 	vector3f(const vector3f&);
 	~vector3f();
+	void release();
 	vector3f& operator=(const vector3f&);
 
 	void zeros();
@@ -81,11 +83,11 @@ public:
 	vector3f divNoRem(float) const;
 	vector3f mul(const vector3f&) const;
 	vector3f mul(const float) const;
+
+	void mallocVector3f();
 	void print(const std::string&) const;
 
-	float val0;
-	float val1;
-	float val2;
+	float *Data;
 };
 
 class MatPtr{
@@ -95,9 +97,6 @@ public:
 	~MatPtr();
 	MatPtr& operator=(const MatPtr&);
 	MatPtr& operator<=(const MatPtr&);
-	
-
-	
 	Mat* mptr;
 };
 

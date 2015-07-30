@@ -111,6 +111,8 @@ preProcessing(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX){
     	safeGetPt(testX[i], divide(testX[i], sdev));
     }
 
+    mean -> release();
+    sdev -> release();
     tmp -> release();
 }
 

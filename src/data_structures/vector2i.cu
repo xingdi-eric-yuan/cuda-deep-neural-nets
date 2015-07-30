@@ -3,28 +3,42 @@
 using namespace std;
 
 vector2i::vector2i(){
-	for(int i = 0; i < 2; ++i){
-		set(i, 0);
-	}
+	Data = NULL;
+	mallocVector2i();
 }
 
 vector2i::vector2i(int a, int b){
+	Data = NULL;
+	mallocVector2i();
 	set(0, a);
 	set(1, b);
 }
 
 vector2i::vector2i(const vector2i &v){
-	for(int i = 0; i < 2; ++i){
-		set(i, v.get(i));
-	}
+	Data = NULL;
+	mallocVector2i();
+	memcpy(Data, v.Data, 2 * sizeof(int));
 }
 
-vector2i::~vector2i(){}
+vector2i::~vector2i(){
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+	Data = NULL;
+}
+
+void vector2i::release(){
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+	Data = NULL;
+}
 
 vector2i& vector2i::operator=(const vector2i &v){
-	for(int i = 0; i < 2; ++i){
-		set(i, v.get(i));
+	if(NULL != Data){
+		MemoryMonitor::instance()->freeCpuMemory(Data);
+		Data = NULL;
 	}
+	mallocVector2i();
+	memcpy(Data, v.Data, 2 * sizeof(int));
     return *this;
 }
 
@@ -41,9 +55,7 @@ void vector2i::ones(){
 }
 
 void vector2i::set(int pos, int val){
-	if(0 == pos) val0 = val;
-	elif(1 == pos) val1 = val;
-	else ;
+	Data[pos] = val;
 }
 
 void vector2i::setAll(int val){
@@ -53,14 +65,15 @@ void vector2i::setAll(int val){
 }
 
 int vector2i::get(int pos) const{
-	if(0 == pos) return val0;
-	elif(1 == pos) return val1;
-	else return 0;
+	return Data[pos];
 }
 void vector2i::copyTo(vector2i &v) const{
-	for(int i = 0; i < 2; ++i){
-		v.set(i, get(i));
+	if(NULL != v.Data){
+		MemoryMonitor::instance()->freeCpuMemory(v.Data);
+		v.Data = NULL;
 	}
+	v.mallocVector2i();
+	memcpy(v.Data, Data, 2 * sizeof(int));
 }
 
 vector2i vector2i::operator+(const vector2i &v) const{
@@ -175,6 +188,18 @@ vector2i vector2i::mul(int a) const{
 		tmp.set(i, tmp.get(i) * a);
 	}
 	return tmp;
+}
+
+void vector2i::mallocVector2i(){
+	if(NULL == Data){
+		// malloc data
+		Data = (int*)MemoryMonitor::instance()->cpuMalloc(2 * sizeof(int));
+		if(NULL == Data) {
+			std::cout<<"host memory allocation failed..."<<std::endl;
+			exit(0);
+		}
+		memset(Data, 0, 2 * sizeof(int));
+	}
 }
 
 void vector2i::print(const std::string& str) const{

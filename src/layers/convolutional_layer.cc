@@ -16,6 +16,9 @@ convolutional_kernel::~convolutional_kernel(){
 	w -> release();
 	wgrad -> release();
     wd2 -> release();
+    b -> release();
+    bgrad -> release();
+    bd2 -> release();
 }
 
 void convolutional_kernel::init_config(int width, float weightDecay){
@@ -36,6 +39,9 @@ void convolutional_kernel::release(){
 	w -> release();
 	wgrad -> release();
     wd2 -> release();
+    b -> release();
+    bgrad -> release();
+    bd2 -> release();
     free(w);
     free(b);
     free(wgrad);
@@ -75,6 +81,7 @@ convolutional_layer::~convolutional_layer(){
     velocity_combine_weight -> release();
     second_derivative_combine_weight -> release();
     learning_rate_w -> release();
+    learning_rate_b -> release();
 }
 
 void convolutional_layer::init_config(string namestr, int kernel_amount, int kernel_size, int output_amount, int _padding, int _stride, float weight_decay, string outputformat){
@@ -152,17 +159,16 @@ void convolutional_layer::update(int iter_num){
         safeGetPt(velocity_w[i], add(tmp, velocity_w[i]));
         safeGetPt(kernels[i] -> w, subtract(kernels[i] -> w, velocity_w[i]));
 
-        second_derivative_b[i] = multiply_elem(second_derivative_b[i], momentum_second_derivative);
-        tmpvec = multiply_elem(kernels[i] -> bd2, 1.0 - momentum_second_derivative);
-        second_derivative_b[i] = add(second_derivative_b[i], tmpvec);
-        tmpvec = add(second_derivative_b[i], allmu);
-        learning_rate_b = divide(lrate_b, tmpvec);
-
-        velocity_b[i] = multiply_elem(velocity_b[i], momentum_derivative);
-        tmpvec = multiply_elem(kernels[i] -> bgrad, 1.0 - momentum_derivative);
-        tmpvec = multiply_elem(tmpvec, learning_rate_b);
-        velocity_b[i] = add(velocity_b[i], tmpvec);
-        kernels[i] -> b = subtract(kernels[i] -> b, velocity_b[i]);
+        safeGetPt(second_derivative_b[i], multiply_elem(second_derivative_b[i], momentum_second_derivative));
+        safeGetPt(tmpvec, multiply_elem(kernels[i] -> bd2, 1.0 - momentum_second_derivative));
+        safeGetPt(second_derivative_b[i], add(second_derivative_b[i], tmpvec));
+        safeGetPt(tmpvec, add(second_derivative_b[i], mu));
+        safeGetPt(learning_rate_b, divide(lrate_b, tmpvec));
+        safeGetPt(velocity_b[i], multiply_elem(velocity_b[i], momentum_derivative));
+        safeGetPt(tmpvec, multiply_elem(kernels[i] -> bgrad, learning_rate_b));
+        safeGetPt(tmpvec, multiply_elem(tmpvec, 1.0 - momentum_derivative));
+        safeGetPt(velocity_b[i], add(tmpvec, velocity_b[i]));
+        safeGetPt(kernels[i] -> b, subtract(kernels[i] -> b, velocity_b[i]));
     }
     if(combine_feature_map > 0){
         safeGetPt(second_derivative_combine_weight, multiply_elem(second_derivative_combine_weight, momentum_second_derivative));
@@ -177,6 +183,7 @@ void convolutional_layer::update(int iter_num){
         safeGetPt(combine_weight, subtract(combine_weight, velocity_combine_weight));
     }
     tmp -> release();
+    tmpvec -> release();
 }
 
 void convolutional_layer::forwardPass(int nsamples, network_layer* previous_layer){
@@ -222,6 +229,7 @@ void convolutional_layer::forwardPass(int nsamples, network_layer* previous_laye
                     	tmpvec3 -> setAll(c_weight -> get(m, n, 0));
                         safeGetPt(tmp, multiply_elem(tmpvec[m], tmpvec3));
                         safeGetPt(outputvec[n], add(outputvec[n], tmp));
+                        tmpvec3 -> release();
                     }
                 }
                 for(int k = 0; k < outputvec.size(); k++) {eachsample.push_back(outputvec[k]);}
@@ -427,6 +435,8 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     tmp2 -> release();
     tmp3 -> release();
     tmp4 -> release();
+    tmpvec3_1 -> release();
+    tmpvec3_2 -> release();
     if(combine_feature_map > 0){
         c_weight -> release();
         c_weightgrad -> release();
@@ -444,8 +454,10 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     releaseVector(deriv2);
     deriv2.clear();
     std::vector<std::vector<Mat*> >().swap(deriv2);
+    releaseVector(tmpgradb);
     tmpgradb.clear();
     std::vector<vector3f*>().swap(tmpgradb);
+    releaseVector(tmpbd2);
     tmpbd2.clear();
     std::vector<vector3f*>().swap(tmpbd2);
 }

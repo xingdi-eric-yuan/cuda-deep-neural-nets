@@ -74,7 +74,6 @@ void fully_connected_layer::init_weight(network_layer* previous_layer){
     iter = 0;
     mu = 1e-2;
     fully_connected_layer::setMomentum();
-
 }
 
 void fully_connected_layer::setMomentum(){

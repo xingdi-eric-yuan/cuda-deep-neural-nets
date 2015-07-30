@@ -9,6 +9,7 @@ pooling_layer::pooling_layer(){
     overlap = false;
 }
 pooling_layer::~pooling_layer(){
+	releaseVector(location);
 	location.clear();
     std::vector<std::vector<std::vector<vector3f*> > >().swap(location);
 }
@@ -63,6 +64,7 @@ void pooling_layer::forwardPass(int nsamples, network_layer* previous_layer){
         	}
         }
     }
+    _size -> release();
     releaseVector(input);
 	input.clear();
 	std::vector<std::vector<Mat*> >().swap(input);
@@ -114,6 +116,8 @@ void pooling_layer::backwardPass(int nsamples, network_layer* previous_layer, ne
         	}
         }
     }
+    _size -> release();
+    up_size -> release();
     releaseVector(derivative);
     derivative.clear();
     std::vector<std::vector<Mat*> >().swap(derivative);

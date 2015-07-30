@@ -9,6 +9,8 @@ class vector2i;
 /////////// pointer version
 void safeGetPt(Mat*&, Mat*);
 void safeGetPt(cpuMat*&, cpuMat*);
+void safeGetPt(vector2i*&, vector2i*);
+void safeGetPt(vector3f*&, vector3f*);
 
 vector3f* add(const vector3f*, float);
 vector3f* add(const vector3f*, const vector3f*);

@@ -370,25 +370,35 @@ bool areApproximatelyIdentical(float a, float b){
 // tests
 bool test_add_v_f(){
 	cout<<"testing add_v_f --- ";
-	vector3f *a = getTestVector3f_0();
-	float b = getTestFloat();
+	vector3f *a = NULL;
 	vector3f *res = NULL;
-	res = add(a, b);
+	safeGetPt(a, getTestVector3f_0());
+	float b = getTestFloat();
+	safeGetPt(res, add(a, b));
 	vector3f *expect = new vector3f(0.75, 1.0, 1.25);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
 bool test_add_v_v(){
 	cout<<"testing add_v_v --- ";
-	vector3f *a = getTestVector3f_0();
-	vector3f *b = getTestVector3f_0();
+	vector3f *a = NULL;
+	vector3f *b = NULL;
+	safeGetPt(a, getTestVector3f_0());
+	safeGetPt(b, getTestVector3f_0());
 	vector3f *res = NULL;
-	res = add(a, b);
+	safeGetPt(res, add(a, b));
 	vector3f *expect = new vector3f(0.50, 1.0, 1.5);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	b -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -430,6 +440,7 @@ bool test_add_m_v(){
 	a -> release();
 	res -> release();
 	expect -> release();
+	b -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -461,10 +472,13 @@ bool test_subtract_v_f(){
 	vector3f *a = getTestVector3f_0();
 	float b = getTestFloat();
 	vector3f *res = NULL;
-	res = subtract(a, b);
+	safeGetPt(res, subtract(a, b));
 	vector3f *expect = new vector3f(-0.25, 0.0, 0.25);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -473,10 +487,14 @@ bool test_subtract_v_v(){
 	vector3f *a = getTestVector3f_0();
 	vector3f *b = getTestVector3f_0();
 	vector3f *res = NULL;
-	res = subtract(a, b);
+	safeGetPt(res, subtract(a, b));
 	vector3f *expect = new vector3f(0.00, 0.00, 0.0);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	b -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -516,6 +534,7 @@ bool test_subtract_m_v(){
 	expect -> hostToDevice();
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	b -> release();
 	res -> release();
 	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
@@ -549,10 +568,13 @@ bool test_multiply_elem_v_f(){
 	vector3f *a = getTestVector3f_0();
 	float b = getTestFloat();
 	vector3f *res = NULL;
-	res = multiply_elem(a, b);
+	safeGetPt(res, multiply_elem(a, b));
 	vector3f *expect = new vector3f(0.125, 0.25, 0.375);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -561,10 +583,14 @@ bool test_multiply_elem_v_v(){
 	vector3f *a = getTestVector3f_0();
 	vector3f *b = getTestVector3f_0();
 	vector3f *res = NULL;
-	res = multiply_elem(a, b);
+	safeGetPt(res, multiply_elem(a, b));
 	vector3f *expect = new vector3f(0.0625, 0.25, 0.5625);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	b -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -604,6 +630,7 @@ bool test_multiply_elem_m_v(){
 	expect -> hostToDevice();
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	b -> release();
 	res -> release();
 	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
@@ -679,10 +706,13 @@ bool test_div_rem(){
 	vector3f *a = getTestVector3f_1();
 	int b = getTestInt();
 	vector3f *res = NULL;
-	res = div_rem(a, b);
+	safeGetPt(res, div_rem(a, b));
 	vector3f *expect = new vector3f(1, 1, 1);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -691,10 +721,13 @@ bool test_div_no_rem(){
 	vector3f *a = getTestVector3f_1();
 	int b = getTestInt();
 	vector3f *res = NULL;
-	res = div_no_rem(a, b);
+	safeGetPt(res, div_no_rem(a, b));
 	vector3f *expect = new vector3f(1, 1, 1);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -747,10 +780,13 @@ bool test_divide_v_f(){
 	vector3f *a = getTestVector3f_0();
 	float b = getTestFloat();
 	vector3f *res = NULL;
-	res = divide(a, b);
+	safeGetPt(res, divide(a, b));
 	vector3f *expect = new vector3f(0.5, 1.0, 1.5);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -759,10 +795,13 @@ bool test_divide_f_v(){
 	vector3f *a = getTestVector3f_0();
 	float b = getTestFloat();
 	vector3f *res = NULL;
-	res = divide(b, a);
+	safeGetPt(res, divide(b, a));
 	vector3f *expect = new vector3f(2.0000, 1.0000, 0.6667);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -781,6 +820,7 @@ bool test_divide_m_v(){
 	expect -> hostToDevice();
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	b -> release();
 	res -> release();
 	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
@@ -804,6 +844,7 @@ bool test_divide_v_m(){
 	expect -> hostToDevice();
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	b -> release();
 	res -> release();
 	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
@@ -840,10 +881,14 @@ bool test_divide_v_v(){
 	vector3f *a = getTestVector3f_0();
 	vector3f *b = getTestVector3f_0();
 	vector3f *res = NULL;
-	res = divide(a, b);
+	safeGetPt(res, divide(a, b));
 	vector3f *expect = new vector3f(1.0, 1.0, 1.0);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	b -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -946,10 +991,13 @@ bool test_square_v(){
 	cout<<"testing square_v --- ";
 	vector3f *a = getTestVector3f_0();
 	vector3f *res = NULL;
-	res = square(a);
+	safeGetPt(res, square(a));
 	vector3f *expect = new vector3f(0.0625, 0.2500, 0.5625);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -977,10 +1025,13 @@ bool test_sqrt_v(){
 	cout<<"testing sqrt_v --- ";
 	vector3f *a = getTestVector3f_0();
 	vector3f *res = NULL;
-	res = sqrt(a);
+	safeGetPt(res, sqrt(a));
 	vector3f *expect = new vector3f(0.5000, 0.7071, 0.8660);
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -991,6 +1042,7 @@ bool test_sum_v(){
 	float expect = 1.5;
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
 	return result;
 }
 
@@ -1003,6 +1055,8 @@ bool test_sum_m(){
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	cout<<(result ? "success" : "failed")<<endl;
+	res -> release();
+	expect -> release();
 	return result;
 }
 
@@ -1014,6 +1068,8 @@ bool test_average(){
 	vector3f *expect = new vector3f(0.4, 1.3, 2.2);
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	res -> release();
+	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1027,6 +1083,9 @@ bool test_stddev(){
 	vector3f *expect = new vector3f(0.2582, 0.2582, 0.2582);
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	avg -> release();
+	res -> release();
+	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1037,6 +1096,7 @@ bool test_max_v(){
 	float res = max(a);
 	float expect = 0.75;
 	bool result = areApproximatelyIdentical(res, expect);
+	a -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1048,6 +1108,7 @@ bool test_min_v(){
 	float expect = 0.25;
 	bool result = areApproximatelyIdentical(res, expect);
 	cout<<(result ? "success" : "failed")<<endl;
+	a -> release();
 	return result;
 }
 
@@ -1059,6 +1120,7 @@ bool test_max_m(){
 	vector3f *expect = new vector3f(0.8, 1.7, 2.6);
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1071,6 +1133,8 @@ bool test_min_m(){
 	vector3f *expect = new vector3f(0.0, 0.9, 1.8);
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
+	res -> release();
+	expect -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1085,6 +1149,10 @@ bool test_maxLoc(){
 	vector3f *expectLoc = new vector3f(8, 8, 8);
 	bool result = areApproximatelyIdentical(resVal, expectVal) && areApproximatelyIdentical(resLoc, expectLoc);
 	a -> release();
+	resVal -> release();
+	expectVal -> release();
+	resLoc -> release();
+	expectLoc -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1099,6 +1167,10 @@ bool test_minLoc(){
 	vector3f *expectLoc = new vector3f(0, 0, 0);
 	bool result = areApproximatelyIdentical(resVal, expectVal) && areApproximatelyIdentical(resLoc, expectLoc);
 	a -> release();
+	resVal -> release();
+	expectVal -> release();
+	resLoc -> release();
+	expectLoc -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1120,6 +1192,14 @@ bool test_minMaxLoc(){
 				  areApproximatelyIdentical(resMaxVal, expectMaxVal) &&
 				  areApproximatelyIdentical(resMaxLoc, expectMaxLoc) ;
 	a -> release();
+	resMinVal -> release();
+	expectMinVal -> release();
+	resMinLoc -> release();
+	expectMinLoc -> release();
+	resMaxVal -> release();
+	expectMaxVal -> release();
+	resMaxLoc -> release();
+	expectMaxLoc -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1751,6 +1831,7 @@ bool test_copyMakeBorder(){
 	a -> release();
 	res -> release();
 	expect -> release();
+	v -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -1965,6 +2046,8 @@ bool test_pooling_max(){
 	a -> release();
 	res_max -> release();
 	expect_max -> release();
+	releaseVector(res_loc_max);
+	releaseVector(expect_loc_max);
 	res_loc_max.clear();
 	expect_loc_max.clear();
 	std::vector<vector3f*>().swap(res_loc_max);
@@ -2035,6 +2118,8 @@ bool test_pooling_mean(){
 	a -> release();
 	res_mean -> release();
 	expect_mean -> release();
+	releaseVector(res_loc_mean);
+	releaseVector(expect_loc_mean);
 	res_loc_mean.clear();
 	expect_loc_mean.clear();
 	std::vector<vector3f*>().swap(res_loc_mean);
@@ -2080,7 +2165,6 @@ bool test_pooling_overlap_max(){
 	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
 	expect_max -> hostToDevice();
 	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc_max);
-
 //	expect_max -> printHost("EXP");
 //	res_max -> printHost("RES");
 //	Mat *tmp = new Mat();
@@ -2095,10 +2179,13 @@ bool test_pooling_overlap_max(){
 	a -> release();
 	res_max -> release();
 	expect_max -> release();
+	releaseVector(res_loc_max);
+	releaseVector(expect_loc_max);
 	res_loc_max.clear();
 	expect_loc_max.clear();
 	std::vector<vector3f*>().swap(res_loc_max);
 	std::vector<vector3f*>().swap(expect_loc_max);
+	window_size -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
