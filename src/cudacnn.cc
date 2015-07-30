@@ -2,7 +2,7 @@
  ============================================================================
  Name        : cudacnn.cu
  Author      : eric_yuan
- Version     :
+ Version     : 0.1.0
  Copyright   : 
  Description : CUDA compute reciprocals
  ============================================================================
@@ -53,9 +53,9 @@ int main(void){
 
 //	showGpuProperty();
 
-	runAllTest();
+//	runAllTest();
 
-//	run();
+	run();
 
 	return 0;
 }

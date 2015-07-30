@@ -133,6 +133,7 @@ public:
 	void setAll(const vector3f&);
 	float get(int, int, int) const;
 	vector3f get(int, int) const;
+	vector3f get(int) const;
 	int getLength() const;
 
 	void deviceToHost();

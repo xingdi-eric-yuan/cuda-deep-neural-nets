@@ -255,6 +255,19 @@ vector3f Mat::get(int pos_y, int pos_x) const{
 	return res;
 }
 
+vector3f Mat::get(int pos) const{
+	if(NULL == hostData || NULL == devData||
+	   pos >= getLength() || channels < 3){
+		std::cout<<"invalid position..."<<std::endl;
+		exit(0);
+	}
+	vector3f res;
+	for(int i = 0; i < 3; ++i){
+		res.set(i, hostData[pos + i * (rows * cols)]);
+	}
+	return res;
+}
+
 int Mat::getLength() const{
 	return rows * cols * channels;
 }

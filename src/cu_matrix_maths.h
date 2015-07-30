@@ -21,7 +21,6 @@ __global__ void cu_divide(const float*, float*, const float, const int);
 __global__ void cu_divide(const float, const float*, float*, const int);
 __global__ void cu_divide(const float*, const float*, float*, const int);
 __global__ void cu_sum(const float*, float*, const int);
-//__global__ void cu_stddev(const float*, float*, const float, const int);
 __global__ void cu_minMaxLoc(const float*, float*, float*, int*, int*, const int);
 __global__ void cu_greaterThan(const float*, float*, const float, const int);
 __global__ void cu_greaterThanOrEqualTo(const float*, float*, const float, const int);
@@ -39,7 +38,9 @@ __global__ void cu_interpolation(const float*, float*, const int, const int, con
 __global__ void cu_getRange(const float*, float*, const int, const int, const int, const int, const int, const int);
 __global__ void cu_copyMakeBorder(const float*, float*, const int, const int, const int, const int, const int, const int, const int);
 __global__ void cu_pooling_max(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
+__global__ void cu_pooling_mean(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
 
+__global__ void cu_pooling_overlap_max(const float*, float*, float*, const int, const int, const int, const int, const int, const int, const int);
 
 
 

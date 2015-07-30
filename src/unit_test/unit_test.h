@@ -13,6 +13,7 @@ void runAllTest();
 Mat* getTestMatrix_5();
 Mat* getTestMatrix_3();
 Mat* getTestMatrix_3_rand();
+Mat* getTestMatrix_5_rand();
 Mat* getTestMatrix_10_rand();
 vector3f* getTestVector3f_0();
 vector3f* getTestVector3f_1();
@@ -116,7 +117,9 @@ bool test_downSample();
 bool test_copyMakeBorder();
 bool test_pooling_with_overlap();
 bool test_unpooling_with_overlap();
-bool test_pooling();
+bool test_pooling_max();
+bool test_pooling_mean();
+bool test_pooling_overlap_max();
 bool test_unpooling();
 
 bool test_cpu_average();
