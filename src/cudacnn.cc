@@ -32,9 +32,6 @@ void run(){
     std::vector<network_layer*> flow;
     buildNetworkFromConfigFile("config.txt", flow);
 
-    //trainX[0] -> print("trainx0");
-    //trainX[1] -> print("trainx1");
-
     trainNetwork(trainX, trainY, testX, testY, flow);
 
     flow.clear();
@@ -62,19 +59,6 @@ int main(void){
 	run();
 
 
-
-	/*
-	Mat *a = new Mat(10, 10, 3);
-	a -> randn();
-	vector3f* mean = new vector3f();
-	safeGetPt(mean, average(a));
-	vector3f* stdv = new vector3f();
-	safeGetPt(stdv, stddev(a, mean));
-	mean -> print("MEAN");
-	stdv -> print("STDV");
-	//a ->printHost("A");
-
-	*/
 
 
 	return 0;

@@ -54,7 +54,6 @@ void fully_connected_layer::init_weight(network_layer* previous_layer){
     }
 
     float epsilon = 0.12;
-//    float epsilon = 0.008;
     w = new Mat(size, inputsize, 1);
     w -> randn();
     safeGetPt(w, multiply_elem(w, epsilon));
@@ -129,25 +128,6 @@ void fully_connected_layer::forwardPass(int nsamples, network_layer* previous_la
     safeGetPt(output_matrix, multiply(w, input));
     safeGetPt(tmp, repmat(b, 1, nsamples));
     safeGetPt(output_matrix, add(output_matrix, tmp));
-
-
-    /*
-    cout<<"#################################"<<endl<<"POOLING OUTPUT VEC"<<endl;;
-    for(int i = 0; i < previous_layer -> output_vector.size(); ++i){
-    	for(int j = 0; j < previous_layer -> output_vector[i].size(); ++j){
-    		cout<<"i = "<<i<<", j = "<<j<<endl;
-    		previous_layer -> output_vector[i][j] -> printHost(" ");
-    	}
-    }
-
-    cout<<"#################################"<<endl;
-    input ->printHost("POOLING output");
-    //w ->printHost("FC W");
-    //cout<<"#################################"<<endl;
-    cout<<"#################################"<<endl;
-    output_matrix ->printHost("FC output");
-    cout<<"#################################"<<endl;
-*/
 
     input -> release();
     tmp -> release();

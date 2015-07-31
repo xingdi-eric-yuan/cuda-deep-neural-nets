@@ -99,8 +99,11 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
         	flow[i] -> output_vector[0][0] -> printHost("OUTPUT VECTOR 00");
             //cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
         } //*/
+
+
+
     }
-//   cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<endl;
+   cout<<"------------- J1 = "<<J1<<endl;
 
 
 

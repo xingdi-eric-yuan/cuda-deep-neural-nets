@@ -27,8 +27,6 @@ void copyVector(const std::vector<std::vector<Mat*> >& _from, std::vector<std::v
 	for(int i = 0; i < _to.size(); ++i){
 		_to[i].clear();
 		_to[i].resize(_from[i].size());
-	}
-	for(int i = 0; i < _to.size(); ++i){
 		for(int j = 0; j < _to[i].size(); ++j){
 			_to[i][j] = new Mat();
 			_from[i][j] -> copyTo(*(_to[i][j]));
@@ -51,8 +49,6 @@ void copyVector(const std::vector<std::vector<vector3f*> >& _from, std::vector<s
 	for(int i = 0; i < _to.size(); ++i){
 		_to[i].clear();
 		_to[i].resize(_from[i].size());
-	}
-	for(int i = 0; i < _to.size(); ++i){
 		for(int j = 0; j < _to[i].size(); ++j){
 			_to[i][j] = new vector3f();
 			_from[i][j] -> copyTo(*(_to[i][j]));

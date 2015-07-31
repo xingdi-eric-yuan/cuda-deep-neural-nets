@@ -25,10 +25,6 @@ void non_linearity_layer::forwardPass(int nsamples, network_layer* previous_laye
             convert(previous_layer -> output_vector, input);
         }
         safeGetPt(output_matrix, nonLinearity(input, method));
-        //cout<<"#################################"<<endl;
-        //output_matrix ->printHost("non lin output");
-        //cout<<"#################################"<<endl;
-
         input -> release();
     }else{ // output_format == "image"
         std::vector<std::vector<Mat*> > input;

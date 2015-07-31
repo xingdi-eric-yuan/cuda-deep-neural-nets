@@ -51,7 +51,6 @@ void gradientChecking_SoftmaxLayer(std::vector<network_layer*> &flow, const std:
     //Gradient Checking (remember to disable this part after you're sure the
     //cost function and dJ function are correct)
 
-    // forwardPassInit(sampleX, sampleY, flow);
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
 
@@ -75,7 +74,6 @@ void gradientChecking_FullyConnectedLayer(std::vector<network_layer*> &flow, con
     //Gradient Checking (remember to disable this part after you're sure the
     //cost function and dJ function are correct)
 
-    // forwardPassInit(sampleX, sampleY, flow);
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
 
@@ -98,7 +96,6 @@ void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, cons
     //Gradient Checking (remember to disable this part after you're sure the
     //cost function and dJ function are correct)
 
-    // forwardPassInit(sampleX, sampleY, flow);
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
 
@@ -110,15 +107,18 @@ void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, cons
     for(int i = 0; i < flow.size(); i++){
         if(flow[i] -> layer_type == "convolutional"){
             cout<<"---------------- checking layer number "<<i<<" ..."<<endl;
-
             for(int j = 0; j < ((convolutional_layer*)flow[i]) -> kernels.size(); j++){
                 cout<<"------ checking kernel number "<<j<<" ..."<<endl;
                 p = ((convolutional_layer*)flow[i]) -> kernels[j] -> w;
                 gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> kernels[j] -> wgrad, p);
             }
-            cout<<"-------------------------------------- checking combine feature map weight"<<endl;
-            p = ((convolutional_layer*)flow[i]) -> combine_weight;
-            gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> combine_weight_grad, p);
+            if(((convolutional_layer*)flow[i]) -> combine_feature_map > 0){
+                cout<<"-------------------------------------- checking combine feature map weight"<<endl;
+                p = ((convolutional_layer*)flow[i]) -> combine_weight;
+                gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> combine_weight_grad, p);
+            }else{
+            	cout<<"-------------------------------------- not using combine feature map"<<endl;
+            }
         }
     }
     p = NULL;

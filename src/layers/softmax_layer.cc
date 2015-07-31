@@ -125,28 +125,16 @@ void softmax_layer::forwardPass(int nsamples, network_layer* previous_layer){
     Mat *tmp = new Mat();
     Mat *M = new Mat();
 
-
-    //w -> printHost("W");
-    //input -> printHost("INPUT");
-
     safeGetPt(M, multiply(w, input));
-    //	M -> printHost("M -1");
     safeGetPt(tmp, repmat(b, 1, nsamples));
-    //	tmp -> printHost("TMP0");
     safeGetPt(M, add(M, tmp));
-    //	M -> printHost("M0");
     safeGetPt(tmp, reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_MAX));
-    	//tmp -> printHost("TMP1");
     safeGetPt(tmp, repmat(tmp, M -> rows, 1));
-    	//tmp -> printHost("TMP2");
     safeGetPt(M, subtract(M, tmp));
-    	//M -> printHost("M1");
     safeGetPt(M, exp(M));
-    	//M -> printHost("M2");
     safeGetPt(tmp, reduce(M, REDUCE_TO_SINGLE_ROW, REDUCE_SUM));
     safeGetPt(tmp, repmat(tmp, M -> rows, 1));
     safeGetPt(output_matrix, divide(M, tmp));
-    	//output_matrix -> printHost("OUTPUT");
     M -> release();
     input -> release();
     tmp -> release();
@@ -183,13 +171,9 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     Mat *derivative = new Mat();
 
     safeGetPt(derivative, subtract(groundTruth, output_matrix));
-	//derivative -> printHost("derivative  1");
     safeGetPt(tmp2, t(input));
-	//tmp2 -> printHost("tmp2  1");
     safeGetPt(tmp1, multiply(derivative, tmp2));
-	//tmp1 -> printHost("tmp1  1");
     safeGetPt(wgrad, divide(tmp1, -nsamples));
-	//wgrad -> printHost("wgrad  1");
     safeGetPt(tmp1, multiply_elem(w, weight_decay));
     safeGetPt(wgrad, add(wgrad, tmp1));
 
