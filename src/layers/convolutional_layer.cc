@@ -22,11 +22,11 @@ convolutional_kernel::~convolutional_kernel(){
 }
 
 void convolutional_kernel::init_config(int width, float weightDecay){
-    float epsilon = 0.12;
+    float epsilon = 0.005;
     kernel_size = width;
     weight_decay = weightDecay;
     w = new Mat(kernel_size, kernel_size, 3);
-    w -> randu();
+    w -> randn();
     safeGetPt(w, multiply_elem(w, epsilon));
     wgrad = new Mat(kernel_size, kernel_size, 3);
     wd2 = new Mat(kernel_size, kernel_size, 3);
@@ -104,7 +104,7 @@ void convolutional_layer::init_weight(network_layer* previous_layer){
     float epsilon = 0.12;
     if(combine_feature_map > 0){
     	combine_weight = new Mat(kernels.size(), combine_feature_map, 1);
-    	combine_weight -> randu();
+    	combine_weight -> randn();
         safeGetPt(combine_weight, multiply_elem(combine_weight, epsilon));
         combine_weight_grad = new Mat(kernels.size(), combine_feature_map, 1);
         combine_weight_d2 = new Mat(kernels.size(), combine_feature_map, 1);

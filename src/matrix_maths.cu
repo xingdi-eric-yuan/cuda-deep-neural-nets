@@ -63,6 +63,7 @@ Mat* add(const Mat* src, float a){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_plus<<<num_blocks, block_size>>>(src -> devData, tmp -> devData, a, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -78,6 +79,7 @@ Mat* add(const Mat* src, const vector3f *val){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < src -> channels; ++ch){
 		cu_plus<<<num_blocks, block_size>>>(src -> devData + len * ch, tmp -> devData + len * ch, val -> get(ch), len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	tmp -> deviceToHost();
 	return tmp;
@@ -95,6 +97,7 @@ Mat* add(const Mat* a, const Mat* b){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_plus<<<num_blocks, block_size>>>(a -> devData, b -> devData, tmp -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -133,6 +136,7 @@ Mat* subtract(const Mat* src, float a){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_minus<<<num_blocks, block_size>>>(src -> devData, tmp -> devData, a, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -148,6 +152,7 @@ Mat* subtract(const Mat* src, const vector3f *val){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < src -> channels; ++ch){
 		cu_minus<<<num_blocks, block_size>>>(src -> devData + len * ch, tmp -> devData + len * ch, val -> get(ch), len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	tmp -> deviceToHost();
 	return tmp;
@@ -165,6 +170,7 @@ Mat* subtract(const Mat* a, const Mat* b){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_minus<<<num_blocks, block_size>>>(a -> devData, b -> devData, tmp -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	tmp -> deviceToHost();
 	return tmp;
 }
@@ -203,6 +209,7 @@ Mat* multiply_elem(const Mat* src, float a){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> devData, a, res -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	res -> deviceToHost();
 	return res;
 }
@@ -219,6 +226,7 @@ Mat* multiply_elem(const Mat* src, const vector3f *a){
 	for(int ch = 0; ch < src -> channels; ++ch){
 		float val = a -> get(ch);
 		cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> devData + ch * len, val, res -> devData + ch * len, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	return res;
@@ -241,6 +249,7 @@ Mat* multiply(const Mat* a, const Mat* b){
 	for(int ch = 0; ch < a -> channels; ++ch){
 		cu_multiply<<<dimGrid, dimBlock>>>(a -> devData + ch * lena , b -> devData + ch * lenb, res -> devData + ch * lenres,
 													a -> rows, a -> cols, b -> rows, b -> cols, res -> rows, res -> cols);
+        checkCudaErrors(cudaDeviceSynchronize());
 		checkCudaErrors(cudaThreadSynchronize());
 	}
 	res -> deviceToHost();
@@ -259,6 +268,7 @@ Mat* multiply_elem(const Mat* a, const Mat* b){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_elementWiseMultiply<<<num_blocks, block_size>>>(a -> devData, b -> devData, res -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	res -> deviceToHost();
 	return res;
 }
@@ -274,6 +284,7 @@ Mat* t(const Mat* a){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < a -> channels; ++ch){
 		cu_transpose<<<num_blocks, block_size>>>(a -> devData + ch * len, res -> devData + ch * len, a -> cols, res -> cols, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	return res;
@@ -313,6 +324,7 @@ Mat* exp(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_exp<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -327,6 +339,7 @@ Mat* log(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_log<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -345,6 +358,7 @@ Mat* pow(const Mat* src, float power){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_pow<<<num_blocks, block_size>>>(src -> devData, dst -> devData, power, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -359,6 +373,7 @@ Mat* square(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_square<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -373,6 +388,7 @@ Mat* sqrt(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_sqrt<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -407,6 +423,7 @@ Mat* divide(const Mat* numerator, float denominator){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_divide<<<num_blocks, block_size>>>(numerator -> devData, dst -> devData, denominator, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -424,6 +441,7 @@ Mat* divide(float numerator, const Mat* denominator){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_divide<<<num_blocks, block_size>>>(numerator, denominator -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -466,6 +484,7 @@ Mat* divide(const Mat* numerator, const vector3f* denominator){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < numerator -> channels; ++i){
 		cu_divide<<<num_blocks, block_size>>>(numerator -> devData + i * len, dst -> devData + i * len, denominator -> get(i), len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -482,6 +501,7 @@ Mat* divide(const vector3f* numerator, const Mat* denominator){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < denominator -> channels; ++i){
 		cu_divide<<<num_blocks, block_size>>>(numerator -> get(i), denominator -> devData + i * len, dst -> devData + i * len, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -498,6 +518,7 @@ Mat* divide(const Mat* numerator, const Mat* denominator){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_divide<<<num_blocks, block_size>>>(numerator -> devData, denominator -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -612,6 +633,7 @@ vector3f* sum(const Mat* src){
 		float *devRes = 0;
 		checkCudaErrors(cudaMalloc((void**)&devRes, sizeof(float)));
 		cu_sum<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len, devRes, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float hostRes = 0;
 		checkCudaErrors(cudaMemcpy(&hostRes, devRes, sizeof(float), cudaMemcpyDeviceToHost));
 		checkCudaErrors(cudaFree(devRes));
@@ -710,6 +732,7 @@ vector3f* max(const Mat* src){
 		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
 		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
@@ -746,6 +769,7 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
 		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
@@ -790,6 +814,7 @@ vector3f* min(const Mat* src){
 		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
 		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
@@ -826,6 +851,7 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
 		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
@@ -863,6 +889,7 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
 		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
 		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 		float host_maxVal = 0;
 		float host_minVal = 0;
 		int host_maxLoc = 0;
@@ -892,6 +919,7 @@ Mat* greaterThan(const Mat *src, float val){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_greaterThan<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -906,6 +934,7 @@ Mat* lessThan(const Mat *src, float val){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_lessThan<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -920,13 +949,14 @@ Mat* equalTo(const Mat *src, float val){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_equalTo<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
 
 Mat* getBernoulliMatrix(int height, int width, int nchannels, float prob){
 	Mat *ran = new Mat(height, width, nchannels);
-	ran -> rand();
+	ran -> randu();
 	Mat *res = NULL;
 	safeGetPt(res, greaterThan(ran, prob));
 	ran -> release();
@@ -937,32 +967,37 @@ Mat* getBernoulliMatrix(int height, int width, int nchannels, float prob){
 // convert from vector of img to matrix
 // vec.size() == nsamples
 void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
-    int subFeatures = vec[0][0] -> rows * vec[0][0] -> cols;
-    Mat *res = new Mat(3 * vec[0].size() * subFeatures, vec.size(), 1);
+    Mat *res = new Mat(vec.size(), vec[0].size() * vec[0][0] -> getLength(), 1);
     for(int i = 0; i < vec.size(); i++){
         for(int m = 0; m < vec[i].size(); m++){
 			memcpy(res -> hostData + vec[i][m] -> getLength() * (m + i * vec[i].size()), vec[i][m] -> hostData, vec[i][m] -> getLength() * sizeof(float));
         }
     }
     res -> hostToDevice();
-    res -> moveTo(*M);
+    Mat *tmp = NULL;
+    safeGetPt(tmp, t(res));
+    tmp -> moveTo(*M);
+    res -> release();
 }
 
 // convert from matrix to vector of img
 // vec.size() == nsamples
 void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int imagesize){
     std::vector<Mat*> tmpvec;
+    Mat *Mt = NULL;
+    safeGetPt(Mt, t(M));
     for(int i = 0; i < nsamples; i++){
         tmpvec.clear();
-        int dim = imagesize * imagesize;
-        for(int j = 0; j < M -> rows; j += dim * 3){
+        int dim = imagesize * imagesize * 3;
+        for(int j = 0; j < Mt -> cols; j += dim){
         	Mat *tmp =  new Mat(imagesize, imagesize, 3);
-        	memcpy(tmp -> hostData, M -> hostData + i * M -> rows + j, dim * 3 * sizeof(float));
+        	memcpy(tmp -> hostData, Mt -> hostData + i * Mt -> cols + j, dim * sizeof(float));
         	tmp -> hostToDevice();
         	tmpvec.push_back(tmp);
         }
         vec.push_back(tmpvec);
     }
+    Mt -> release();
     tmpvec.clear();
     std::vector<Mat*>().swap(tmpvec);
 }
@@ -1074,6 +1109,7 @@ Mat* Tanh(const Mat *src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	cu_tanh<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();
 	return dst;
 }
@@ -1136,6 +1172,7 @@ Mat* fliplr(const Mat *src){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_fliplr<<<num_blocks, block_size>>>(src -> devData + i * len, dst -> devData + i * len, src -> rows, src -> cols, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1174,6 +1211,7 @@ Mat* dopadding(const Mat *src, int pad){
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_padding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lensrc);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1196,6 +1234,7 @@ Mat* depadding(const Mat *src, int pad){
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_depadding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lendst);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1252,6 +1291,7 @@ Mat* interpolation(const Mat* src, int _size){
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_interpolation<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> cols, dst -> cols, stride, lensrc);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1274,6 +1314,7 @@ Mat* repmat(const Mat *src, int vert, int hori){
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_repmat<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> rows, dst -> cols, lendst);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1291,6 +1332,7 @@ Mat* kron(const Mat *a, const Mat *b){
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < a -> channels; ++i){
 		cu_kron<<<num_blocks, block_size>>>(a -> devData + i * lensrc, b -> devData, dst -> devData + i * lendst, a -> rows, a -> cols, dst -> rows, dst -> cols, lendst);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1415,6 +1457,7 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_getRange<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, dst -> devData + i * len, xstart, xend, ystart, yend, src -> cols, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1440,6 +1483,7 @@ Mat* downSample(const Mat* src, int y_stride, int x_stride){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_downSample<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, res -> devData + i * len, y_stride, x_stride, src -> cols, len);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	return res;
@@ -1463,6 +1507,7 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_copyMakeBorder<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, up, down, left, right, lensrc);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
 	return dst;
@@ -1489,6 +1534,7 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_pooling_overlap_max<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  loc -> devData + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, window_size -> get(0), window_size -> get(1), lenres);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	loc -> deviceToHost();
@@ -1518,6 +1564,7 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	return res;
@@ -1556,6 +1603,7 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
 		}elif(POOL_MEAN == poolingMethod){
 			cu_pooling_mean<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  loc -> devData + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
 		}
+        checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	loc -> deviceToHost();
@@ -1592,6 +1640,7 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, 
     	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
     	for(int i = 0; i < src -> channels; ++i){
     		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+            checkCudaErrors(cudaDeviceSynchronize());
     	}
     	res -> deviceToHost();
     	return res;

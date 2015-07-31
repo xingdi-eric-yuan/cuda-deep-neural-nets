@@ -96,15 +96,30 @@ void cpuMat::ones(){
 	setAll(1.0);
 }
 
-void cpuMat::randu(){
+void cpuMat::randn(){
 	if(NULL == Data) mallocMat();
-	for(int i = 0; i < rows; ++i){
-		for(int j = 0; j < cols; ++j){
-			for(int ch = 0; ch < channels; ++ch){
-				set(i, j, ch, 2.0 * ((float) rand() / (RAND_MAX)) - 1.0);
-			}
+	int len = cols * rows;
+	curandGenerator_t gen;
+	// Create pseudo-random number generator
+	checkCudaErrors(curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT));
+	for(int ch = 0; ch < channels; ++ch){
+		// Set seed
+		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, ch * 1000ULL));
+		// Generate n floats on device
+		if(len % 2){
+			// In general, the normal generating functions (e.g. curandGenerateNormal, curandGenerateLogNormal, etc.)
+			// require the number of requested points to be a multiple of 2, for a pseudorandom RNG.
+			float *tmp = NULL;
+			tmp = (float*)MemoryMonitor::instance()->cpuMalloc((len + 1) * sizeof(float));
+			checkCudaErrors(curandGenerateNormal(gen, tmp, len + 1, 0.0, 1.0));
+			memcpy(Data + ch * len, tmp, len * sizeof(float));
+			MemoryMonitor::instance()->freeCpuMemory(tmp);
+		}else{
+			checkCudaErrors(curandGenerateNormal(gen, Data + ch * len, len, 0.0, 1.0));
 		}
 	}
+	// Cleanup generator
+	checkCudaErrors(curandDestroyGenerator(gen));
 }
 
 void cpuMat::set(int pos_y, int pos_x, int pos_channel, float val){

@@ -53,12 +53,12 @@ void softmax_layer::init_weight(network_layer* previous_layer){
     }else{
         inputsize = previous_layer -> output_matrix -> rows;
     }
-    float epsilon = 0.12;
+    float epsilon = 0.005;
     w = new Mat(output_size, inputsize, 1);
-    w -> randu();
+    w -> randn();
     safeGetPt(w, multiply_elem(w, epsilon));
     b = new Mat(output_size, 1, 1);
-    b -> randu();
+    b -> randn();
     safeGetPt(b, multiply_elem(b, epsilon));
     wgrad = new Mat(output_size, inputsize, 1);
     wd2 = new Mat(output_size, inputsize, 1);
@@ -183,9 +183,13 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     Mat *derivative = new Mat();
 
     safeGetPt(derivative, subtract(groundTruth, output_matrix));
+	//derivative -> printHost("derivative  1");
     safeGetPt(tmp2, t(input));
+	//tmp2 -> printHost("tmp2  1");
     safeGetPt(tmp1, multiply(derivative, tmp2));
+	//tmp1 -> printHost("tmp1  1");
     safeGetPt(wgrad, divide(tmp1, -nsamples));
+	//wgrad -> printHost("wgrad  1");
     safeGetPt(tmp1, multiply_elem(w, weight_decay));
     safeGetPt(wgrad, add(wgrad, tmp1));
 

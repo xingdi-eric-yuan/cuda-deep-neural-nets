@@ -73,7 +73,7 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             safeGetPt(tmp, log(flow[i] -> output_matrix));
             safeGetPt(tmp, multiply_elem(tmp, groundTruth));
         	safeGetPt(tmpvec3, sum(tmp));
-            J1 += -sum(tmpvec3) / batch_size;
+            J1 = -sum(tmpvec3) / batch_size;
             safeGetPt(tmp, square(((softmax_layer*)flow[i]) -> w));
         	safeGetPt(tmpvec3, sum(tmp));
             J2 += sum(tmpvec3) * ((softmax_layer*)flow[i]) -> weight_decay / 2.0;
@@ -299,6 +299,7 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
 
 
     //forwardPass(x, y, flow);
+    //backwardPass(flow);
     //return;
 
     if (is_gradient_checking){

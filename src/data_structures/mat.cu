@@ -133,7 +133,7 @@ void Mat::ones(){
 	setAll(1.0);
 }
 
-void Mat::rand(){
+void Mat::randu(){
 	if(NULL == hostData) mallocHost();
 	if(NULL == devData) mallocDevice();
 	curandGenerator_t gen;
@@ -146,18 +146,35 @@ void Mat::rand(){
 	// Cleanup generator
 	checkCudaErrors(curandDestroyGenerator(gen));
 	deviceToHost();
-	for(int i = 0; i < getLength(); ++i){
-		hostData[i] = hostData[i] * 2.0 - 1.0;
-	}
-	hostToDevice();
 }
 
-void Mat::randu(){
-	Mat::rand();
-	for(int i = 0; i < getLength(); ++i){
-		hostData[i] = hostData[i] * 2.0 - 1.0;
+void Mat::randn(){
+
+	if(NULL == hostData) mallocHost();
+	if(NULL == devData) mallocDevice();
+	int len = cols * rows;
+	curandGenerator_t gen;
+	// Create pseudo-random number generator
+	checkCudaErrors(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
+	for(int ch = 0; ch < channels; ++ch){
+		// Set seed
+		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, ch * 1000ULL));
+		// Generate n floats on device
+		if(len % 2){
+			// In general, the normal generating functions (e.g. curandGenerateNormal, curandGenerateLogNormal, etc.)
+			// require the number of requested points to be a multiple of 2, for a pseudorandom RNG.
+			float *tmp = NULL;
+			checkCudaErrors(MemoryMonitor::instance()->gpuMalloc((void**)&tmp, (len + 1) * sizeof(float)));
+			checkCudaErrors(curandGenerateNormal(gen, tmp, len + 1, 0.0, 1.0));
+			checkCudaErrors(cudaMemcpy(devData + len * ch, tmp, len * sizeof(float), cudaMemcpyDeviceToDevice));
+			MemoryMonitor::instance()->freeGpuMemory(tmp);
+		}else{
+			checkCudaErrors(curandGenerateNormal(gen, devData + ch * len, len, 0.0, 1.0));
+		}
 	}
-	hostToDevice();
+	// Cleanup generator
+	checkCudaErrors(curandDestroyGenerator(gen));
+	deviceToHost();
 }
 
 void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
@@ -787,7 +804,6 @@ void Mat::printHost(const std::string &str) const{
 	std::cout<<"Matrix with "<<channels<<" channels, "<<rows<<" rows, "<<cols<<"columns."<<std::endl;
 	for(int i = 0; i < channels; ++i){
 		std::cout<<"Channel "<<i<<" : "<<std::endl;
-
 		for(int j = 0; j < rows; ++j){
 			for(int k = 0; k < cols; ++k){
 				std::cout<<hostData[counter]<<" ";

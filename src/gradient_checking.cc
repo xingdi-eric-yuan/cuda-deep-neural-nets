@@ -64,6 +64,7 @@ void gradientChecking_SoftmaxLayer(std::vector<network_layer*> &flow, const std:
         if(flow[i] -> layer_type == "softmax"){
             cout<<"---------------- checking layer number "<<i<<" ..."<<endl;
             p = ((softmax_layer*)flow[i]) -> w;
+            //((softmax_layer*)flow[i]) -> wgrad ->printHost("WGRAD");
             gradient_checking(sampleX, sampleY, flow, ((softmax_layer*)flow[i]) -> wgrad, p);
         }
     }
