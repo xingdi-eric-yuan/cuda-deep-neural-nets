@@ -116,7 +116,6 @@ void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, cons
                 p = ((convolutional_layer*)flow[i]) -> kernels[j] -> w;
                 gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> kernels[j] -> wgrad, p);
             }
-
             cout<<"-------------------------------------- checking combine feature map weight"<<endl;
             p = ((convolutional_layer*)flow[i]) -> combine_weight;
             gradient_checking(sampleX, sampleY, flow, ((convolutional_layer*)flow[i]) -> combine_weight_grad, p);
@@ -136,9 +135,9 @@ void gradient_checking_network_layers(std::vector<network_layer*> &flow, const s
             tmpflow.erase(tmpflow.begin() + i);
         }else ++i;
     }
-    //gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
+    gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
     //gradientChecking_FullyConnectedLayer(tmpflow, sampleX, sampleY);
-    gradientChecking_SoftmaxLayer(tmpflow, sampleX, sampleY);
+    //gradientChecking_SoftmaxLayer(tmpflow, sampleX, sampleY);
 }
 
 

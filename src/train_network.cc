@@ -212,7 +212,7 @@ void printNetwork(std::vector<network_layer*> &flow){
             cout<<"weight decay = "<<((fully_connected_layer*)flow[i]) -> weight_decay<<endl;
         }elif(flow[i] -> layer_type == "softmax"){
             cout<<"output size = "<<((softmax_layer*)flow[i]) -> output_size<<endl;
-            cout<<"weight decay size = "<<((softmax_layer*)flow[i]) -> weight_decay<<endl;
+            cout<<"weight decay = "<<((softmax_layer*)flow[i]) -> weight_decay<<endl;
         }elif(flow[i] -> layer_type == "combine"){
             ;
         }elif(flow[i] -> layer_type == "branch"){
@@ -297,10 +297,9 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
     forwardPassInit(x, y, flow);
     printNetwork(flow);
 
-
-    //forwardPass(x, y, flow);
-    //backwardPass(flow);
-    //return;
+//    forwardPass(x, y, flow);
+//    backwardPass(flow);
+//    return;
 
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);

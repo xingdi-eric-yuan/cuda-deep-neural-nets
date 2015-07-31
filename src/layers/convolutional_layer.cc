@@ -22,7 +22,7 @@ convolutional_kernel::~convolutional_kernel(){
 }
 
 void convolutional_kernel::init_config(int width, float weightDecay){
-    float epsilon = 0.005;
+    float epsilon = 0.12;
     kernel_size = width;
     weight_decay = weightDecay;
     w = new Mat(kernel_size, kernel_size, 3);

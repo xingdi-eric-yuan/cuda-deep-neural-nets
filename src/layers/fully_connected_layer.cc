@@ -53,7 +53,8 @@ void fully_connected_layer::init_weight(network_layer* previous_layer){
         inputsize = previous_layer -> output_matrix -> rows;
     }
 
-    float epsilon = 0.005;
+    float epsilon = 0.12;
+//    float epsilon = 0.008;
     w = new Mat(size, inputsize, 1);
     w -> randn();
     safeGetPt(w, multiply_elem(w, epsilon));
@@ -175,7 +176,6 @@ void fully_connected_layer::backwardPass(int nsamples, network_layer* previous_l
     next_layer -> d2_matrix -> copyTo(*deriv2);
     Mat *tmp = new Mat();
     Mat *tmp2 = new Mat();
-
 
     safeGetPt(tmp, t(input));
     safeGetPt(wgrad, multiply(derivative, tmp));

@@ -52,6 +52,7 @@ void run(){
 }
 
 
+
 int main(void){
 
 //	showGpuProperty();
@@ -59,7 +60,10 @@ int main(void){
 //	runAllTest();
 
 	run();
-/*
+
+
+
+	/*
 	Mat *a = new Mat(10, 10, 3);
 	a -> randn();
 	vector3f* mean = new vector3f();

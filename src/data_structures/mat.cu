@@ -140,7 +140,7 @@ void Mat::randu(){
 	// Create pseudo-random number generator
 	checkCudaErrors(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
 	// Set seed
-	checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, 1234ULL));
+	checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, rand() % 3456));
 	// Generate n floats on device
 	checkCudaErrors(curandGenerateUniform(gen, devData, getLength()));
 	// Cleanup generator
@@ -158,7 +158,7 @@ void Mat::randn(){
 	checkCudaErrors(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
 	for(int ch = 0; ch < channels; ++ch){
 		// Set seed
-		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, ch * 1000ULL));
+		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, rand() % 1234));
 		// Generate n floats on device
 		if(len % 2){
 			// In general, the normal generating functions (e.g. curandGenerateNormal, curandGenerateLogNormal, etc.)

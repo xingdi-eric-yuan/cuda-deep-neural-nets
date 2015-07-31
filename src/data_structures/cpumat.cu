@@ -104,7 +104,7 @@ void cpuMat::randn(){
 	checkCudaErrors(curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT));
 	for(int ch = 0; ch < channels; ++ch){
 		// Set seed
-		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, ch * 1000ULL));
+		checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, rand() % 6789));
 		// Generate n floats on device
 		if(len % 2){
 			// In general, the normal generating functions (e.g. curandGenerateNormal, curandGenerateLogNormal, etc.)
