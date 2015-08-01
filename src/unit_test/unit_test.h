@@ -112,6 +112,7 @@ bool test_repmat();
 bool test_kron();
 bool test_conv2_kernel();
 bool test_conv2();
+bool test_conv2_pad_stride();
 bool test_getRange();
 bool test_downSample();
 bool test_copyMakeBorder();
