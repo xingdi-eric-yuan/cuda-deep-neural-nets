@@ -4,6 +4,7 @@
 using namespace std;
 
 void gradient_checking(const std::vector<cpuMat*>&, const cpuMat*, std::vector<network_layer*>&, Mat*, Mat*);
+void gradient_checking_half(const std::vector<cpuMat*>&, const cpuMat*, std::vector<network_layer*>&, Mat*, Mat*);
 
 void gradientChecking_SoftmaxLayer(std::vector<network_layer*>&, const std::vector<cpuMat*>&, const cpuMat*);
 void gradientChecking_FullyConnectedLayer(std::vector<network_layer*>&, const std::vector<cpuMat*>&, const cpuMat*);

@@ -5,6 +5,7 @@ void safeGetPt(Mat* &dst, Mat* src){
 		dst -> release();
 	}
 	dst = src;
+    //checkCudaErrors(cudaDeviceSynchronize());
 }
 
 void safeGetPt(cpuMat* &dst, cpuMat* src){
@@ -249,8 +250,7 @@ Mat* multiply(const Mat* a, const Mat* b){
 	for(int ch = 0; ch < a -> channels; ++ch){
 		cu_multiply<<<dimGrid, dimBlock>>>(a -> devData + ch * lena , b -> devData + ch * lenb, res -> devData + ch * lenres,
 													a -> rows, a -> cols, b -> rows, b -> cols, res -> rows, res -> cols);
-        checkCudaErrors(cudaDeviceSynchronize());
-		checkCudaErrors(cudaThreadSynchronize());
+	    checkCudaErrors(cudaDeviceSynchronize());
 	}
 	res -> deviceToHost();
 	return res;
@@ -986,20 +986,20 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
     std::vector<Mat*> tmpvec;
     Mat *Mt = NULL;
     safeGetPt(Mt, t(M));
-    for(int i = 0; i < nsamples; i++){
-        tmpvec.clear();
-        int dim = imagesize * imagesize * 3;
-        for(int j = 0; j < Mt -> cols; j += dim){
-        	Mat *tmp =  new Mat(imagesize, imagesize, 3);
-        	memcpy(tmp -> hostData, Mt -> hostData + i * Mt -> cols + j, dim * sizeof(float));
-        	tmp -> hostToDevice();
-        	tmpvec.push_back(tmp);
-        }
-        vec.push_back(tmpvec);
+
+    int dim = imagesize * imagesize * 3;
+    releaseVector(vec);
+    vec.resize(nsamples);
+    for(int i = 0; i < vec.size(); ++i){
+    	vec[i].clear();
+    	vec[i].resize(Mt -> cols / dim);
+    	cout<<"i = "<<i<<", vec[i].size = "<<vec[i].size()<<endl;
+    	for(int j = 0; j < vec[i].size(); ++j){
+    		vec[i][j] = new Mat(imagesize, imagesize, 3);
+        	memcpy(vec[i][j] -> hostData, Mt -> hostData + i * Mt -> cols + j * dim, dim * sizeof(float));
+        	vec[i][j] -> hostToDevice();
+    	}
     }
-    Mt -> release();
-    tmpvec.clear();
-    std::vector<Mat*>().swap(tmpvec);
 }
 
 // non-linearity
@@ -1383,6 +1383,7 @@ Mat* conv2(const Mat *m, const Mat *kernel){
         // std::cout<<"...running GPU FFT convolution: "<<std::endl;
         checkCudaErrors(cudaDeviceSynchronize());
         checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_PaddedData, (cufftComplex *)d_DataSpectrum0, FFT_DIR));
+        checkCudaErrors(cudaDeviceSynchronize());
         spProcess2D(d_DataSpectrum0, d_DataSpectrum0, d_KernelSpectrum0, fftH, fftW / 2, FFT_DIR);
         checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR));
         checkCudaErrors(cudaDeviceSynchronize());
@@ -1418,6 +1419,7 @@ Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 	safeGetPt(src, dopadding(m, kernel -> cols / 2 + 1));
 	safeGetPt(src, dopadding(src, pad));
 	safeGetPt(res, conv2(src, kernel));
+    checkCudaErrors(cudaDeviceSynchronize());
 	safeGetPt(res, getRange(res, (res -> cols - (m -> cols + kernel -> cols - 1 + pad * 2)) / 2,
 								 (res -> cols - (m -> cols + kernel -> cols - 1 + pad * 2)) / 2 + m -> cols + kernel -> cols - 1 + pad * 2 - 1,
 								 (res -> rows - (m -> rows + kernel -> rows - 1 + pad * 2)) / 2,

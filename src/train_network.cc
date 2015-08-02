@@ -99,11 +99,7 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
         	flow[i] -> output_vector[0][0] -> printHost("OUTPUT VECTOR 00");
             //cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
         } //*/
-
-
-
     }
-   cout<<"------------- J1 = "<<J1<<endl;
 
 
 
@@ -236,9 +232,9 @@ void printNetwork(std::vector<network_layer*> &flow){
             cout<<"dropout rate = "<<((dropout_layer*)flow[i]) -> dropout_rate<<endl;
         }
         if(flow[i] -> output_format == "matrix"){
-            cout<<"output matrix size is ["<<flow[i] -> output_matrix -> rows<<", "<<flow[i] -> output_matrix -> cols<<"]"<<endl;
+            cout<<"output matrix size is ["<<flow[i] -> output_matrix -> rows<<", "<<flow[i] -> output_matrix -> cols<<", "<<flow[i] -> output_matrix -> channels<<"]"<<endl;
         }else{
-            cout<<"output vector size is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * ["<<flow[i] -> output_vector[0][0] -> rows<<", "<<flow[i] -> output_vector[0][0] -> cols<<"]"<<endl;
+            cout<<"output vector size is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * ["<<flow[i] -> output_vector[0][0] -> rows<<", "<<flow[i] -> output_vector[0][0] -> cols<<", "<<flow[i] -> output_vector[0][0] -> channels<<"]"<<endl;
         }
         cout<<"---------------------"<<endl;
     }
@@ -299,6 +295,7 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
 
     forwardPassInit(x, y, flow);
     printNetwork(flow);
+
 
 //    forwardPass(x, y, flow);
 //    backwardPass(flow);

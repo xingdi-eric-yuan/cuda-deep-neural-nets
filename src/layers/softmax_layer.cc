@@ -199,6 +199,9 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     tmp2 -> release();
     input -> release();
     derivative -> release();
+
+//    delta_matrix -> printHost("SOFTMAX OUTPUT");
+
 }
 //*/
 

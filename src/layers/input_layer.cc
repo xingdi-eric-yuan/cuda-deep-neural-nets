@@ -25,7 +25,7 @@ void input_layer::getSample(const std::vector<cpuMat*>& src1, std::vector<std::v
 	dst2->zeros();
 
     if(is_gradient_checking){
-        for(int i = 10; i < 10 + batch_size; i++){
+        for(int i = 0; i < 0 + batch_size; i++){
         	std::vector<Mat*> tmp;
         	Mat *tmpmat = new Mat();
         	src1[i] -> copyTo(*tmpmat);

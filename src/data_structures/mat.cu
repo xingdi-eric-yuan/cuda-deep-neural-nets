@@ -838,3 +838,14 @@ void Mat::printDevice(const std::string &str) const{
 	}
 	if(NULL != host_data) MemoryMonitor::instance()->freeCpuMemory(host_data);
 }
+
+void Mat::printDim(const std::string &str) const{
+
+	std::cout<<str<<std::endl;
+	if(NULL == hostData || NULL == devData){
+		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
+		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
+		exit(0);
+	}
+	cout<<"Matrix Dimension = ["<<rows<<", "<<cols<<", "<<channels<<"]"<<endl;
+}

@@ -22,6 +22,7 @@ int snapTransformSize(int dataSize){
 }
 
 void copyVector(const std::vector<std::vector<Mat*> >& _from, std::vector<std::vector<Mat*> >& _to){
+	releaseVector(_to);
 	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
@@ -35,6 +36,7 @@ void copyVector(const std::vector<std::vector<Mat*> >& _from, std::vector<std::v
 }
 
 void copyVector(const std::vector<Mat*>& _from, std::vector<Mat*>& _to){
+	releaseVector(_to);
 	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
@@ -44,6 +46,7 @@ void copyVector(const std::vector<Mat*>& _from, std::vector<Mat*>& _to){
 }
 
 void copyVector(const std::vector<std::vector<vector3f*> >& _from, std::vector<std::vector<vector3f*> >& _to){
+	releaseVector(_to);
 	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
@@ -57,6 +60,7 @@ void copyVector(const std::vector<std::vector<vector3f*> >& _from, std::vector<s
 }
 
 void copyVector(const std::vector<vector3f*>& _from, std::vector<vector3f*>& _to){
+	releaseVector(_to);
 	_to.clear();
 	_to.resize(_from.size());
 	for(int i = 0; i < _to.size(); ++i){
@@ -68,7 +72,7 @@ void copyVector(const std::vector<vector3f*>& _from, std::vector<vector3f*>& _to
 void releaseVector(std::vector<std::vector<Mat*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
-			vec[i][j] -> release();
+			if(vec[i][j]) vec[i][j] -> release();
 		}
 	}
 }
@@ -82,7 +86,7 @@ void releaseVector(std::vector<std::vector<Mat> >& vec){
 }
 void releaseVector(std::vector<Mat*>& vec){
 	for(int i = 0; i < vec.size(); ++i){
-		vec[i] -> release();
+		if(vec[i]) vec[i] -> release();
 	}
 }
 void releaseVector(std::vector<Mat>& vec){
@@ -94,7 +98,7 @@ void releaseVector(std::vector<Mat>& vec){
 void releaseVector(std::vector<std::vector<cpuMat*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
-			vec[i][j] -> release();
+			if(vec[i][j]) vec[i][j] -> release();
 		}
 	}
 }
@@ -108,7 +112,7 @@ void releaseVector(std::vector<std::vector<cpuMat> >& vec){
 }
 void releaseVector(std::vector<cpuMat*>& vec){
 	for(int i = 0; i < vec.size(); ++i){
-		vec[i] -> release();
+		if(vec[i]) vec[i] -> release();
 	}
 }
 void releaseVector(std::vector<cpuMat>& vec){
@@ -122,7 +126,7 @@ void releaseVector(std::vector<std::vector<std::vector<vector3f*> > >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
 			for(int k = 0; k < vec[i][j].size(); ++k){
-				vec[i][j][k] -> release();
+				if(vec[i][j][k]) vec[i][j][k] -> release();
 			}
 		}
 	}
@@ -141,7 +145,7 @@ void releaseVector(std::vector<std::vector<std::vector<vector3f> > >& vec){
 void releaseVector(std::vector<std::vector<vector3f*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
-			vec[i][j] -> release();
+			if(vec[i][j]) vec[i][j] -> release();
 		}
 	}
 }
@@ -155,7 +159,7 @@ void releaseVector(std::vector<std::vector<vector3f> >& vec){
 }
 void releaseVector(std::vector<vector3f*>& vec){
 	for(int i = 0; i < vec.size(); ++i){
-		vec[i] -> release();
+		if(vec[i]) vec[i] -> release();
 	}
 }
 void releaseVector(std::vector<vector3f>& vec){

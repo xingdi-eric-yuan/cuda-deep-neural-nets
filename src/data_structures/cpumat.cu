@@ -573,3 +573,12 @@ void cpuMat::print(const std::string &str) const{
 		}
 	}
 }
+
+void cpuMat::printDim(const std::string &str) const{
+	std::cout<<str<<std::endl;
+	if(NULL == Data ){
+		std::cout<<"invalid cpuMatrix..."<<std::endl;
+		exit(0);
+	}
+	cout<<"Matrix Dimension = ["<<rows<<", "<<cols<<", "<<channels<<"]"<<endl;
+}

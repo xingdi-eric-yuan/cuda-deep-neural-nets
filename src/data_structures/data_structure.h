@@ -177,6 +177,7 @@ public:
 	//
 	void printHost(const std::string&) const;
 	void printDevice(const std::string&) const;
+	void printDim(const std::string&) const;
 };
 
 // matrix
@@ -242,4 +243,5 @@ public:
 	// memory
 	void mallocMat();
 	void print(const std::string&) const;
+	void printDim(const std::string&) const;
 };

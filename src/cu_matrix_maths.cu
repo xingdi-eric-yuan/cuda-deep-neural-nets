@@ -554,6 +554,7 @@ __global__ void cu_multiply(const float* A, const float* B, float * C,
         else{
             sA[threadIdx.y][threadIdx.x] = 0.0;
         }
+        __syncthreads();
         if ( Col < colsb && (threadIdx.y + k*32) < rowsb){
             sB[threadIdx.y][threadIdx.x] = B[(threadIdx.y + k*32)*colsb + Col];
         }
@@ -565,6 +566,7 @@ __global__ void cu_multiply(const float* A, const float* B, float * C,
         for (int j = 0; j < 32; ++j){
             Cvalue += sA[threadIdx.y][j] * sB[j][threadIdx.x];
         }
+        __syncthreads();
     }
     if (Row < rowsc && Col < colsc){
         C[Row*colsc + Col] = Cvalue;
