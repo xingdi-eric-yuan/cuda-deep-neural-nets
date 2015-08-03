@@ -629,17 +629,23 @@ vector3f* sum(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *devRes = 0;
-		checkCudaErrors(cudaMalloc((void**)&devRes, sizeof(float)));
-		cu_sum<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len, devRes, len);
+		float *d_partial_sums_and_total = 0;
+		checkCudaErrors(cudaMalloc((void**)&d_partial_sums_and_total, sizeof(float) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial sum
+		cu_sum<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len, d_partial_sums_and_total, len);
         checkCudaErrors(cudaDeviceSynchronize());
-		float hostRes = 0;
-		checkCudaErrors(cudaMemcpy(&hostRes, devRes, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(devRes));
-		res -> set(i, hostRes);
+		// launch a single block to compute the sum of the partial sums
+		cu_sum<<<1, num_blocks, num_blocks * sizeof(float)>>>(d_partial_sums_and_total, d_partial_sums_and_total + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
+		float device_result = 0;
+		checkCudaErrors(cudaMemcpy(&device_result, d_partial_sums_and_total + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(d_partial_sums_and_total));
+		res -> set(i, device_result);
 	}
 	return res;
 }
+
 
 vector3f* average(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){

@@ -33,7 +33,7 @@ class vector3f;
 #define RC2IDX(R,C,COLS) (((R)*(COLS))+(C))
 
 #define elif else if
-#define threadsPerBlock 128
+#define threadsPerBlock 256
 
 // non-linearity
 #define NL_SIGMOID 0

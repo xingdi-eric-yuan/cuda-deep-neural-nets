@@ -225,6 +225,7 @@ __global__ void cu_sum(const float* src, float* sum, const int n){
 	if(threadIdx.x == 0){
 		sum[blockIdx.x] = sdata[0];
 	}
+	__syncthreads();
 }
 
 __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue, int* minLoc, int* maxLoc, const int n){
