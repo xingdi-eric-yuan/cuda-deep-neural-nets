@@ -54,9 +54,9 @@ int main(void){
 
 //	showGpuProperty();
 
-//	runAllTest();
+	runAllTest();
 
-	run();
+//	run();
 
 	return 0;
 }

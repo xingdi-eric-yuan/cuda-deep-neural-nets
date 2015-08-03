@@ -728,29 +728,34 @@ vector3f* max(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal = 0;
-		float *dev_minVal = 0;
-		int *dev_maxLoc = 0;
-		int *dev_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+		float *dev_maxVal_partial = 0;
+		float *dev_minVal_partial = 0;
+		int *dev_maxLoc_partial = 0;
+		int *dev_minLoc_partial = 0;
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial max
+		cu_minMaxLoc<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
+															dev_minVal_partial, dev_maxVal_partial,
+															dev_minLoc_partial, dev_maxLoc_partial, len);
         checkCudaErrors(cudaDeviceSynchronize());
+		// launch a single block to compute the max
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
 		float host_maxVal = 0;
-		float host_minVal = 0;
-		int host_maxLoc = 0;
-		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal));
-		checkCudaErrors(cudaFree(dev_minVal));
-		checkCudaErrors(cudaFree(dev_maxLoc));
-		checkCudaErrors(cudaFree(dev_minLoc));
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
 		res -> set(i, host_maxVal);
+		checkCudaErrors(cudaFree(dev_maxVal_partial));
+		checkCudaErrors(cudaFree(dev_minVal_partial));
+		checkCudaErrors(cudaFree(dev_maxLoc_partial));
+		checkCudaErrors(cudaFree(dev_minLoc_partial));
 	}
 	return res;
 }
@@ -765,30 +770,39 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal = 0;
-		float *dev_minVal = 0;
-		int *dev_maxLoc = 0;
-		int *dev_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+		float *dev_maxVal_partial = 0;
+		float *dev_minVal_partial = 0;
+		int *dev_maxLoc_partial = 0;
+		int *dev_minLoc_partial = 0;
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial max
+		cu_minMaxLoc<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
+															dev_minVal_partial, dev_maxVal_partial,
+															dev_minLoc_partial, dev_maxLoc_partial, len);
         checkCudaErrors(cudaDeviceSynchronize());
+		int* host_maxLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
+		checkCudaErrors(cudaMemcpy(host_maxLoc_partial, dev_maxLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+		// launch a single block to compute the max
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
 		float host_maxVal = 0;
-		float host_minVal = 0;
 		int host_maxLoc = 0;
-		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal));
-		checkCudaErrors(cudaFree(dev_minVal));
-		checkCudaErrors(cudaFree(dev_maxLoc));
-		checkCudaErrors(cudaFree(dev_minLoc));
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal_partial));
+		checkCudaErrors(cudaFree(dev_minVal_partial));
+		checkCudaErrors(cudaFree(dev_maxLoc_partial));
+		checkCudaErrors(cudaFree(dev_minLoc_partial));
 		max_val -> set(i, host_maxVal);
-		max_loc -> set(i, host_maxLoc);
+		max_loc -> set(i, host_maxLoc_partial[host_maxLoc]);
 	}
 }
 
@@ -810,29 +824,34 @@ vector3f* min(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal = 0;
-		float *dev_minVal = 0;
-		int *dev_maxLoc = 0;
-		int *dev_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+		float *dev_maxVal_partial = 0;
+		float *dev_minVal_partial = 0;
+		int *dev_maxLoc_partial = 0;
+		int *dev_minLoc_partial = 0;
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial min
+		cu_minMaxLoc<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
+															dev_minVal_partial, dev_maxVal_partial,
+															dev_minLoc_partial, dev_maxLoc_partial, len);
         checkCudaErrors(cudaDeviceSynchronize());
-		float host_maxVal = 0;
+		// launch a single block to compute the min
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
 		float host_minVal = 0;
-		int host_maxLoc = 0;
-		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal));
-		checkCudaErrors(cudaFree(dev_minVal));
-		checkCudaErrors(cudaFree(dev_maxLoc));
-		checkCudaErrors(cudaFree(dev_minLoc));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
 		res -> set(i, host_minVal);
+		checkCudaErrors(cudaFree(dev_maxVal_partial));
+		checkCudaErrors(cudaFree(dev_minVal_partial));
+		checkCudaErrors(cudaFree(dev_maxLoc_partial));
+		checkCudaErrors(cudaFree(dev_minLoc_partial));
 	}
 	return res;
 }
@@ -847,30 +866,39 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal = 0;
-		float *dev_minVal = 0;
-		int *dev_maxLoc = 0;
-		int *dev_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+		float *dev_maxVal_partial = 0;
+		float *dev_minVal_partial = 0;
+		int *dev_maxLoc_partial = 0;
+		int *dev_minLoc_partial = 0;
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial min
+		cu_minMaxLoc<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
+															dev_minVal_partial, dev_maxVal_partial,
+															dev_minLoc_partial, dev_maxLoc_partial, len);
         checkCudaErrors(cudaDeviceSynchronize());
-		float host_maxVal = 0;
+		int* host_minLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
+		checkCudaErrors(cudaMemcpy(host_minLoc_partial, dev_minLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+		// launch a single block to compute the min
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
 		float host_minVal = 0;
-		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal));
-		checkCudaErrors(cudaFree(dev_minVal));
-		checkCudaErrors(cudaFree(dev_maxLoc));
-		checkCudaErrors(cudaFree(dev_minLoc));
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal_partial));
+		checkCudaErrors(cudaFree(dev_minVal_partial));
+		checkCudaErrors(cudaFree(dev_maxLoc_partial));
+		checkCudaErrors(cudaFree(dev_minLoc_partial));
 		min_val -> set(i, host_minVal);
-		min_loc -> set(i, host_minLoc);
+		min_loc -> set(i, host_minLoc_partial[host_minLoc]);
 	}
 }
 
@@ -885,32 +913,56 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal = 0;
-		float *dev_minVal = 0;
-		int *dev_maxLoc = 0;
-		int *dev_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc, sizeof(int)));
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len, dev_minVal, dev_maxVal, dev_minLoc, dev_maxLoc, len);
+		float *dev_maxVal_partial = 0;
+		float *dev_minVal_partial = 0;
+		int *dev_maxLoc_partial = 0;
+		int *dev_minLoc_partial = 0;
+		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
+		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
+		// launch one kernel to compute, per-block, a partial result
+		cu_minMaxLoc<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
+															dev_minVal_partial, dev_maxVal_partial,
+															dev_minLoc_partial, dev_maxLoc_partial, len);
+		// store partial results
         checkCudaErrors(cudaDeviceSynchronize());
-		float host_maxVal = 0;
+		int* host_minLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
+		checkCudaErrors(cudaMemcpy(host_minLoc_partial, dev_minLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+		int* host_maxLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
+		checkCudaErrors(cudaMemcpy(host_maxLoc_partial, dev_maxLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+		// launch a single block to compute min
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
 		float host_minVal = 0;
-		int host_maxLoc = 0;
 		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal));
-		checkCudaErrors(cudaFree(dev_minVal));
-		checkCudaErrors(cudaFree(dev_maxLoc));
-		checkCudaErrors(cudaFree(dev_minLoc));
-		max_val -> set(i, host_maxVal);
-		max_loc -> set(i, host_maxLoc);
+		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
+		// launch a single block to compute max
+		cu_minMaxLoc<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
+															dev_minVal_partial + num_blocks,
+															dev_maxVal_partial + num_blocks,
+															dev_minLoc_partial + num_blocks,
+															dev_maxLoc_partial + num_blocks, num_blocks);
+        checkCudaErrors(cudaDeviceSynchronize());
+		  // copy the result back to the host
+		float host_maxVal = 0;
+		int host_maxLoc = 0;
+		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaFree(dev_maxVal_partial));
+		checkCudaErrors(cudaFree(dev_minVal_partial));
+		checkCudaErrors(cudaFree(dev_maxLoc_partial));
+		checkCudaErrors(cudaFree(dev_minLoc_partial));
 		min_val -> set(i, host_minVal);
-		min_loc -> set(i, host_minLoc);
+		min_loc -> set(i, host_minLoc_partial[host_minLoc]);
+		max_val -> set(i, host_maxVal);
+		max_loc -> set(i, host_maxLoc_partial[host_maxLoc]);
 	}
 }
 

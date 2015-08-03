@@ -276,6 +276,7 @@ __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue,
 	}
 }
 
+
 __global__ void cu_greaterThan(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
