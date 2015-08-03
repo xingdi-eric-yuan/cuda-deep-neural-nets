@@ -5,7 +5,6 @@ void safeGetPt(Mat* &dst, Mat* src){
 		dst -> release();
 	}
 	dst = src;
-    //checkCudaErrors(cudaDeviceSynchronize());
 }
 
 void safeGetPt(cpuMat* &dst, cpuMat* src){
@@ -1003,18 +1002,19 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
 }
 
 // non-linearity
-
-Mat* sigmoid(const Mat *src){
+Mat *sigmoid(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
-		std::cout<<"invalid input..."<<std::endl;
+		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
-	Mat *tmp = new Mat();
-	safeGetPt(tmp, multiply_elem(src, -1.0));
-	safeGetPt(tmp, exp(tmp));
-	safeGetPt(tmp, add(tmp, 1.0));
-	safeGetPt(tmp, divide(1.0, tmp));
-	return tmp;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_sigmoid<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
 Mat* dsigmoid(const Mat *src){
@@ -1022,81 +1022,89 @@ Mat* dsigmoid(const Mat *src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *tmp = new Mat();
-	Mat *tmp2 = new Mat();
-	safeGetPt(tmp, exp(src));
-	safeGetPt(tmp2, add(tmp, 1.0));
-	safeGetPt(tmp2, square(tmp2));
-	safeGetPt(tmp, divide(tmp, tmp2));
-	tmp2 -> release();
-    return tmp;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_dsigmoid<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
-Mat* dsigmoid_a(const Mat* src){
+Mat* dsigmoid_a(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *res = new Mat(src -> rows, src -> cols, src -> channels);
-	res -> ones();
-	safeGetPt(res, subtract(res, src));
-	safeGetPt(res, multiply_elem(res, src));
-	return res;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_dsigmoid_a<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
-Mat* ReLU(const Mat *M){
-	if(NULL == M -> hostData || NULL == M -> devData){
+Mat* ReLU(const Mat *src){
+	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat* res = NULL;
-	res = greaterThan(M, 0.0);
-	safeGetPt(res, multiply_elem(res, M));
-    return res;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
-Mat* dReLU(const Mat* M){
-	if(NULL == M -> hostData || NULL == M -> devData){
+Mat* dReLU(const Mat *src){
+	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *res = NULL;
-	res = greaterThan(M, 0.0);
-    return res;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_drelu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
-Mat* LeakyReLU(const Mat* M){
-	if(NULL == M -> hostData || NULL == M -> devData){
+Mat* LeakyReLU(const Mat* src){
+	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *p = NULL;
-	Mat *n = NULL;
-
-	p = greaterThan(M, 0.0);
-	n = lessThan(M, 0.0);
-	safeGetPt(p, multiply_elem(p, M));
-	safeGetPt(n, multiply_elem(n, M));
-	safeGetPt(n, divide(n, leaky_relu_alpha));
-	safeGetPt(n, add(n, p));
-	p -> release();
-	return n;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_leaky_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
-Mat* dLeakyReLU(const Mat* M){
-	if(NULL == M -> hostData || NULL == M -> devData){
+Mat* dLeakyReLU(const Mat* src){
+	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *p = NULL;
-	Mat *n = NULL;
-
-	p = greaterThan(M, 0.0);
-	n = lessThan(M, 0.0);
-	safeGetPt(n, divide(n, leaky_relu_alpha));
-	safeGetPt(n, add(n, p));
-	p -> release();
-	return n;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_dleaky_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
 Mat* Tanh(const Mat *src){
@@ -1119,13 +1127,14 @@ Mat* dTanh(const Mat *src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
-	Mat *res = new Mat(src -> rows, src -> cols, src -> channels);
-	res -> ones();
-	Mat *tmp = NULL;
-	safeGetPt(tmp, square(src));
-	safeGetPt(res, subtract(res, tmp));
-    tmp -> release();
-    return res;
+	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
+	int len = src -> getLength();
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_dtanh<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+    checkCudaErrors(cudaDeviceSynchronize());
+	dst -> deviceToHost();
+	return dst;
 }
 
 Mat* nonLinearity(const Mat *M, int method){

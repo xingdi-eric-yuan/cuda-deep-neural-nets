@@ -58,7 +58,6 @@ class vector3f;
 
 using namespace std;
 
-static float leaky_relu_alpha = 100.0;
 const size_t Mb = 1 << 20; // Assuming a 1Mb page size here
 extern bool is_gradient_checking;
 extern bool use_log;

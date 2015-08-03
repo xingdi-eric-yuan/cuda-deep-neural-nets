@@ -325,15 +325,6 @@ __global__ void cu_equalTo(const float* src, float* dst, const float val, const 
 	}
 }
 
-__global__ void cu_tanh(const float* src, float* dst, const int n){
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int stride = blockDim.x * gridDim.x;
-	while(tid < n){
-		dst[tid] = tanhf(src[tid]);
-		tid += stride;
-	}
-}
-
 __global__ void cu_fliplr(const float* src, float* dst, const int rows, const int cols, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -585,4 +576,116 @@ __global__ void cu_transpose(const float* src, float* dst, int colssrc, int cols
 		tid += stride;
 	}
 }
+
+__global__ void cu_sigmoid(const float* src, float* dst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float tmp = __fmul_rd(src[tid], -1.0);
+		tmp = __expf(tmp);
+		tmp = __fadd_rd(tmp, 1.0);
+		dst[tid] = __fdividef(1.0, tmp);
+		tid += stride;
+	}
+}
+
+__global__ void cu_dsigmoid(const float* src, float* dst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float tmp = __expf(src[tid]);
+		float tmp2 = __fadd_rd(tmp, 1.0);
+		tmp2 = __fmul_rd(tmp2, tmp2);
+		dst[tid] = fdividef(tmp, tmp2);
+		tid += stride;
+	}
+}
+
+__global__ void cu_dsigmoid_a(const float* src, float* dst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float tmp = __fsub_rd(1.0, src[tid]);
+		dst[tid] = __fmul_rd(tmp, src[tid]);
+		tid += stride;
+	}
+}
+
+__global__ void cu_relu(const float* src, float* dst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		if(src[tid] > 0.0) dst[tid] = src[tid];
+		else dst[tid] = 0.0;
+		tid += stride;
+	}
+}
+
+__global__ void cu_drelu(const float* src, float* dst, int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		if(src[tid] > 0.0) dst[tid] = 1.0;
+		else dst[tid] = 0.0;
+		tid += stride;
+	}
+}
+
+__global__ void cu_leaky_relu(const float* src, float* dst, int n){
+	const float leaky_relu_alpha = 100.0;
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float p = 0.0;
+		float n = 0.0;
+		if(src[tid] > 0.0) p = src[tid];
+		if(src[tid] < 0.0) n = src[tid];
+		n = fdividef(n, leaky_relu_alpha);
+		dst[tid] = __fadd_rd(p, n);
+		tid += stride;
+	}
+}
+
+__global__ void cu_dleaky_relu(const float* src, float* dst, int n){
+	const float leaky_relu_alpha = 100.0;
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float p = 0.0;
+		float n = 0.0;
+		if(src[tid] > 0.0) p = 1;
+		if(src[tid] < 0.0) n = 1;
+		n = fdividef(n, leaky_relu_alpha);
+		dst[tid] = __fadd_rd(p, n);
+		tid += stride;
+	}
+}
+
+__global__ void cu_tanh(const float* src, float* dst, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		dst[tid] = tanhf(src[tid]);
+		tid += stride;
+	}
+}
+
+__global__ void cu_dtanh(const float* src, float* dst, const int n){
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	while(tid < n){
+		float tmp = __fmul_rd(src[tid], src[tid]);
+		dst[tid] = __fsub_rd(1.0, tmp);
+		tid += stride;
+	}
+}
+
+
+
+
+
+
+
+
+
 
