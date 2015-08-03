@@ -37,7 +37,7 @@ cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
 void MemoryMonitor::freeGpuMemory(void* ptr){
 	if(gpuPoint.find(ptr) != gpuPoint.end()){
  		//if(gpuPoint[ptr] >= Mb){
- 		//	printf("+++++++++++++++++++++++++++++++ free gpu memory %fMb\n", gpuPoint[ptr] / Mb);
+ 		//printf("+++++++++++++++++++++++++++++++ free gpu memory %fMb\n", gpuPoint[ptr] / Mb);
  		//}
 		gpuMemory -= gpuPoint[ptr];
 		checkCudaErrors(cudaFree(ptr));

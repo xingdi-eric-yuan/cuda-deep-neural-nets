@@ -993,13 +993,13 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
     for(int i = 0; i < vec.size(); ++i){
     	vec[i].clear();
     	vec[i].resize(Mt -> cols / dim);
-    	cout<<"i = "<<i<<", vec[i].size = "<<vec[i].size()<<endl;
     	for(int j = 0; j < vec[i].size(); ++j){
     		vec[i][j] = new Mat(imagesize, imagesize, 3);
         	memcpy(vec[i][j] -> hostData, Mt -> hostData + i * Mt -> cols + j * dim, dim * sizeof(float));
         	vec[i][j] -> hostToDevice();
     	}
     }
+    Mt -> release();
 }
 
 // non-linearity
