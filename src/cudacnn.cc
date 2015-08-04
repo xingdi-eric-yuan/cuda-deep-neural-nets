@@ -60,11 +60,11 @@ int main(void){
 
 
     cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
-	Mat *a = new Mat(3000, 3000, 1);
+	Mat *a = new Mat(5, 5, 1);
 	a -> randn();
-	//a -> printHost("A");
+	a -> printHost("A");
 	vector3f *c = new vector3f();
-	safeGetPt(c, sum(a));
+	safeGetPt(c, max(a));
 	c -> print("sum = ");
 	a -> release();
 	c -> release();
