@@ -650,47 +650,44 @@ vector3f* sum(const Mat* src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 
+	float *data = NULL;
+	float *d_partial_sums = NULL;
+	float *global_mem = NULL;
+	checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * len));
+	checkCudaErrors(cudaMalloc((void**)&global_mem, sizeof(float) * block_size));
+	checkCudaErrors(cudaMalloc((void**)&d_partial_sums, sizeof(float) * num_blocks));
+
 	for(int ch = 0; ch < src -> channels; ++ch){
 		int tmp_block_size = block_size;
 		int tmp_num_blocks = num_blocks;
-		float *data = NULL;
 		int data_len = len;
-		checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * data_len));
 		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
-		float *d_partial_sums = NULL;
-		float *global_mem = NULL;
 		while(true){
-			checkCudaErrors(cudaMalloc((void**)&global_mem, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(global_mem, 0, sizeof(float) * tmp_block_size));
-			checkCudaErrors(cudaMalloc((void**)&d_partial_sums, sizeof(float) * tmp_num_blocks));
 			cu_sum<<<tmp_num_blocks, tmp_block_size>>>(data, d_partial_sums, global_mem, data_len);
 		    getLastCudaError("kernel execution failed\n");
 	        checkCudaErrors(cudaDeviceSynchronize());
-			checkCudaErrors(cudaFree(global_mem));
-			checkCudaErrors(cudaFree(data));
 			data_len = tmp_num_blocks;
 			if(tmp_num_blocks == 1){
 				// copy the result back to the host
 				float host_res = 0;
 				checkCudaErrors(cudaMemcpy(&host_res, d_partial_sums, sizeof(float), cudaMemcpyDeviceToHost));
-				checkCudaErrors(cudaFree(d_partial_sums));
 				res -> set(ch, host_res);
 				break;
 			}elif(tmp_num_blocks <= block_size){
 				tmp_block_size = data_len;
 				tmp_num_blocks = 1;
-				checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * data_len));
 				checkCudaErrors(cudaMemcpy(data, d_partial_sums, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
-				checkCudaErrors(cudaFree(d_partial_sums));
 			}else{
 				tmp_block_size = threadsPerBlock;
 				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
-				checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * data_len));
 				checkCudaErrors(cudaMemcpy(data, d_partial_sums, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
-				checkCudaErrors(cudaFree(d_partial_sums));
 			}
 		}
 	}
+	checkCudaErrors(cudaFree(global_mem));
+	checkCudaErrors(cudaFree(data));
+	checkCudaErrors(cudaFree(d_partial_sums));
 	return res;
 }
 
@@ -771,158 +768,76 @@ vector3f* max(const Mat* src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+
 	vector3f *res = new vector3f();
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
 
-		float *glob_mem_maxVal = 0;
-		float *glob_mem_minVal = 0;
-		int *glob_mem_maxLoc = 0;
-		int *glob_mem_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
-		checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * block_size));
-		checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * block_size));
-		checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * block_size));
-		checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * block_size));
+	float *dev_maxVal_partial = NULL;
+	float *dev_minVal_partial = NULL;
+	int *dev_maxLoc_partial = NULL;
+	int *dev_minLoc_partial = NULL;
+	float *glob_mem_maxVal = NULL;
+	float *glob_mem_minVal = NULL;
+	int *glob_mem_maxLoc = NULL;
+	int *glob_mem_minLoc = NULL;
+	float *data = NULL;
+	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * len));
 
-
-		// launch one kernel to compute, per-block, a partial max
-		cu_minMaxLoc<<<num_blocks, block_size>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial,
-															glob_mem_maxVal,
-															glob_mem_minVal,
-															glob_mem_maxLoc,
-															glob_mem_minLoc, len);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-
-		float *data_maxVal = 0;
-		float *data_minVal = 0;
-		int *data_maxLoc = 0;
-		int *data_minLoc = 0;
-		checkCudaErrors(cudaMalloc((void**)&data_maxVal, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&data_minVal, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&data_maxLoc, sizeof(int) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&data_minLoc, sizeof(int) * num_blocks));
-		checkCudaErrors(cudaMemcpy(data_maxVal, dev_maxVal_partial, num_blocks * sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(data_minVal, dev_minVal_partial, num_blocks * sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(data_maxLoc, dev_maxLoc_partial, num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(data_minLoc, dev_minLoc_partial, num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
-
-
-
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-		checkCudaErrors(cudaFree(glob_mem_maxVal));
-		checkCudaErrors(cudaFree(glob_mem_minVal));
-		checkCudaErrors(cudaFree(glob_mem_maxLoc));
-		checkCudaErrors(cudaFree(glob_mem_minLoc));
-
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int)));
-
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * num_blocks));
-		checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * num_blocks));
-		checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * num_blocks));
-		checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * num_blocks));
-		checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * num_blocks));
-
-
-
-
-		// launch a single block to compute the max
-		cu_minMaxLoc<<<1, num_blocks>>>(dev_maxVal_partial,
-										data_maxVal, data_minVal, data_maxLoc, data_minLoc,
-										glob_mem_maxVal,
-										glob_mem_minVal,
-										glob_mem_maxLoc,
-										glob_mem_minLoc, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_maxVal = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial, sizeof(float), cudaMemcpyDeviceToHost));
-		res -> set(i, host_maxVal);
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-		checkCudaErrors(cudaFree(glob_mem_maxVal));
-		checkCudaErrors(cudaFree(glob_mem_minVal));
-		checkCudaErrors(cudaFree(glob_mem_maxLoc));
-		checkCudaErrors(cudaFree(glob_mem_minLoc));
-		checkCudaErrors(cudaFree(data_maxVal));
-		checkCudaErrors(cudaFree(data_minVal));
-		checkCudaErrors(cudaFree(data_maxLoc));
-		checkCudaErrors(cudaFree(data_minLoc));
+	for(int ch = 0; ch < src -> channels; ++ch){
+		int tmp_block_size = block_size;
+		int tmp_num_blocks = num_blocks;
+		int data_len = len;
+		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		while(true){
+			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+			cu_minMaxLoc<<<num_blocks, block_size>>>(data,
+													dev_minVal_partial, dev_maxVal_partial,
+													dev_minLoc_partial, dev_maxLoc_partial,
+													glob_mem_maxVal,
+													glob_mem_minVal,
+													glob_mem_maxLoc,
+													glob_mem_minLoc, data_len);
+		    getLastCudaError("kernel execution failed\n");
+	        checkCudaErrors(cudaDeviceSynchronize());
+			checkCudaErrors(cudaMemcpy(data, dev_maxVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			data_len = tmp_num_blocks;
+			if(tmp_num_blocks == 1){
+				// copy the result back to the host
+				float host_res = 0;
+				checkCudaErrors(cudaMemcpy(&host_res, dev_maxVal_partial, sizeof(float), cudaMemcpyDeviceToHost));
+				res -> set(ch, host_res);
+				break;
+			}elif(tmp_num_blocks <= block_size){
+				tmp_block_size = data_len;
+				tmp_num_blocks = 1;
+			}else{
+				tmp_block_size = threadsPerBlock;
+				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
+			}
+		}
 	}
-	return res;
-}
-
-
-
-vector3f* max1(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
-		std::cout<<"invalid input..."<<std::endl;
-		exit(0);
-	}
-	vector3f *res = new vector3f();
-	int len = src -> rows * src -> cols;
-	const size_t block_size = threadsPerBlock;
-	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
-		// launch one kernel to compute, per-block, a partial max
-		cu_minMaxLoc1<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial, len);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		// launch a single block to compute the max
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_maxVal = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		res -> set(i, host_maxVal);
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-	}
+	checkCudaErrors(cudaFree(glob_mem_maxVal));
+	checkCudaErrors(cudaFree(glob_mem_minVal));
+	checkCudaErrors(cudaFree(glob_mem_maxLoc));
+	checkCudaErrors(cudaFree(glob_mem_minLoc));
+	checkCudaErrors(cudaFree(data));
+	checkCudaErrors(cudaFree(dev_maxVal_partial));
+	checkCudaErrors(cudaFree(dev_minVal_partial));
+	checkCudaErrors(cudaFree(dev_maxLoc_partial));
+	checkCudaErrors(cudaFree(dev_minLoc_partial));
 	return res;
 }
 
@@ -935,43 +850,87 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
-		// launch one kernel to compute, per-block, a partial max
-		cu_minMaxLoc1<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial, len);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		int* host_maxLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
-		checkCudaErrors(cudaMemcpy(host_maxLoc_partial, dev_maxLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
-		// launch a single block to compute the max
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_maxVal = 0;
-		int host_maxLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-		max_val -> set(i, host_maxVal);
-		max_loc -> set(i, host_maxLoc_partial[host_maxLoc]);
+
+	float *dev_maxVal_partial = NULL;
+	float *dev_minVal_partial = NULL;
+	int *dev_maxLoc_partial = NULL;
+	int *dev_minLoc_partial = NULL;
+	float *glob_mem_maxVal = NULL;
+	float *glob_mem_minVal = NULL;
+	int *glob_mem_maxLoc = NULL;
+	int *glob_mem_minLoc = NULL;
+	float *data = NULL;
+	int *loc_tmp1 = (int*)malloc(sizeof(int) * num_blocks);
+	int *loc_tmp2 = (int*)malloc(sizeof(int) * num_blocks);
+	memset(loc_tmp1, 0, sizeof(int) * num_blocks);
+	memset(loc_tmp2, 0, sizeof(int) * num_blocks);
+	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * len));
+
+	for(int ch = 0; ch < src -> channels; ++ch){
+		int tmp_block_size = block_size;
+		int tmp_num_blocks = num_blocks;
+		int data_len = len;
+		int counter = 0;
+		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		while(true){
+			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+			cu_minMaxLoc<<<num_blocks, block_size>>>(data,
+													dev_minVal_partial, dev_maxVal_partial,
+													dev_minLoc_partial, dev_maxLoc_partial,
+													glob_mem_maxVal,
+													glob_mem_minVal,
+													glob_mem_maxLoc,
+													glob_mem_minLoc, data_len);
+		    getLastCudaError("kernel execution failed\n");
+	        checkCudaErrors(cudaDeviceSynchronize());
+			checkCudaErrors(cudaMemcpy(data, dev_maxVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			data_len = tmp_num_blocks;
+			checkCudaErrors(cudaMemcpy(loc_tmp2, dev_maxLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(0 < counter){
+				for(int i = 0; i < tmp_num_blocks; ++i){
+					loc_tmp2[i] = loc_tmp1[loc_tmp2[i]];
+				}
+			}
+			++counter;
+			checkCudaErrors(cudaMemcpy(loc_tmp1, dev_maxLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(tmp_num_blocks == 1){
+				// copy the result back to the host
+				float host_res = 0;
+				checkCudaErrors(cudaMemcpy(&host_res, dev_maxVal_partial, sizeof(float), cudaMemcpyDeviceToHost));
+				max_val -> set(ch, host_res);
+				max_loc -> set(ch, loc_tmp2[0]);
+				break;
+			}elif(tmp_num_blocks <= block_size){
+				tmp_block_size = data_len;
+				tmp_num_blocks = 1;
+			}else{
+				tmp_block_size = threadsPerBlock;
+				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
+			}
+		}
 	}
+	checkCudaErrors(cudaFree(glob_mem_maxVal));
+	checkCudaErrors(cudaFree(glob_mem_minVal));
+	checkCudaErrors(cudaFree(glob_mem_maxLoc));
+	checkCudaErrors(cudaFree(glob_mem_minLoc));
+	checkCudaErrors(cudaFree(data));
+	checkCudaErrors(cudaFree(dev_maxVal_partial));
+	checkCudaErrors(cudaFree(dev_minVal_partial));
+	checkCudaErrors(cudaFree(dev_maxLoc_partial));
+	checkCudaErrors(cudaFree(dev_minLoc_partial));
+	free(loc_tmp1);
+	free(loc_tmp2);
 }
 
 float min(const vector3f* src){
@@ -987,42 +946,76 @@ vector3f* min(const Mat* src){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
+
 	vector3f *res = new vector3f();
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
-		// launch one kernel to compute, per-block, a partial min
-		cu_minMaxLoc1<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial, len);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		// launch a single block to compute the min
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_minVal = 0;
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		res -> set(i, host_minVal);
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
+
+	float *dev_maxVal_partial = NULL;
+	float *dev_minVal_partial = NULL;
+	int *dev_maxLoc_partial = NULL;
+	int *dev_minLoc_partial = NULL;
+	float *glob_mem_maxVal = NULL;
+	float *glob_mem_minVal = NULL;
+	int *glob_mem_maxLoc = NULL;
+	int *glob_mem_minLoc = NULL;
+	float *data = NULL;
+	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * len));
+
+	for(int ch = 0; ch < src -> channels; ++ch){
+		int tmp_block_size = block_size;
+		int tmp_num_blocks = num_blocks;
+		int data_len = len;
+		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		while(true){
+			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+			cu_minMaxLoc<<<num_blocks, block_size>>>(data,
+													dev_minVal_partial, dev_maxVal_partial,
+													dev_minLoc_partial, dev_maxLoc_partial,
+													glob_mem_maxVal,
+													glob_mem_minVal,
+													glob_mem_maxLoc,
+													glob_mem_minLoc, data_len);
+		    getLastCudaError("kernel execution failed\n");
+	        checkCudaErrors(cudaDeviceSynchronize());
+			checkCudaErrors(cudaMemcpy(data, dev_minVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			data_len = tmp_num_blocks;
+			if(tmp_num_blocks == 1){
+				// copy the result back to the host
+				float host_res = 0;
+				checkCudaErrors(cudaMemcpy(&host_res, dev_minVal_partial, sizeof(float), cudaMemcpyDeviceToHost));
+				res -> set(ch, host_res);
+				break;
+			}elif(tmp_num_blocks <= block_size){
+				tmp_block_size = data_len;
+				tmp_num_blocks = 1;
+			}else{
+				tmp_block_size = threadsPerBlock;
+				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
+			}
+		}
 	}
+	checkCudaErrors(cudaFree(glob_mem_maxVal));
+	checkCudaErrors(cudaFree(glob_mem_minVal));
+	checkCudaErrors(cudaFree(glob_mem_maxLoc));
+	checkCudaErrors(cudaFree(glob_mem_minLoc));
+	checkCudaErrors(cudaFree(data));
+	checkCudaErrors(cudaFree(dev_maxVal_partial));
+	checkCudaErrors(cudaFree(dev_minVal_partial));
+	checkCudaErrors(cudaFree(dev_maxLoc_partial));
+	checkCudaErrors(cudaFree(dev_minLoc_partial));
 	return res;
 }
 
@@ -1035,43 +1028,87 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
-		// launch one kernel to compute, per-block, a partial min
-		cu_minMaxLoc1<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial, len);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		int* host_minLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
-		checkCudaErrors(cudaMemcpy(host_minLoc_partial, dev_minLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
-		// launch a single block to compute the min
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_minVal = 0;
-		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-		min_val -> set(i, host_minVal);
-		min_loc -> set(i, host_minLoc_partial[host_minLoc]);
+
+	float *dev_maxVal_partial = NULL;
+	float *dev_minVal_partial = NULL;
+	int *dev_maxLoc_partial = NULL;
+	int *dev_minLoc_partial = NULL;
+	float *glob_mem_maxVal = NULL;
+	float *glob_mem_minVal = NULL;
+	int *glob_mem_maxLoc = NULL;
+	int *glob_mem_minLoc = NULL;
+	float *data = NULL;
+	int *loc_tmp1 = (int*)malloc(sizeof(int) * num_blocks);
+	int *loc_tmp2 = (int*)malloc(sizeof(int) * num_blocks);
+	memset(loc_tmp1, 0, sizeof(int) * num_blocks);
+	memset(loc_tmp2, 0, sizeof(int) * num_blocks);
+	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&data, sizeof(float) * len));
+
+	for(int ch = 0; ch < src -> channels; ++ch){
+		int tmp_block_size = block_size;
+		int tmp_num_blocks = num_blocks;
+		int data_len = len;
+		int counter = 0;
+		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		while(true){
+			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+			cu_minMaxLoc<<<num_blocks, block_size>>>(data,
+													dev_minVal_partial, dev_maxVal_partial,
+													dev_minLoc_partial, dev_maxLoc_partial,
+													glob_mem_maxVal,
+													glob_mem_minVal,
+													glob_mem_maxLoc,
+													glob_mem_minLoc, data_len);
+		    getLastCudaError("kernel execution failed\n");
+	        checkCudaErrors(cudaDeviceSynchronize());
+			checkCudaErrors(cudaMemcpy(data, dev_minVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			data_len = tmp_num_blocks;
+			checkCudaErrors(cudaMemcpy(loc_tmp2, dev_minLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(0 < counter){
+				for(int i = 0; i < tmp_num_blocks; ++i){
+					loc_tmp2[i] = loc_tmp1[loc_tmp2[i]];
+				}
+			}
+			++counter;
+			checkCudaErrors(cudaMemcpy(loc_tmp1, dev_minLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(tmp_num_blocks == 1){
+				// copy the result back to the host
+				float host_res = 0;
+				checkCudaErrors(cudaMemcpy(&host_res, dev_minVal_partial, sizeof(float), cudaMemcpyDeviceToHost));
+				min_val -> set(ch, host_res);
+				min_loc -> set(ch, loc_tmp2[0]);
+				break;
+			}elif(tmp_num_blocks <= block_size){
+				tmp_block_size = data_len;
+				tmp_num_blocks = 1;
+			}else{
+				tmp_block_size = threadsPerBlock;
+				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
+			}
+		}
 	}
+	checkCudaErrors(cudaFree(glob_mem_maxVal));
+	checkCudaErrors(cudaFree(glob_mem_minVal));
+	checkCudaErrors(cudaFree(glob_mem_maxLoc));
+	checkCudaErrors(cudaFree(glob_mem_minLoc));
+	checkCudaErrors(cudaFree(data));
+	checkCudaErrors(cudaFree(dev_maxVal_partial));
+	checkCudaErrors(cudaFree(dev_minVal_partial));
+	checkCudaErrors(cudaFree(dev_maxLoc_partial));
+	checkCudaErrors(cudaFree(dev_minLoc_partial));
+	free(loc_tmp1);
+	free(loc_tmp2);
 }
 
 void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* min_val, vector3f* min_loc){
@@ -1084,61 +1121,126 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 	int len = src -> rows * src -> cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	for(int i = 0; i < src -> channels; ++i){
-		float *dev_maxVal_partial = 0;
-		float *dev_minVal_partial = 0;
-		int *dev_maxLoc_partial = 0;
-		int *dev_minLoc_partial = 0;
-		checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks + 1)));
-		checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks + 1)));
-		// launch one kernel to compute, per-block, a partial result
-		cu_minMaxLoc1<<<num_blocks, block_size, block_size * sizeof(float)>>>(src -> devData + i * len,
-															dev_minVal_partial, dev_maxVal_partial,
-															dev_minLoc_partial, dev_maxLoc_partial, len);
-	    getLastCudaError("kernel execution failed\n");
-		// store partial results
-        checkCudaErrors(cudaDeviceSynchronize());
-		int* host_minLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
-		checkCudaErrors(cudaMemcpy(host_minLoc_partial, dev_minLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
-		int* host_maxLoc_partial = (int *)malloc(sizeof(int) * (num_blocks + 1));
-		checkCudaErrors(cudaMemcpy(host_maxLoc_partial, dev_maxLoc_partial, (num_blocks + 1) * sizeof(int), cudaMemcpyDeviceToHost));
-		// launch a single block to compute min
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_minVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_minVal = 0;
-		int host_minLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_minVal, dev_minVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_minLoc, dev_minLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
-		// launch a single block to compute max
-		cu_minMaxLoc1<<<1, num_blocks, num_blocks * sizeof(float)>>>(dev_maxVal_partial,
-															dev_minVal_partial + num_blocks,
-															dev_maxVal_partial + num_blocks,
-															dev_minLoc_partial + num_blocks,
-															dev_maxLoc_partial + num_blocks, num_blocks);
-	    getLastCudaError("kernel execution failed\n");
-        checkCudaErrors(cudaDeviceSynchronize());
-		  // copy the result back to the host
-		float host_maxVal = 0;
-		int host_maxLoc = 0;
-		checkCudaErrors(cudaMemcpy(&host_maxVal, dev_maxVal_partial + num_blocks, sizeof(float), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaMemcpy(&host_maxLoc, dev_maxLoc_partial + num_blocks, sizeof(int), cudaMemcpyDeviceToHost));
-		checkCudaErrors(cudaFree(dev_maxVal_partial));
-		checkCudaErrors(cudaFree(dev_minVal_partial));
-		checkCudaErrors(cudaFree(dev_maxLoc_partial));
-		checkCudaErrors(cudaFree(dev_minLoc_partial));
-		min_val -> set(i, host_minVal);
-		min_loc -> set(i, host_minLoc_partial[host_minLoc]);
-		max_val -> set(i, host_maxVal);
-		max_loc -> set(i, host_maxLoc_partial[host_maxLoc]);
+
+	float *dev_maxVal_partial = NULL;
+	float *dev_minVal_partial = NULL;
+	int *dev_maxLoc_partial = NULL;
+	int *dev_minLoc_partial = NULL;
+	float *glob_mem_maxVal = NULL;
+	float *glob_mem_minVal = NULL;
+	int *glob_mem_maxLoc = NULL;
+	int *glob_mem_minLoc = NULL;
+	float *data_max = NULL;
+	float *data_min = NULL;
+	int *loc_tmp1 = (int*)malloc(sizeof(int) * num_blocks);
+	int *loc_tmp2 = (int*)malloc(sizeof(int) * num_blocks);
+	int *loc_tmp3 = (int*)malloc(sizeof(int) * num_blocks);
+	int *loc_tmp4 = (int*)malloc(sizeof(int) * num_blocks);
+	memset(loc_tmp1, 0, sizeof(int) * num_blocks);
+	memset(loc_tmp2, 0, sizeof(int) * num_blocks);
+	memset(loc_tmp3, 0, sizeof(int) * num_blocks);
+	memset(loc_tmp4, 0, sizeof(int) * num_blocks);
+	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&glob_mem_minLoc, sizeof(int) * (block_size)));
+	checkCudaErrors(cudaMalloc((void**)&data_max, sizeof(float) * len));
+	checkCudaErrors(cudaMalloc((void**)&data_min, sizeof(float) * len));
+
+	for(int ch = 0; ch < src -> channels; ++ch){
+		int tmp_block_size = block_size;
+		int tmp_num_blocks = num_blocks;
+		int data_len = len;
+		int counter = 0;
+		checkCudaErrors(cudaMemcpy(data_max, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		while(true){
+			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+			checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+			cu_minMaxLoc<<<num_blocks, block_size>>>(data_max,
+													dev_minVal_partial, dev_maxVal_partial,
+													dev_minLoc_partial, dev_maxLoc_partial,
+													glob_mem_maxVal,
+													glob_mem_minVal,
+													glob_mem_maxLoc,
+													glob_mem_minLoc, data_len);
+		    getLastCudaError("kernel execution failed\n");
+	        checkCudaErrors(cudaDeviceSynchronize());
+			checkCudaErrors(cudaMemcpy(data_max, dev_maxVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			checkCudaErrors(cudaMemcpy(loc_tmp2, dev_maxLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(0 < counter){
+				for(int i = 0; i < tmp_num_blocks; ++i){
+					loc_tmp2[i] = loc_tmp1[loc_tmp2[i]];
+				}
+			}
+			checkCudaErrors(cudaMemcpy(loc_tmp1, dev_maxLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(0 < counter){
+				checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
+				checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
+				checkCudaErrors(cudaMemset(glob_mem_maxLoc, 0, sizeof(int) * tmp_block_size));
+				checkCudaErrors(cudaMemset(glob_mem_minLoc, 0, sizeof(int) * tmp_block_size));
+				cu_minMaxLoc<<<num_blocks, block_size>>>(data_min,
+														dev_minVal_partial, dev_maxVal_partial,
+														dev_minLoc_partial, dev_maxLoc_partial,
+														glob_mem_maxVal,
+														glob_mem_minVal,
+														glob_mem_maxLoc,
+														glob_mem_minLoc, data_len);
+			    getLastCudaError("kernel execution failed\n");
+		        checkCudaErrors(cudaDeviceSynchronize());
+				checkCudaErrors(cudaMemcpy(data_min, dev_minVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			}else{
+				checkCudaErrors(cudaMemcpy(data_min, dev_minVal_partial, tmp_num_blocks * sizeof(float), cudaMemcpyDeviceToDevice));
+			}
+
+			checkCudaErrors(cudaMemcpy(loc_tmp4, dev_minLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			if(0 < counter){
+				for(int i = 0; i < tmp_num_blocks; ++i){
+					loc_tmp4[i] = loc_tmp3[loc_tmp4[i]];
+				}
+			}
+			checkCudaErrors(cudaMemcpy(loc_tmp3, dev_minLoc_partial, tmp_num_blocks * sizeof(int), cudaMemcpyDeviceToHost));
+			data_len = tmp_num_blocks;
+			++counter;
+			if(tmp_num_blocks == 1){
+				// copy the result back to the host
+				float host_res_min = 0;
+				float host_res_max = 0;
+				checkCudaErrors(cudaMemcpy(&host_res_min, data_min, sizeof(float), cudaMemcpyDeviceToHost));
+				checkCudaErrors(cudaMemcpy(&host_res_max, data_max, sizeof(float), cudaMemcpyDeviceToHost));
+				max_val -> set(ch, host_res_max);
+				max_loc -> set(ch, loc_tmp2[0]);
+				min_val -> set(ch, host_res_min);
+				min_loc -> set(ch, loc_tmp4[0]);
+				break;
+			}elif(tmp_num_blocks <= block_size){
+				tmp_block_size = data_len;
+				tmp_num_blocks = 1;
+			}else{
+				tmp_block_size = threadsPerBlock;
+				tmp_num_blocks = (data_len / tmp_block_size) + ((data_len % tmp_block_size) ? 1 : 0);
+			}
+		}
 	}
+	checkCudaErrors(cudaFree(glob_mem_maxVal));
+	checkCudaErrors(cudaFree(glob_mem_minVal));
+	checkCudaErrors(cudaFree(glob_mem_maxLoc));
+	checkCudaErrors(cudaFree(glob_mem_minLoc));
+	checkCudaErrors(cudaFree(data_min));
+	checkCudaErrors(cudaFree(data_max));
+	checkCudaErrors(cudaFree(dev_maxVal_partial));
+	checkCudaErrors(cudaFree(dev_minVal_partial));
+	checkCudaErrors(cudaFree(dev_maxLoc_partial));
+	checkCudaErrors(cudaFree(dev_minLoc_partial));
+	free(loc_tmp1);
+	free(loc_tmp2);
+	free(loc_tmp3);
+	free(loc_tmp4);
 }
 
 Mat* greaterThan(const Mat *src, float val){
@@ -1245,12 +1347,9 @@ Mat *sigmoid(const Mat *src){
 	}
 	Mat *dst = new Mat(src -> rows, src -> cols, src -> channels);
 	int len = src -> getLength();
-
-	dim3 ThreadsPerBlock(16, 16);  // 256 threads
-	dim3 numBlocks(	iDivUp(src -> cols, ThreadsPerBlock.x),  // for instance 512/8 = 64
-					iDivUp(src -> rows, ThreadsPerBlock.y));
-
-	cu_sigmoid<<<numBlocks, ThreadsPerBlock>>>(src -> devData, dst -> devData, len);
+	const size_t block_size = threadsPerBlock;
+	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
+	cu_sigmoid<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
 	dst -> deviceToHost();

@@ -88,8 +88,6 @@ void runAllTest(){
 	if(test_pooling_mean()){ ++ success;} ++ counter;
 	if(test_pooling_overlap_max()){ ++ success;} ++ counter;
 
-
-
 	cout<<"test success : "<<success<<", failed : "<<counter - success<<", total : "<<counter<<endl;
 }
 
@@ -1199,7 +1197,7 @@ bool test_minLoc(){
 }
 
 bool test_minMaxLoc(){
-	cout<<"testing minLoc --- ";
+	cout<<"testing minMaxLoc --- ";
 	Mat *a = getTestMatrix_3();
 	vector3f *resMinVal = new vector3f();
 	vector3f *resMinLoc = new vector3f();
@@ -2034,7 +2032,6 @@ bool test_conv2(){
 			-3.095624740000000,  3.053076620000000, -1.924472330000000,  4.872398820000000,  2.990781410000000,
 			 1.276184570000000, -1.439856320000001,  3.391516610000000,  5.309386210000000,  0.017621660000000,
 			-0.544109030000000,  3.177449150000001,  2.998356920000000, -1.646269500000000,  3.188088460000000
-
 };
 	const float array_conv2_full[147] = {
 			-0.223015680000000,  0.538043120000000,  2.799425560000000,  1.391648780000000,  0.924094150000000,  1.843902660000000, -0.506105400000000,
@@ -2087,8 +2084,8 @@ bool test_conv2(){
 	res_same -> release();
 	res_full -> release();
 	expect_valid -> release();
-	res_same -> release();
-	res_full -> release();
+	expect_same -> release();
+	expect_full -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -2160,8 +2157,8 @@ bool test_conv2_pad_stride(){
 	res_same -> release();
 	res_full -> release();
 	expect_valid -> release();
-	res_same -> release();
-	res_full -> release();
+	expect_same -> release();
+	expect_full -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }
@@ -2387,6 +2384,7 @@ bool test_sameValuesInMat(){
 	int res = sameValuesInMat(a, sameMat);
 	bool result = (res == 6);
 	a -> release();
+	sameMat -> release();
 	cout<<(result ? "success" : "failed")<<endl;
 	return result;
 }

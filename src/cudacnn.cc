@@ -52,22 +52,31 @@ void run(){
 
 int main(void){
 
-	showGpuProperty();
+//	showGpuProperty();
 
-//	runAllTest();
+	runAllTest();
 
 //	run();
 
-
+/*
     cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
-	Mat *a = new Mat(5, 5, 1);
+	Mat *a = new Mat(5000, 5000, 1);
 	a -> randn();
-	a -> printHost("A");
+	//a -> printHost("A");
 	vector3f *c = new vector3f();
-	safeGetPt(c, max(a));
-	c -> print("sum = ");
+	vector3f *d = new vector3f();
+	vector3f *e = new vector3f();
+	vector3f *f = new vector3f();
+	minMaxLoc(a, c, d, e, f);
+	c -> print("max = ");
+	d -> print("max loc = ");
+	e -> print("min = ");
+	f -> print("min loc = ");
 	a -> release();
 	c -> release();
+	d -> release();
+	e -> release();
+	f -> release();
 
     cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
 
