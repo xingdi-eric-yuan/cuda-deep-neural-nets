@@ -23,7 +23,7 @@ __global__ void cu_divide(float*, float, const int);
 __global__ void cu_divide(const float*, float*, const float, const int);
 __global__ void cu_divide(const float, const float*, float*, const int);
 __global__ void cu_divide(const float*, const float*, float*, const int);
-__global__ void cu_sum(const float*, float*, const int);
+__global__ void cu_sum(const float*, float*, float *, const int);
 //__global__ void cu_minMaxLoc(const float*, float*, float*, int*, int*, int, const int);
 __global__ void cu_minMaxLoc(const float*, float*, float*, int*, int*, const int);
 __global__ void cu_greaterThan(const float*, float*, const float, const int);

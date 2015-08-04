@@ -43,7 +43,7 @@ extern "C" void padKernel(
         kernelY,
         kernelX
     );
-    getLastCudaError("padKernel_kernel<<<>>> execution failed\n");
+    getLastCudaError("kernel execution failed\n");
 }
 
 

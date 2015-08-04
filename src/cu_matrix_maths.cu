@@ -201,21 +201,20 @@ __global__ void cu_divide(const float* numerator, const float* denominator, floa
 	}
 }
 
-__global__ void cu_sum(const float* src, float* sum, const int n){
-	extern __shared__ float sdata[];
+__global__ void cu_sum(const float* src, float* sum, float *global_mem, const int n){
 	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 	// load input into __shared__ memory
 	float x = 0;
 	if(tid < n){
 		x = src[tid];
 	}
-	sdata[threadIdx.x] = x;
+	global_mem[threadIdx.x] = x;
 	__syncthreads();
 	// contiguous range pattern
 	for(int offset = blockDim.x / 2; offset > 0; offset >>= 1){
 		if(threadIdx.x < offset){
 			// add a partial sum upstream to our own
-			sdata[threadIdx.x] += sdata[threadIdx.x + offset];
+			global_mem[threadIdx.x] += global_mem[threadIdx.x + offset];
 		}
 	    // wait until all threads in the block have
 	    // updated their partial sums
@@ -223,7 +222,7 @@ __global__ void cu_sum(const float* src, float* sum, const int n){
 	}
 	// thread 0 writes the final result
 	if(threadIdx.x == 0){
-		sum[blockIdx.x] = sdata[0];
+		sum[blockIdx.x] = global_mem[0];
 	}
 	__syncthreads();
 }
@@ -580,14 +579,16 @@ __global__ void cu_transpose(const float* src, float* dst, int colssrc, int cols
 }
 
 __global__ void cu_sigmoid(const float* src, float* dst, int n){
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	uint x = (blockIdx.x * blockDim.x) + threadIdx.x;
+	uint y = (blockIdx.y * blockDim.y) + threadIdx.y;
+	uint offset = x + y * gridDim.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
-	while(tid < n){
-		float tmp = __fmul_rd(src[tid], -1.0);
+	while(offset < n){
+		float tmp = __fmul_rd(src[offset], -1.0);
 		tmp = __expf(tmp);
 		tmp = __fadd_rd(tmp, 1.0);
-		dst[tid] = __fdividef(1.0, tmp);
-		tid += stride;
+		dst[offset] = __fdividef(1.0, tmp);
+		offset += stride;
 	}
 }
 
