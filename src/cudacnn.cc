@@ -21,6 +21,8 @@ bool use_log = false;
 int training_epochs = 0;
 int iter_per_epo = 0;
 
+// RUN
+// run an example network training code
 void run(){
 
     std::vector<cpuMat*> trainX;
@@ -36,7 +38,6 @@ void run(){
 
     flow.clear();
     std::vector<network_layer*>().swap(flow);
-
     releaseVector(trainX);
     releaseVector(testX);
     trainY -> release();
@@ -45,7 +46,6 @@ void run(){
     std::vector<cpuMat*>().swap(trainX);
     testX.clear();
     std::vector<cpuMat*>().swap(testX);
-
 }
 
 
@@ -54,36 +54,9 @@ int main(void){
 
 //	showGpuProperty();
 
-	runAllTest();
+//	runAllTest();
 
-//	run();
-
-/*
-    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
-	Mat *a = new Mat(5000, 5000, 1);
-	a -> randn();
-	//a -> printHost("A");
-	vector3f *c = new vector3f();
-	vector3f *d = new vector3f();
-	vector3f *e = new vector3f();
-	vector3f *f = new vector3f();
-	minMaxLoc(a, c, d, e, f);
-	c -> print("max = ");
-	d -> print("max loc = ");
-	e -> print("min = ");
-	f -> print("min loc = ");
-	a -> release();
-	c -> release();
-	d -> release();
-	e -> release();
-	f -> release();
-
-    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
-
-//*/
-
-
-
+	run();
 
 	return 0;
 }

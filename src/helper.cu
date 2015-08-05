@@ -1,5 +1,7 @@
 #include "helper.h"
 
+// SNAP TRANSFORM SIZE
+// transforms data size, use in convolution FFT 2D
 int snapTransformSize(int dataSize){
     int hiBit;
     unsigned int lowPOT, hiPOT;
@@ -21,6 +23,8 @@ int snapTransformSize(int dataSize){
     }
 }
 
+// COPY VECTOR
+// DEEP copy between vectors of pointers
 void copyVector(const std::vector<std::vector<Mat*> >& _from, std::vector<std::vector<Mat*> >& _to){
 	releaseVector(_to);
 	_to.clear();
@@ -69,6 +73,8 @@ void copyVector(const std::vector<vector3f*>& _from, std::vector<vector3f*>& _to
 	}
 }
 
+// RELEASE VECTOR
+// release vector of Mat, vector3f, cpuMat, or Mat*, vector3f*, cpuMat*. (first make sure the pointer is not NULL before you free it)
 void releaseVector(std::vector<std::vector<Mat*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -76,7 +82,6 @@ void releaseVector(std::vector<std::vector<Mat*> >& vec){
 		}
 	}
 }
-
 void releaseVector(std::vector<std::vector<Mat> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -94,7 +99,6 @@ void releaseVector(std::vector<Mat>& vec){
 		vec[i].release();
 	}
 }
-
 void releaseVector(std::vector<std::vector<cpuMat*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -102,7 +106,6 @@ void releaseVector(std::vector<std::vector<cpuMat*> >& vec){
 		}
 	}
 }
-
 void releaseVector(std::vector<std::vector<cpuMat> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -120,8 +123,6 @@ void releaseVector(std::vector<cpuMat>& vec){
 		vec[i].release();
 	}
 }
-
-
 void releaseVector(std::vector<std::vector<std::vector<vector3f*> > >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -131,7 +132,6 @@ void releaseVector(std::vector<std::vector<std::vector<vector3f*> > >& vec){
 		}
 	}
 }
-
 void releaseVector(std::vector<std::vector<std::vector<vector3f> > >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -141,7 +141,6 @@ void releaseVector(std::vector<std::vector<std::vector<vector3f> > >& vec){
 		}
 	}
 }
-
 void releaseVector(std::vector<std::vector<vector3f*> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -149,7 +148,6 @@ void releaseVector(std::vector<std::vector<vector3f*> >& vec){
 		}
 	}
 }
-
 void releaseVector(std::vector<std::vector<vector3f> >& vec){
 	for(int i = 0; i < vec.size(); ++i){
 		for(int j = 0; j < vec[i].size(); ++j){
@@ -168,8 +166,9 @@ void releaseVector(std::vector<vector3f>& vec){
 	}
 }
 
+// SHOW GPU PROPERTY
+// cuda function, shows gpu properties
 void showGpuProperty(){
-
 	cudaDeviceProp prop;
 	int count;
 	checkCudaErrors(cudaGetDeviceCount(&count));

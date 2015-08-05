@@ -1,26 +1,25 @@
 #include "matrix_maths.h"
 
+// SAFE GET POINTER
+// assign value to pointer after free that pointer
 void safeGetPt(Mat* &dst, Mat* src){
 	if(dst){
 		dst -> release();
 	}
 	dst = src;
 }
-
 void safeGetPt(cpuMat* &dst, cpuMat* src){
 	if(dst){
 		dst -> release();
 	}
 	dst = src;
 }
-
 void safeGetPt(vector3f* &dst, vector3f* src){
 	if(dst){
 		dst -> release();
 	}
 	dst = src;
 }
-
 void safeGetPt(vector2i* &dst, vector2i* src){
 	if(dst){
 		dst -> release();
@@ -28,7 +27,8 @@ void safeGetPt(vector2i* &dst, vector2i* src){
 	dst = src;
 }
 
-///
+// ADD
+// returns src + a
 vector3f* add(const vector3f* src, float a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -41,6 +41,8 @@ vector3f* add(const vector3f* src, float a){
 	return res;
 }
 
+// ADD
+// returns src1 + src2
 vector3f* add(const vector3f* src1, const vector3f* src2){
 	if(NULL == src1 || NULL == src2){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -53,6 +55,8 @@ vector3f* add(const vector3f* src1, const vector3f* src2){
 	return res;
 }
 
+// ADD
+// returns src + a
 Mat* add(const Mat* src, float a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -69,6 +73,8 @@ Mat* add(const Mat* src, float a){
 	return tmp;
 }
 
+// ADD
+// returns src + val
 Mat* add(const Mat* src, const vector3f *val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -87,6 +93,8 @@ Mat* add(const Mat* src, const vector3f *val){
 	return tmp;
 }
 
+// ADD
+// returns a + b
 Mat* add(const Mat* a, const Mat* b){
 	if(NULL == a -> hostData || NULL == a -> devData ||
 	   NULL == b -> hostData || NULL == b -> devData ||
@@ -105,6 +113,8 @@ Mat* add(const Mat* a, const Mat* b){
 	return tmp;
 }
 
+// SUBTRACT
+// returns src - a
 vector3f* subtract(const vector3f* src, float a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -117,6 +127,8 @@ vector3f* subtract(const vector3f* src, float a){
 	return res;
 }
 
+// SUBTRACT
+// returns src1 - src2
 vector3f* subtract(const vector3f* src1, const vector3f* src2){
 	if(NULL == src1 || NULL == src2){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -129,6 +141,8 @@ vector3f* subtract(const vector3f* src1, const vector3f* src2){
 	return res;
 }
 
+// SUBTRACT
+// returns src - a
 Mat* subtract(const Mat* src, float a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -145,6 +159,8 @@ Mat* subtract(const Mat* src, float a){
 	return tmp;
 }
 
+// SUBTRACT
+// returns src - val
 Mat* subtract(const Mat* src, const vector3f *val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -163,6 +179,8 @@ Mat* subtract(const Mat* src, const vector3f *val){
 	return tmp;
 }
 
+// SUBTRACT
+// returns a - b
 Mat* subtract(const Mat* a, const Mat* b){
 	if(NULL == a -> hostData || NULL == a -> devData ||
 	   NULL == b -> hostData || NULL == b -> devData ||
@@ -181,6 +199,8 @@ Mat* subtract(const Mat* a, const Mat* b){
 	return tmp;
 }
 
+// MULTIPLY ELEMENT WISE
+// return src(i) * a
 vector3f* multiply_elem(const vector3f* src, float a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -193,6 +213,8 @@ vector3f* multiply_elem(const vector3f* src, float a){
 	return res;
 }
 
+// MULTIPLY ELEMENT WISE
+// return src1(i) * src2(i)
 vector3f* multiply_elem(const vector3f* src1, const vector3f* src2){
 	if(NULL == src1 || NULL == src2){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -205,6 +227,8 @@ vector3f* multiply_elem(const vector3f* src1, const vector3f* src2){
 	return res;
 }
 
+// MULTIPLY ELEMENT WISE
+// return src(i) * a
 Mat* multiply_elem(const Mat* src, float a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -221,6 +245,8 @@ Mat* multiply_elem(const Mat* src, float a){
 	return res;
 }
 
+// MULTIPLY ELEMENT WISE
+// return src(i) * a
 Mat* multiply_elem(const Mat* src, const vector3f *a){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -240,6 +266,9 @@ Mat* multiply_elem(const Mat* src, const vector3f *a){
 	return res;
 }
 
+// MULTIPLY
+// matrix multiplication
+// result size should be (rowsa, colsb)
 Mat* multiply(const Mat* a, const Mat* b){
 	if(NULL == a -> hostData || NULL == a -> devData ||
 	   NULL == b -> hostData || NULL == b -> devData||
@@ -264,6 +293,8 @@ Mat* multiply(const Mat* a, const Mat* b){
 	return res;
 }
 
+// MULTIPLY ELEMENT WISE
+// return a(i) * b(i)
 Mat* multiply_elem(const Mat* a, const Mat* b){
 	if(NULL == a -> hostData || NULL == a -> devData ||
 	   NULL == b -> hostData || NULL == b -> devData||
@@ -282,6 +313,8 @@ Mat* multiply_elem(const Mat* a, const Mat* b){
 	return res;
 }
 
+// TRANSPOSE
+// return matrix transpose
 Mat* t(const Mat* a){
 	if(NULL == a -> hostData || NULL == a -> devData){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -300,6 +333,8 @@ Mat* t(const Mat* a){
 	return res;
 }
 
+// DIVIDE REMAINDER
+// returns src % a
 vector3f* div_rem(vector3f* src, int a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -312,6 +347,8 @@ vector3f* div_rem(vector3f* src, int a){
 	return res;
 }
 
+// DIVIDE NO REMAINDER
+// returns src / a
 vector3f* div_no_rem(vector3f* src, int a){
 	if(NULL == src){
 		std::cout<<"invalid vectors..."<<std::endl;
@@ -324,6 +361,8 @@ vector3f* div_no_rem(vector3f* src, int a){
 	return res;
 }
 
+// EXP
+// returns exp(src)
 Mat* exp(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -340,6 +379,8 @@ Mat* exp(const Mat* src){
 	return dst;
 }
 
+// LOG
+// returns log(src)
 Mat* log(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -356,6 +397,8 @@ Mat* log(const Mat* src){
 	return dst;
 }
 
+// POW
+// returns pow(src, power)
 Mat* pow(const Mat* src, float power){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -376,6 +419,8 @@ Mat* pow(const Mat* src, float power){
 	return dst;
 }
 
+// SQUARE
+// returns square
 Mat* square(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -392,6 +437,8 @@ Mat* square(const Mat* src){
 	return dst;
 }
 
+// SQRT
+// returns square root
 Mat* sqrt(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -408,6 +455,8 @@ Mat* sqrt(const Mat* src){
 	return dst;
 }
 
+// SQUARE
+// returns square
 vector3f* square(const vector3f* src){
 	vector3f* dst = new vector3f();
 	for(int i = 0; i < 3; ++i){
@@ -416,6 +465,8 @@ vector3f* square(const vector3f* src){
 	return dst;
 }
 
+// SQRT
+// returns square root
 vector3f* sqrt(const vector3f* src){
 	vector3f* dst = new vector3f();
 	for(int i = 0; i < 3; ++i){
@@ -424,6 +475,8 @@ vector3f* sqrt(const vector3f* src){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 Mat* divide(const Mat* numerator, float denominator){
 	if(NULL == numerator -> hostData || NULL == numerator -> devData){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -444,6 +497,8 @@ Mat* divide(const Mat* numerator, float denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 Mat* divide(float numerator, const Mat* denominator){
 	if(NULL == denominator -> hostData || NULL == denominator -> devData){
 		std::cout<<"invalid denominator..."<<std::endl;
@@ -463,6 +518,8 @@ Mat* divide(float numerator, const Mat* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 vector3f* divide(const vector3f* numerator, float denominator){
 	vector3f* dst = new vector3f();
 	if(0.0 == denominator){
@@ -475,6 +532,8 @@ vector3f* divide(const vector3f* numerator, float denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 vector3f* divide(float numerator, const vector3f* denominator){
 	vector3f* dst = new vector3f();
 	if(0.0 == numerator){
@@ -490,6 +549,8 @@ vector3f* divide(float numerator, const vector3f* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 Mat* divide(const Mat* numerator, const vector3f* denominator){
 	if(NULL == numerator -> hostData || NULL == numerator -> devData){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -508,6 +569,8 @@ Mat* divide(const Mat* numerator, const vector3f* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 Mat* divide(const vector3f* numerator, const Mat* denominator){
 	if(NULL == denominator -> hostData || NULL == denominator -> devData){
 		std::cout<<"invalid denominator..."<<std::endl;
@@ -526,6 +589,8 @@ Mat* divide(const vector3f* numerator, const Mat* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 Mat* divide(const Mat* numerator, const Mat* denominator){
 	if(NULL == denominator -> hostData || NULL == denominator -> devData ||
 	   NULL == numerator -> hostData || NULL == numerator -> devData || numerator -> getLength() != denominator -> getLength()){
@@ -543,6 +608,8 @@ Mat* divide(const Mat* numerator, const Mat* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 vector3f* divide(const vector3f* numerator, const vector3f* denominator){
 	vector3f *dst = new vector3f();
 	for(int i = 0; i < 3; ++i){
@@ -555,6 +622,8 @@ vector3f* divide(const vector3f* numerator, const vector3f* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 cpuMat* divide(const cpuMat* numerator, const vector3f* denominator){
 	if(NULL == numerator -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -574,6 +643,8 @@ cpuMat* divide(const cpuMat* numerator, const vector3f* denominator){
 	return dst;
 }
 
+// DIVIDE
+// returns numerator / denominator
 cpuMat* divide(const cpuMat* numerator, float denominator){
 	if(NULL == numerator -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -591,6 +662,8 @@ cpuMat* divide(const cpuMat* numerator, float denominator){
 	return dst;
 }
 
+// SUBTRACT
+// returns a - b
 cpuMat* subtract(const cpuMat* a, float b){
 	if(NULL == a -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -604,6 +677,8 @@ cpuMat* subtract(const cpuMat* a, float b){
 	return dst;
 }
 
+// SUBTRACT
+// returns a - b
 cpuMat* subtract(const cpuMat* a, const vector3f* b){
 	if(NULL == a -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -619,6 +694,8 @@ cpuMat* subtract(const cpuMat* a, const vector3f* b){
 	return dst;
 }
 
+// SUBTRACT
+// returns a - b
 cpuMat* subtract(const cpuMat* a, const cpuMat* b){
 	if(NULL == a -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
@@ -632,6 +709,8 @@ cpuMat* subtract(const cpuMat* a, const cpuMat* b){
 	return dst;
 }
 
+// SUM
+// returns the sum of a vector3f
 float sum(const vector3f* src){
 	float res = 0.0;
 	for(int i = 0; i < 3; ++i){
@@ -640,6 +719,11 @@ float sum(const vector3f* src){
 	return res;
 }
 
+// SUM
+// get sum of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the partial sum for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 vector3f* sum(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -691,6 +775,8 @@ vector3f* sum(const Mat* src){
 	return res;
 }
 
+// AVERAGE
+// returns mean of a matrix
 vector3f* average(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -704,6 +790,8 @@ vector3f* average(const Mat* src){
 	return res;
 }
 
+// AVERAGE
+// returns mean of a matrix
 vector3f* average(const cpuMat* src){
 	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
@@ -719,6 +807,8 @@ vector3f* average(const cpuMat* src){
 	return res;
 }
 
+// STDDEV
+// returns standard deviation of a matrix
 vector3f* stddev(const cpuMat* src, const vector3f* avg){
 	if(NULL == src -> Data ){
 		std::cout<<"invalid input..."<<std::endl;
@@ -738,6 +828,8 @@ vector3f* stddev(const cpuMat* src, const vector3f* avg){
 	return res;
 }
 
+// STDDEV
+// returns standard deviation of a matrix
 vector3f* stddev(const Mat* src, const vector3f* avg){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -754,6 +846,8 @@ vector3f* stddev(const Mat* src, const vector3f* avg){
 	return res;
 }
 
+// MAX
+// get max value of a vector3f
 float max(const vector3f* src){
 	float res = src -> get(0);
 	for(int i = 1; i < 3; ++i){
@@ -763,6 +857,11 @@ float max(const vector3f* src){
 }
 
 
+// MAX
+// get min value, max value, min location, max location of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 vector3f* max(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -841,6 +940,11 @@ vector3f* max(const Mat* src){
 	return res;
 }
 
+// MAX
+// get min value, max value, min location, max location of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 	if(NULL == src -> hostData || NULL == src -> devData ||
 	   NULL == max_val || NULL == max_loc){
@@ -933,6 +1037,8 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 	free(loc_tmp2);
 }
 
+// MIN
+// get min value of a vector3f
 float min(const vector3f* src){
 	float res = src -> get(0);
 	for(int i = 1; i < 3; ++i){
@@ -941,6 +1047,11 @@ float min(const vector3f* src){
 	return res;
 }
 
+// MIN
+// get min value, max value, min location, max location of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 vector3f* min(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1019,6 +1130,11 @@ vector3f* min(const Mat* src){
 	return res;
 }
 
+// MIN
+// get min value, max value, min location, max location of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 	if(NULL == src -> hostData || NULL == src -> devData ||
 	   NULL == min_val || NULL == min_loc){
@@ -1111,6 +1227,11 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 	free(loc_tmp2);
 }
 
+// MIN MAX LOCATION
+// get min value, max value, min location, max location of a matrix.
+// because sometimes the size of matrix is larger than maxThreadsPerBlock, so each time
+// it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
+// until data size is less than threadsPerBlock.
 void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* min_val, vector3f* min_loc){
 	if(NULL == src -> hostData || NULL == src -> devData ||
 	   NULL == min_val || NULL == min_loc ||
@@ -1243,6 +1364,8 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 	free(loc_tmp4);
 }
 
+// EQUAL TO
+// res = src > val
 Mat* greaterThan(const Mat *src, float val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1259,6 +1382,8 @@ Mat* greaterThan(const Mat *src, float val){
 	return dst;
 }
 
+// EQUAL TO
+// res = src < val
 Mat* lessThan(const Mat *src, float val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1275,6 +1400,8 @@ Mat* lessThan(const Mat *src, float val){
 	return dst;
 }
 
+// EQUAL TO
+// res = src == val
 Mat* equalTo(const Mat *src, float val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1291,6 +1418,8 @@ Mat* equalTo(const Mat *src, float val){
 	return dst;
 }
 
+// GET BERNOULLI MATRIX
+// get random bernoulli matrix, with given probability
 Mat* getBernoulliMatrix(int height, int width, int nchannels, float prob){
 	Mat *ran = new Mat(height, width, nchannels);
 	ran -> randu();
@@ -1300,9 +1429,17 @@ Mat* getBernoulliMatrix(int height, int width, int nchannels, float prob){
 	return res;
 }
 
-
+// CONVERT
 // convert from vector of img to matrix
 // vec.size() == nsamples
+// for example:
+// vec[0][0]:  	[1, 2]	vec[0][1]: 	[a][b]
+// 				[3, 4]				[c][d]
+// vec[1][0]:  	[5, 6]	vec[1][1]: 	[e][f]
+// 				[7, 8]				[g][h]
+// result should be:   M[1, 2, 3, 4, a, b, c, d]T
+//						[5, 6, 7, 8, e, f, g, h]
+
 void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
     Mat *res = new Mat(vec.size(), vec[0].size() * vec[0][0] -> getLength(), 1);
     for(int i = 0; i < vec.size(); i++){
@@ -1317,8 +1454,10 @@ void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
     res -> release();
 }
 
+// CONVERT
 // convert from matrix to vector of img
 // vec.size() == nsamples
+// details see convert(vec<vec<Mat*>>, Mat*) comments
 void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int imagesize){
     std::vector<Mat*> tmpvec;
     Mat *Mt = NULL;
@@ -1339,7 +1478,8 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
     Mt -> release();
 }
 
-// non-linearity
+// SIGMOID
+// sigmoid non-linearity
 Mat *sigmoid(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid src..."<<std::endl;
@@ -1356,6 +1496,8 @@ Mat *sigmoid(const Mat *src){
 	return dst;
 }
 
+// DSIGMOID
+// get derivatives of sigmoid non-linearity function
 Mat* dsigmoid(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1372,6 +1514,8 @@ Mat* dsigmoid(const Mat *src){
 	return dst;
 }
 
+// DSIGMOID A
+// get derivatives of sigmoid non-linearity function using cache of forward passing matrix
 Mat* dsigmoid_a(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1388,6 +1532,8 @@ Mat* dsigmoid_a(const Mat *src){
 	return dst;
 }
 
+// RELU
+// relu non-linearity
 Mat* ReLU(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1404,6 +1550,8 @@ Mat* ReLU(const Mat *src){
 	return dst;
 }
 
+// DRELU
+// get derivatives of relu non-linearity function
 Mat* dReLU(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1420,6 +1568,8 @@ Mat* dReLU(const Mat *src){
 	return dst;
 }
 
+// LEAKY RELU
+// leaky-relu non-linearity
 Mat* LeakyReLU(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1436,6 +1586,8 @@ Mat* LeakyReLU(const Mat* src){
 	return dst;
 }
 
+// DLEAKYRELU
+// get derivatives of leaky-relu non-linearity function
 Mat* dLeakyReLU(const Mat* src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1452,6 +1604,8 @@ Mat* dLeakyReLU(const Mat* src){
 	return dst;
 }
 
+// TANH
+// tanh non-linearity
 Mat* Tanh(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1468,6 +1622,8 @@ Mat* Tanh(const Mat *src){
 	return dst;
 }
 
+// DTANH
+// get derivatives of tanh non-linearity function
 Mat* dTanh(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1484,6 +1640,8 @@ Mat* dTanh(const Mat *src){
 	return dst;
 }
 
+// NONLINEARITY
+// non-linearity
 Mat* nonLinearity(const Mat *M, int method){
 	if(NULL == M -> hostData || NULL == M -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1500,6 +1658,8 @@ Mat* nonLinearity(const Mat *M, int method){
     }
 }
 
+// DNONLINEARITY
+// get derivatives of non-linearity function
 Mat* dnonLinearity(const Mat *M, int method){
 	if(NULL == M -> hostData || NULL == M -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1516,7 +1676,10 @@ Mat* dnonLinearity(const Mat *M, int method){
     }
 }
 
-// convolution and pooling
+// FLIPLR
+// flip left and right, for example:
+// [a, b]				 [b, a]
+// [c, d]   turns into   [d, c]
 Mat* fliplr(const Mat *src){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1535,6 +1698,8 @@ Mat* fliplr(const Mat *src){
 	return dst;
 }
 
+// ROT90
+// rotate 90
 Mat* rot90(const Mat *src, int k){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1551,6 +1716,8 @@ Mat* rot90(const Mat *src, int k){
     return res;
 }
 
+// DOPADDING
+// do zero padding around matrix
 Mat* dopadding(const Mat *src, int pad){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1575,6 +1742,8 @@ Mat* dopadding(const Mat *src, int pad){
 	return dst;
 }
 
+// DEPADDING
+// delete padding around matrix
 Mat* depadding(const Mat *src, int pad){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1599,6 +1768,8 @@ Mat* depadding(const Mat *src, int pad){
 	return dst;
 }
 
+// REDUCE
+// similar with OpenCV reduce function, only support max reduce and sum reduce
 Mat* reduce(const Mat* src, int direction, int mode){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1631,6 +1802,8 @@ Mat* reduce(const Mat* src, int direction, int mode){
 	return dst;
 }
 
+// INTERPOLATION
+// interpolation with zeros
 Mat* interpolation(const Mat* src, int _size){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1658,6 +1831,9 @@ Mat* interpolation(const Mat* src, int _size){
 	return dst;
 }
 
+// REPMAT
+// repeat matrix, for example, repmat(a, 2, 3) turns into:	[a, a, a]
+// 															[a, a, a]
 Mat* repmat(const Mat *src, int vert, int hori){
 	if(NULL == src -> hostData || NULL == src -> devData || 0 == vert || 0 == hori){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1683,6 +1859,8 @@ Mat* repmat(const Mat *src, int vert, int hori){
 	return dst;
 }
 
+// KRON
+// calculates kronecker product, can be used in unpooling mean pooling
 Mat* kron(const Mat *a, const Mat *b){
 	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1703,6 +1881,9 @@ Mat* kron(const Mat *a, const Mat *b){
 	return dst;
 }
 
+// CONVOLUTION 2D
+// using nVidia convolution FFT2D,
+// this is actually conv2 with 'same' type
 Mat* conv2(const Mat *m, const Mat *kernel){
 	if(NULL == m -> hostData || NULL == m -> devData || NULL == kernel -> hostData || NULL == kernel -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1774,6 +1955,10 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     return res;
 }
 
+// CONVOLUTION 2D
+// supports full/same/valid type convolution, similar with matlab conv2 type.
+// also supports zero padding and stride.
+// if using valid type, result size = (m_size + 2 * pad - kernel_size) / stride + 1
 Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 	if(NULL == m -> hostData || NULL == m -> devData || NULL == kernel -> hostData || NULL == kernel -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1808,6 +1993,9 @@ Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 	return res;
 }
 
+// GET RANGE
+// similar with OpenCV getRange function.
+// BE CAREFUL, xend/yend are last element in the range, but not first element outside range.
 Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1831,6 +2019,8 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 	return dst;
 }
 
+// DOWN SAMPLE
+// simply down sample
 Mat* downSample(const Mat* src, int y_stride, int x_stride){
 	if(NULL == src -> hostData || NULL == src -> devData || y_stride < 1 || x_stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1858,6 +2048,11 @@ Mat* downSample(const Mat* src, int y_stride, int x_stride){
 	return res;
 }
 
+// COPY MAKE BORDER
+// similar with OpenCV copyMakeBorder function, for example
+// a =  [b, c]		, copyMakeBorder(a, 1, 0, 1, 0, val=x) is 	[x, x, x]
+//		[d, e]													[x, b, c]
+//																[x, d, e]
 Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const vector3f* val){
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1883,11 +2078,11 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 	return dst;
 }
 
-// THE FOLLOWING POOLING METHOD SUCKS, NEED TO SPEED UP!!!!
 
-// Pooling with overlap
-// Max pooling and stochastic pooling supported
+// POOLING WITH OVERLAP
+// Max pooling supported
 // output size = (input size - window size) / stride + 1
+// TODO: stochastic pooling
 Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int poolingMethod, Mat*& locat){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1917,7 +2112,8 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
     return dst;
 }
 
-// Max pooling and stochastic pooling supported
+// UNPOOLING WITH OVERLAP
+// unpooling with overlap
 Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1942,6 +2138,9 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
 	return res;
 }
 
+// POOLING
+// pooling without overlap
+// TODO: stochastic pooling
 Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1986,6 +2185,8 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
     return res;
 }
 
+// UNPOOLING
+// unpooling
 Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
 	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
@@ -2022,6 +2223,8 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, 
     }
 }
 
+// FIND MAX
+// use during testing, find which has max val in each column
 Mat* findMax(const Mat* m){
 	if(NULL == m -> hostData || NULL == m -> devData){
 		std::cout<<"invalid input..."<<std::endl;
@@ -2042,7 +2245,9 @@ Mat* findMax(const Mat* m){
 	return res;
 }
 
-// only calculates first channel.
+// SAME VALUES IN MATRIX
+// use during testing, only calculates first channel,
+// and find how many values are same between two matrices.
 int sameValuesInMat(const Mat* a, const Mat* b){
 	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData ||
 			a -> getLength() != b -> getLength()){

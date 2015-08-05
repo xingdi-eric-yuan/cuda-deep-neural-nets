@@ -1,8 +1,7 @@
 #include "layer_bank.h"
-
 using namespace std;
 
-// kernel
+// network layer
 network_layer::network_layer(){
     output_matrix = new Mat();
     delta_matrix = new Mat();
@@ -17,5 +16,3 @@ network_layer::~network_layer(){
     std::vector<std::vector<Mat*> >().swap(d2_vector);
 }
 
-
-//*/

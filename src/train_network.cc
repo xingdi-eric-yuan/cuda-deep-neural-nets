@@ -2,6 +2,10 @@
 
 using namespace std;
 
+// FORWARD PASS INIT
+// call this function when finish building network using config file,
+// this function calculates the size of weights and initializes weights
+// in CONV/FC/SM layers.
 void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
     //cout<<"---------------- forward init"<<endl;
     // forward pass
@@ -36,6 +40,9 @@ void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
     }
 }
 
+// FORWARD PASS
+// do the forward pass using a network, this function also calculates
+// the network cost from output layer.
 void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
     //cout<<"---------------- forward "<<endl;
@@ -92,18 +99,14 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
             ((dropout_layer*)flow[i]) -> forwardPass(batch_size, flow[i - 1]);
         }
 
-/*
-        if(flow[i] -> output_format == "matrix"){
-        	flow[i] -> output_matrix -> printHost("OUTPUT MATRIX");
-        }else{
-        	flow[i] -> output_vector[0][0] -> printHost("OUTPUT VECTOR 00");
-            //cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
-        } //*/
+//        if(flow[i] -> output_format == "matrix"){
+//        	flow[i] -> output_matrix -> printHost("OUTPUT MATRIX");
+//        }else{
+//        	flow[i] -> output_vector[0][0] -> printHost("OUTPUT VECTOR 00");
+//          cout<<"output dimension is "<<flow[i] -> output_vector.size()<<" * "<<flow[i] -> output_vector[0].size()<<" * "<<flow[i] -> output_vector[0][0].size()<<endl;
+//        }
     }
-
-
-
-
+    // write network cost into network layer
     ((softmax_layer*)flow[flow.size() - 1]) -> network_cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking)
     	cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<((softmax_layer*)flow[flow.size() - 1]) -> network_cost;//endl;
@@ -111,6 +114,9 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
     tmpvec3 -> release();
 }
 
+// FORWARD PASS TEST
+// This function works similar with "forwardPass", however during testing,
+// some of the calculation can be simplified, for example, dropout.
 void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
     //cout<<"---------------- test "<<endl;
@@ -142,6 +148,9 @@ void forwardPassTest(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
     }
 }
 
+// BACKWARD PASS
+// do the backward pass using a network. Calculates gradients and derivatives and writes
+// into network.
 void backwardPass(std::vector<network_layer*> &flow){
     //cout<<"---------------- backward"<<endl;
     // backward pass
@@ -177,6 +186,8 @@ void backwardPass(std::vector<network_layer*> &flow){
     groundTruth -> release();
 }
 
+// UPDATE NETWORK
+// Use during training, updates weights in network.
 void updateNetwork(std::vector<network_layer*> &flow, int iter){
     //cout<<"---------------- update"<<endl;
     for(int i = 0; i < flow.size(); ++i){
@@ -191,6 +202,8 @@ void updateNetwork(std::vector<network_layer*> &flow, int iter){
     }
 }
 
+// PRINT NETWORK
+// Print network info.
 void printNetwork(std::vector<network_layer*> &flow){
     cout<<"****************************************************************************"<<endl
         <<"**                       NETWORK LAYERS                                     "<<endl
@@ -240,6 +253,9 @@ void printNetwork(std::vector<network_layer*> &flow){
     }
 }
 
+// TEST NETWORK
+// Get testing data, and feed into the trained network, compare result with testing label,
+// then calculates the accuracy.
 void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
 
     int batch_size = 100;
@@ -291,22 +307,20 @@ void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
     cout<<"correct: "<<correct<<", total: "<<x.size()<<", accuracy: "<<float(correct) / (float)(x.size())<<endl;
 }
 
+// TRAIN NETWORK
+// train network, for each training epoch, there should be a forward pass, a
+// backward pass, and a update.
 void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vector<cpuMat*> &tx, const cpuMat *ty, std::vector<network_layer*> &flow){
 
     forwardPassInit(x, y, flow);
     printNetwork(flow);
 
-
-//    forwardPass(x, y, flow);
-//    backwardPass(flow);
-//    return;
-
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);
     }else{
-    cout<<"****************************************************************************"<<endl
-        <<"**                       TRAINING NETWORK......                             "<<endl
-        <<"****************************************************************************"<<endl<<endl;
+		cout<<"****************************************************************************"<<endl
+			<<"**                       TRAINING NETWORK......                             "<<endl
+			<<"****************************************************************************"<<endl<<endl;
         int k = 0;
         for(int epo = 1; epo <= training_epochs; epo++){
             for(; k <= iter_per_epo * epo; k++){
@@ -316,19 +330,16 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
                 updateNetwork(flow, k);
                 cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() / Mb<<" Mb"<<endl;
             }
-
             //cout<<"Test training data: "<<endl;
             //testNetwork(x, y, flow);
             cout<<"Test testing data: "<<endl;
             testNetwork(tx, ty, flow);
-
+            // log --- TODO...
             //if(use_log){
             //    save2XML("log", i2str(k), flow);
             //}
         }
     }
-    //*/
-
 }
 
 

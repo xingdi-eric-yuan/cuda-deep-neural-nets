@@ -1,7 +1,11 @@
 #include "gradient_checking.h"
-
 using namespace std;
 
+// GRADIENT CHECKING
+// gradient checking using the mathematical definition of derivative,
+// we assuming that (J(theta + epsilon) - J(theta - epsilon)) / (2 * epsilon) should
+// numerically approximate the derivative, when epsilon is small enough. In which, theta
+// is one element in "alt" in this function.
 void gradient_checking(const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY, std::vector<network_layer*> &flow, Mat* gradient, Mat*alt){
 
 	float epsilon = 1e-3;
@@ -47,6 +51,12 @@ void gradient_checking(const std::vector<cpuMat*> &sampleX, const cpuMat *sample
     }
 }
 
+// GRADIENT CHECKING HALF
+// similar with gradient_checking.
+// gradient checking using the mathematical definition of derivative,
+// we assuming that (J(theta + epsilon) - J(theta)) / (epsilon) should also
+// numerically approximate the derivative, when epsilon is small enough. In which, theta
+// is one element in "alt" in this function.
 void gradient_checking_half(const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY, std::vector<network_layer*> &flow, Mat* gradient, Mat*alt){
 
     forwardPass(sampleX, sampleY, flow);
@@ -86,14 +96,14 @@ void gradient_checking_half(const std::vector<cpuMat*> &sampleX, const cpuMat *s
     }
 }
 
+// GRADIENT CHECKING SOFTMAX LAYER
+// call gradient checking functions for checking softmax layer.
+// remember to disable this part after you're sure the cost function and dJ function are correct.
 void gradientChecking_SoftmaxLayer(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){
-    //Gradient Checking (remember to disable this part after you're sure the
-    //cost function and dJ function are correct)
 
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
-
-    Mat *p;// = new Mat();
+    Mat *p = NULL;
     cout<<"################################################"<<endl;
     cout<<"## test softmax layer !!!!"<<endl;
     cout<<"################################################"<<endl;
@@ -108,14 +118,15 @@ void gradientChecking_SoftmaxLayer(std::vector<network_layer*> &flow, const std:
     p = NULL;
 }
 
+// GRADIENT CHECKING FULLY CONNECTED LAYER
+// call gradient checking functions for checking fc layer.
+// remember to disable this part after you're sure the cost function and dJ function are correct.
 void gradientChecking_FullyConnectedLayer(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){
-    //Gradient Checking (remember to disable this part after you're sure the
-    //cost function and dJ function are correct)
 
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
 
-    Mat *p;
+    Mat *p = NULL;
     cout<<"################################################"<<endl;
     cout<<"## test fully connected layer !!!!"<<endl;
     cout<<"################################################"<<endl;
@@ -130,14 +141,14 @@ void gradientChecking_FullyConnectedLayer(std::vector<network_layer*> &flow, con
 
 }
 
+// GRADIENT CHECKING CONVOLUTIONAL LAYER
+// call gradient checking functions for checking conv layer.
+// remember to disable this part after you're sure the cost function and dJ function are correct.
 void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){
-    //Gradient Checking (remember to disable this part after you're sure the
-    //cost function and dJ function are correct)
 
     forwardPass(sampleX, sampleY, flow);
     backwardPass(flow);
-
-    Mat *p;
+    Mat *p = NULL;
     cout<<"################################################"<<endl;
     cout<<"## test convolutional layer !!!!"<<endl;
     cout<<"################################################"<<endl;
@@ -162,9 +173,12 @@ void gradientChecking_ConvolutionalLayer(std::vector<network_layer*> &flow, cons
     p = NULL;
 }
 
+// GRADIENT CHECKING NETWORK LAYERS
+// call gradient checking functions for each layer.
 void gradient_checking_network_layers(std::vector<network_layer*> &flow, const std::vector<cpuMat*> &sampleX, const cpuMat *sampleY){
 
-    // delete dropout layer when doing gradient checking
+    // delete dropout layer when doing gradient checking, because dropout layer uses random bernoulli matrix, so it will
+	// make the gradient checking method working incorrectly.
     std::vector<network_layer*> tmpflow(flow);
     int i = 0;
     while(true){
@@ -173,9 +187,8 @@ void gradient_checking_network_layers(std::vector<network_layer*> &flow, const s
             tmpflow.erase(tmpflow.begin() + i);
         }else ++i;
     }
-    //gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
-    //gradientChecking_FullyConnectedLayer(tmpflow, sampleX, sampleY);
+    gradientChecking_ConvolutionalLayer(tmpflow, sampleX, sampleY);
+    gradientChecking_FullyConnectedLayer(tmpflow, sampleX, sampleY);
     gradientChecking_SoftmaxLayer(tmpflow, sampleX, sampleY);
 }
-
 

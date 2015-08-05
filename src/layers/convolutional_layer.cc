@@ -1,8 +1,7 @@
 #include "layer_bank.h"
 
-// kernel
+// convolutional kernel
 convolutional_kernel::convolutional_kernel(){
-
 	weight_decay = 0.0;
 	kernel_size = 0;
     w = NULL;
@@ -44,7 +43,7 @@ void convolutional_kernel::release(){
     bd2 -> release();
 }
 
-// layer
+// convolutional layer
 convolutional_layer::convolutional_layer(){
 	stride = 1;
 	padding = 0;
@@ -254,14 +253,6 @@ void convolutional_layer::forwardPass(int nsamples, network_layer* previous_laye
     releaseVector(input);
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
-/*
-    for(int i = 0; i < output_vector.size(); ++i){
-    	for(int j = 0; j < output_vector[i].size(); ++j){
-    		cout<<"@@@@@@@@@@@@@@   OUTPUT  i = "<<i<<", j = "<<j<<endl;
-    		output_vector[i][j] ->printHost(" ");
-    	}
-    }*/
-
 }
 
 void convolutional_layer::forwardPassTest(int nsamples, network_layer* previous_layer){

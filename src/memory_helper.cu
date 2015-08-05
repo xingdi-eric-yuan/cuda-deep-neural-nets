@@ -1,55 +1,54 @@
 #include "memory_helper.h"
 using namespace std;
 
+// CPU MALLOC
+// cpu memory allocation
 void* MemoryMonitor::cpuMalloc(int size){
 	cpuMemory += size;
 	void* p = malloc(size);
 	cpuPoint[p] = 1.0f * size;
- 	//if(size >= Mb){
- 	//	printf("******************************* cpu malloc memory %fMb\n", 1.0 * size / Mb);
- 	//}
 	return p;
 }
 
+// FREE CPU MEMORY
+// cpu memory free
 void MemoryMonitor::freeCpuMemory(void* ptr)
 {
 	if(cpuPoint.find(ptr) != cpuPoint.end()){
- 		//if(cpuPoint[ptr] >= Mb){
- 		//	printf("+++++++++++++++++++++++++++++++ free cpu memory %fMb\n", cpuPoint[ptr] / Mb);
- 		//}
 		cpuMemory -= cpuPoint[ptr];
 		free(ptr);
 		cpuPoint.erase(ptr);
 	}
 }
 
+// GPU MALLOC
+// gpu memory allocation
 cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
 	cudaError_t error = cudaMalloc(devPtr, size);
 	checkCudaErrors(error);
 	gpuMemory += size;
 	gpuPoint[*devPtr] = (float)size;
 	return error;
- 	//if(size >= Mb){
- 	//	printf("******************************* gpu malloc memory %fMb\n", 1.0 * size / Mb);
- 	//}
 }
 
+// FREE GPU MEMORY
+// gpu memory free
 void MemoryMonitor::freeGpuMemory(void* ptr){
 	if(gpuPoint.find(ptr) != gpuPoint.end()){
- 		//if(gpuPoint[ptr] >= Mb){
- 		//printf("+++++++++++++++++++++++++++++++ free gpu memory %fMb\n", gpuPoint[ptr] / Mb);
- 		//}
 		gpuMemory -= gpuPoint[ptr];
 		checkCudaErrors(cudaFree(ptr));
 		gpuPoint.erase(ptr);
 	}
 }
 
-
+// GET CPU MEMORY
+// returns size of cpu memory which currently using
 float MemoryMonitor::getCpuMemory() const{
 	return cpuMemory;
 }
 
+// GET GPU MEMORY
+// returns size of gpu memory which currently using
 float MemoryMonitor::getGpuMemory() const{
 	return gpuMemory;
 }

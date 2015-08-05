@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// local response normalization layer
 local_response_normalization_layer::local_response_normalization_layer(){
     alpha = 0.000125;
     beta = 0.75;

@@ -1,12 +1,10 @@
 #pragma once
-
 #include "general_settings.h"
+
 // CUDA Runtime error messages
 #ifdef __DRIVER_TYPES_H__
-static const char *_cudaGetErrorEnum(cudaError_t error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(cudaError_t error){
+    switch (error){
         case cudaSuccess:
             return "cudaSuccess";
 
@@ -258,10 +256,8 @@ static const char *_cudaGetErrorEnum(cudaError_t error)
 
 #ifdef __cuda_cuda_h__
 // CUDA Driver API errors
-static const char *_cudaGetErrorEnum(CUresult error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(CUresult error){
+    switch (error){
         case CUDA_SUCCESS:
             return "CUDA_SUCCESS";
 
@@ -443,10 +439,8 @@ static const char *_cudaGetErrorEnum(CUresult error)
 
 #ifdef CUBLAS_API_H_
 // cuBLAS API errors
-static const char *_cudaGetErrorEnum(cublasStatus_t error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(cublasStatus_t error){
+    switch (error){
         case CUBLAS_STATUS_SUCCESS:
             return "CUBLAS_STATUS_SUCCESS";
 
@@ -484,10 +478,8 @@ static const char *_cudaGetErrorEnum(cublasStatus_t error)
 
 #ifdef _CUFFT_H_
 // cuFFT API errors
-static const char *_cudaGetErrorEnum(cufftResult error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(cufftResult error){
+    switch (error){
         case CUFFT_SUCCESS:
             return "CUFFT_SUCCESS";
 
@@ -544,10 +536,8 @@ static const char *_cudaGetErrorEnum(cufftResult error)
 
 #ifdef CUSPARSEAPI
 // cuSPARSE API errors
-static const char *_cudaGetErrorEnum(cusparseStatus_t error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(cusparseStatus_t error){
+    switch (error){
         case CUSPARSE_STATUS_SUCCESS:
             return "CUSPARSE_STATUS_SUCCESS";
 
@@ -582,10 +572,8 @@ static const char *_cudaGetErrorEnum(cusparseStatus_t error)
 
 #ifdef CUSOLVER_COMMON_H_
 //cuSOLVER API errors
-static const char *_cudaGetErrorEnum(cusolverStatus_t error)
-{
-   switch(error)
-   {
+static const char *_cudaGetErrorEnum(cusolverStatus_t error){
+   switch(error){
        case CUSOLVER_STATUS_SUCCESS:
            return "CUSOLVER_STATUS_SUCCESS";
        case CUSOLVER_STATUS_NOT_INITIALIZED:
@@ -619,10 +607,8 @@ static const char *_cudaGetErrorEnum(cusolverStatus_t error)
 
 #ifdef CURAND_H_
 // cuRAND API errors
-static const char *_cudaGetErrorEnum(curandStatus_t error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(curandStatus_t error){
+    switch (error){
         case CURAND_STATUS_SUCCESS:
             return "CURAND_STATUS_SUCCESS";
 
@@ -669,10 +655,8 @@ static const char *_cudaGetErrorEnum(curandStatus_t error)
 
 #ifdef NV_NPPIDEFS_H
 // NPP API errors
-static const char *_cudaGetErrorEnum(NppStatus error)
-{
-    switch (error)
-    {
+static const char *_cudaGetErrorEnum(NppStatus error){
+    switch (error){
         case NPP_NOT_SUPPORTED_MODE_ERROR:
             return "NPP_NOT_SUPPORTED_MODE_ERROR";
 
@@ -934,10 +918,8 @@ static const char *_cudaGetErrorEnum(NppStatus error)
 #endif
 
 template< typename T >
-void check(T result, char const *const func, const char *const file, int const line)
-{
-    if (result)
-    {
+void check(T result, char const *const func, const char *const file, int const line){
+    if (result){
         fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n",
                 file, line, static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
         DEVICE_RESET
@@ -953,12 +935,10 @@ void check(T result, char const *const func, const char *const file, int const l
 // This will output the proper error string when calling cudaGetLastError
 #define getLastCudaError(msg)      __getLastCudaError (msg, __FILE__, __LINE__)
 
-inline void __getLastCudaError(const char *errorMessage, const char *file, const int line)
-{
+inline void __getLastCudaError(const char *errorMessage, const char *file, const int line){
     cudaError_t err = cudaGetLastError();
 
-    if (cudaSuccess != err)
-    {
+    if (cudaSuccess != err){
         fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
                 file, line, errorMessage, (int)err, cudaGetErrorString(err));
         DEVICE_RESET

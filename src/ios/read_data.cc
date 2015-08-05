@@ -1,5 +1,7 @@
 #include "read_data.h"
 
+// READ BATCH
+// read cifar-10 single batch
 void read_batch(std::string filename, std::vector<cpuMat*>& vec, cpuMat* label){
     ifstream file (filename, ios::binary);
     if (file.is_open()){
@@ -26,12 +28,14 @@ void read_batch(std::string filename, std::vector<cpuMat*>& vec, cpuMat* label){
 	file.close();
 }
 
+// READ CIFAR-10 DATA
+// read cifar-10 data batch by batch
 void read_CIFAR10_data(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX, cpuMat *&trainY, cpuMat *&testY){
 	std::string filename;
     filename = "cifar-10-batches-bin/data_batch_";
     std::vector<cpuMat*> labels;
     std::vector<std::vector<cpuMat*> > batches;
-	int number_batch = 1;
+	int number_batch = 5;
     for(int i = 1; i <= number_batch; i++){
     	std::vector<cpuMat*> tpbatch;
         cpuMat *tplabel = new cpuMat(1, 10000, 1);
@@ -70,6 +74,8 @@ void read_CIFAR10_data(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX
     cout<<"There are "<<trainY -> cols<<" training labels and "<<testY -> cols<<" testing labels."<<endl<<endl;
 }
 
+// CONCAT
+// concatenate cpuMat for calculating mean and stddev
 cpuMat* concat(const std::vector<cpuMat*> &vec){
     int height = vec[0] -> rows * vec[0] -> cols;
     int width = vec.size();
@@ -82,8 +88,9 @@ cpuMat* concat(const std::vector<cpuMat*> &vec){
     return res;
 }
 
-void
-preProcessing(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX){
+// PREPROCESSING
+// make the data 0-mean, 1-stddev
+void preProcessing(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX){
     for(int i = 0; i < trainX.size(); i++){
     	safeGetPt(trainX[i], divide(trainX[i], 255.0));
     }
@@ -115,6 +122,3 @@ preProcessing(std::vector<cpuMat*> &trainX, std::vector<cpuMat*> &testX){
     sdev -> release();
     tmp -> release();
 }
-
-
-

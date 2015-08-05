@@ -2,7 +2,7 @@
 
 using namespace std;
 
-
+// dropout layer
 dropout_layer::dropout_layer(){
 	dropout_rate = 0.0;
 	bernoulli_matrix = NULL;

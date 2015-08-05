@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// pooling layer
 pooling_layer::pooling_layer(){
     stride = 1;
     window_size = 0;
@@ -130,5 +131,3 @@ void pooling_layer::backwardPass(int nsamples, network_layer* previous_layer, ne
     input.clear();
     std::vector<std::vector<Mat*> >().swap(input);
 }
-
-

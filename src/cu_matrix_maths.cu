@@ -1,5 +1,8 @@
 #include "cu_matrix_maths.h"
 
+// CUDA PLAS
+// a += b
+// n is size of a
 __global__ void cu_plus(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -9,6 +12,9 @@ __global__ void cu_plus(float *A, const float *B, const int n){
 	}
 }
 
+// CUDA PLAS
+// c = a + b
+// n is size of a
 __global__ void cu_plus(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -18,6 +24,9 @@ __global__ void cu_plus(const float *A, const float *B, float *C, const int n){
 	}
 }
 
+// CUDA PLAS
+// a += b
+// n is size of a
 __global__ void cu_plus(float *A, const float b, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -27,6 +36,9 @@ __global__ void cu_plus(float *A, const float b, const int n){
 	}
 }
 
+// CUDA PLAS
+// b = a + c
+// n is size of a
 __global__ void cu_plus(const float *A, float *B, const float c, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -36,6 +48,9 @@ __global__ void cu_plus(const float *A, float *B, const float c, const int n){
 	}
 }
 
+// CUDA MINUS
+// a -= b
+// n is size of a
 __global__ void cu_minus(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -45,6 +60,9 @@ __global__ void cu_minus(float *A, const float *B, const int n){
 	}
 }
 
+// CUDA MINUS
+// c = a - b
+// n is size of a
 __global__ void cu_minus(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -54,6 +72,9 @@ __global__ void cu_minus(const float *A, const float *B, float *C, const int n){
 	}
 }
 
+// CUDA MINUS
+// a -= b
+// n is size of a
 __global__ void cu_minus(float *A, const float b, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -63,6 +84,9 @@ __global__ void cu_minus(float *A, const float b, const int n){
 	}
 }
 
+// CUDA MINUS
+// c = a - b
+// n is size of a
 __global__ void cu_minus(const float *A, float *B, const float c, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -72,6 +96,9 @@ __global__ void cu_minus(const float *A, float *B, const float c, const int n){
 	}
 }
 
+// CUDA SQUARE
+// b = a^2
+// n is size of a
 __global__ void cu_square(const float *A, float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -81,6 +108,9 @@ __global__ void cu_square(const float *A, float *B, const int n){
 	}
 }
 
+// CUDA SQUARE ROOT
+// b = sqrt(a)
+// n is size of a
 __global__ void cu_sqrt(const float *A, float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -90,6 +120,9 @@ __global__ void cu_sqrt(const float *A, float *B, const int n){
 	}
 }
 
+// CUDA ELEMENT WISE MULTIPLY
+// a(i) *= b(i)
+// n is size of a
 __global__ void cu_elementWiseMultiply(float *A, const float *B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -99,6 +132,9 @@ __global__ void cu_elementWiseMultiply(float *A, const float *B, const int n){
 	}
 }
 
+// CUDA ELEMENT WISE MULTIPLY
+// a(i) *= b
+// n is size of a
 __global__ void cu_elementWiseMultiply(float *A, float B, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -108,6 +144,9 @@ __global__ void cu_elementWiseMultiply(float *A, float B, const int n){
 	}
 }
 
+// CUDA ELEMENT WISE MULTIPLY
+// c(i) = a(i) * b(i)
+// n is size of a
 __global__ void cu_elementWiseMultiply(const float *A, const float *B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -117,6 +156,9 @@ __global__ void cu_elementWiseMultiply(const float *A, const float *B, float *C,
 	}
 }
 
+// CUDA ELEMENT WISE MULTIPLY
+// c(i) = a(i) * b
+// n is size of a
 __global__ void cu_elementWiseMultiply(const float *A, const float B, float *C, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -126,6 +168,9 @@ __global__ void cu_elementWiseMultiply(const float *A, const float B, float *C, 
 	}
 }
 
+// CUDA SET ALL
+// a(i) = val
+// n is size of a
 __global__ void cu_setAll(float* A, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -135,6 +180,9 @@ __global__ void cu_setAll(float* A, const float val, const int n){
 	}
 }
 
+// CUDA EXP
+// dst = exp(src)
+// n is size of src
 __global__ void cu_exp(const float* src, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -144,6 +192,9 @@ __global__ void cu_exp(const float* src, float* dst, const int n){
 	}
 }
 
+// CUDA LOG
+// dst = log(src)
+// n is size of src
 __global__ void cu_log(const float* src, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -153,6 +204,9 @@ __global__ void cu_log(const float* src, float* dst, const int n){
 	}
 }
 
+// CUDA POWER
+// dst = pow(src, power)
+// n is size of src
 __global__ void cu_pow(const float* src, float* dst, const float power, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -162,35 +216,47 @@ __global__ void cu_pow(const float* src, float* dst, const float power, const in
 	}
 }
 
-__global__ void cu_divide(float *A, float B, const int n){
+// CUDA DIVIDE
+// numerator /= denominator
+// n is size of numerator
+__global__ void cu_divide(float *numerator, float denominator, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		A[tid] = __fdividef(A[tid], B);
+		numerator[tid] = __fdividef(numerator[tid], denominator);
 		tid += stride;
 	}
 }
 
-__global__ void cu_divide(const float* src, float* dst, const float denominator, const int n){
+// CUDA DIVIDE
+// dst = numerator / denominator
+// n is size of numerator
+__global__ void cu_divide(const float* numerator, float* dst, const float denominator, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
 		if(0 == denominator) dst[tid] = 0.0;
-		else dst[tid] = __fdividef(src[tid], denominator);
+		else dst[tid] = __fdividef(numerator[tid], denominator);
 		tid += stride;
 	}
 }
 
-__global__ void cu_divide(const float numerator, const float* src, float* dst, const int n){
+// CUDA DIVIDE
+// dst = numerator / denominator
+// n is size of denominator
+__global__ void cu_divide(const float numerator, const float* denominator, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
 	while(tid < n){
-		if(0 == src[tid]) dst[tid] = 0.0;
-		else dst[tid] = __fdividef(numerator, src[tid]);
+		if(0 == denominator[tid]) dst[tid] = 0.0;
+		else dst[tid] = __fdividef(numerator, denominator[tid]);
 		tid += stride;
 	}
 }
 
+// CUDA DIVIDE
+// dst = numerator / denominator
+// n is size of denominator
 __global__ void cu_divide(const float* numerator, const float* denominator, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -201,6 +267,10 @@ __global__ void cu_divide(const float* numerator, const float* denominator, floa
 	}
 }
 
+// CUDA SUM
+// calculating sum of src, because sometimes the size of src is larger than
+// max_threads_per_block, so this function only calculates the sum for each
+// block. the output array "sum" is an array which has num_blocks of size.
 __global__ void cu_sum(const float* src, float* sum, float *global_mem, const int n){
 	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 	// load input into __shared__ memory
@@ -227,7 +297,10 @@ __global__ void cu_sum(const float* src, float* sum, float *global_mem, const in
 	__syncthreads();
 }
 
-
+// CUDA MIN MAX LOCATION
+// calculating min/max/minLoc/maxLoc of src, because sometimes the size of src is larger than
+// max_threads_per_block, so this function only calculates the minMaxLoc for each
+// block. the output arrays are arrays that have num_blocks of size.
 __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue, int* minLoc, int* maxLoc,
 							float* minValCache,
 							float* maxValCache,
@@ -276,6 +349,8 @@ __global__ void cu_minMaxLoc(const float* src, float* minValue, float* maxValue,
 	}
 }
 
+// CUDA GREATER THAN
+// dst = src > val
 __global__ void cu_greaterThan(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -286,6 +361,8 @@ __global__ void cu_greaterThan(const float* src, float* dst, const float val, co
 	}
 }
 
+// CUDA GREATER THAN
+// dst = src >= val
 __global__ void cu_greaterThanOrEqualTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -296,6 +373,8 @@ __global__ void cu_greaterThanOrEqualTo(const float* src, float* dst, const floa
 	}
 }
 
+// CUDA GREATER THAN
+// dst = src < val
 __global__ void cu_lessThan(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -306,6 +385,8 @@ __global__ void cu_lessThan(const float* src, float* dst, const float val, const
 	}
 }
 
+// CUDA GREATER THAN
+// dst = src <= val
 __global__ void cu_lessThanOrEqualTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -316,6 +397,8 @@ __global__ void cu_lessThanOrEqualTo(const float* src, float* dst, const float v
 	}
 }
 
+// CUDA GREATER THAN
+// dst = src == val
 __global__ void cu_equalTo(const float* src, float* dst, const float val, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -326,6 +409,10 @@ __global__ void cu_equalTo(const float* src, float* dst, const float val, const 
 	}
 }
 
+// CUDA FLIP LEFT RIGHT
+// flip left and right, for example:
+// [a, b]				 [b, a]
+// [c, d]   turns into   [d, c]
 __global__ void cu_fliplr(const float* src, float* dst, const int rows, const int cols, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -337,6 +424,8 @@ __global__ void cu_fliplr(const float* src, float* dst, const int rows, const in
 	}
 }
 
+// CUDA PADDING
+// do padding around src
 __global__ void cu_padding(const float* src, float* dst, const int rows1, const int cols1, const int cols2, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -351,6 +440,8 @@ __global__ void cu_padding(const float* src, float* dst, const int rows1, const 
 	}
 }
 
+// CUDA PADDING
+// delete padding around src
 __global__ void cu_depadding(const float* src, float* dst, const int rows1, const int cols1, const int cols2, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -365,6 +456,9 @@ __global__ void cu_depadding(const float* src, float* dst, const int rows1, cons
 	}
 }
 
+// CUDA REPMAT
+// repeat matrix, for example, repmat(a, 2, 3) turns into:	[a, a, a]
+// 															[a, a, a]
 __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -378,6 +472,8 @@ __global__ void cu_repmat(const float *a, float* dst, const int rowsa, const int
 	}
 }
 
+// CUDA KRONECKER PRODUCT
+// calculates the kronecker product
 __global__ void cu_kron(const float *a, const float* b, float* dst, const int rowsa, const int colsa, const int rowsdst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -395,6 +491,8 @@ __global__ void cu_kron(const float *a, const float* b, float* dst, const int ro
 	}
 }
 
+// CUDA DOWN SAMPLE
+// simply down sample
 __global__ void cu_downSample(const float *src, float* dst, const int y_stride, const int x_stride, const int colssrc, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -410,6 +508,8 @@ __global__ void cu_downSample(const float *src, float* dst, const int y_stride, 
 	}
 }
 
+// CUDA INTERPOLATION
+// interpolation
 __global__ void cu_interpolation(const float* src, float* dst, const int colssrc, const int colsdst, const int _stride, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -423,6 +523,8 @@ __global__ void cu_interpolation(const float* src, float* dst, const int colssrc
 	}
 }
 
+// CUDA GET RANGE
+// get submatrix/roi from another matrix.
 __global__ void cu_getRange(const float *src, float* dst, const int xstart, const int xend, const int ystart, const int yend, const int colssrc, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -437,6 +539,8 @@ __global__ void cu_getRange(const float *src, float* dst, const int xstart, cons
 	}
 }
 
+// CUDA COPY MAKE BORDER
+// just like OpenCV copyMakeBorder function, kind of padding method
 __global__ void cu_copyMakeBorder(const float *src, float* dst, const int rowssrc, const int colssrc, const int up, const int down, const int left, const int right, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -451,6 +555,8 @@ __global__ void cu_copyMakeBorder(const float *src, float* dst, const int rowssr
 	}
 }
 
+// CUDA POOLING MAX
+// do max pooling
 __global__ void cu_pooling_max(const float* src, float* dst, float *loc, const int rowssrc, const int colssrc, const int rowsdst, const int colsdst, const int stridex, const int stridey, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -474,6 +580,8 @@ __global__ void cu_pooling_max(const float* src, float* dst, float *loc, const i
 	}
 }
 
+// CUDA POOLING MEAN
+// do mean pooling
 __global__ void cu_pooling_mean(const float* src, float* dst, float *loc, const int rowssrc, const int colssrc, const int rowsdst, const int colsdst, const int stridex, const int stridey, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -494,6 +602,8 @@ __global__ void cu_pooling_mean(const float* src, float* dst, float *loc, const 
 	}
 }
 
+// CUDA POOLING OVERLAP MAX
+// do overlap max pooling
 __global__ void cu_pooling_overlap_max(const float* src, float* dst, float *loc, const int rowssrc, const int colssrc, const int rowsdst, const int colsdst, const int sizex, const int sizey, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -517,6 +627,8 @@ __global__ void cu_pooling_overlap_max(const float* src, float* dst, float *loc,
 	}
 }
 
+// CUDA UNPOOLING
+// do unpooling
 __global__ void cu_unpooling(const float* src, const float* loc, float* dst, const int colsdst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -528,6 +640,8 @@ __global__ void cu_unpooling(const float* src, const float* loc, float* dst, con
 	}
 }
 
+// CUDA MULTIPLY
+// do matrix-matrix multiplication
 __global__ void cu_multiply(const float* A, const float* B, float * C,
                                     int rowsa, int colsa,
                                     int rowsb, int colsb,
@@ -565,6 +679,8 @@ __global__ void cu_multiply(const float* A, const float* B, float * C,
     }
 }
 
+// CUDA TRANSPOSE
+// do matrix transpose
 __global__ void cu_transpose(const float* src, float* dst, int colssrc, int colsdst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -578,6 +694,8 @@ __global__ void cu_transpose(const float* src, float* dst, int colssrc, int cols
 	}
 }
 
+// CUDA SIGMOID
+// sigmoid non-linearity
 __global__ void cu_sigmoid(const float* src, float* dst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -590,6 +708,8 @@ __global__ void cu_sigmoid(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA DSIGMOID
+// derivative of sigmoid non-linearity
 __global__ void cu_dsigmoid(const float* src, float* dst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -602,6 +722,8 @@ __global__ void cu_dsigmoid(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA DSIGMOID A
+// derivative of sigmoid non-linearity using cache of forward passing matrix
 __global__ void cu_dsigmoid_a(const float* src, float* dst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -612,6 +734,8 @@ __global__ void cu_dsigmoid_a(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA RELU
+// relu non-linearity
 __global__ void cu_relu(const float* src, float* dst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -622,6 +746,8 @@ __global__ void cu_relu(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA DRELU
+// derivative of relu non-linearity
 __global__ void cu_drelu(const float* src, float* dst, int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -632,6 +758,8 @@ __global__ void cu_drelu(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA LEAKY RELU
+// leaky-relu non-linearity
 __global__ void cu_leaky_relu(const float* src, float* dst, int n){
 	const float leaky_relu_alpha = 100.0;
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -647,6 +775,8 @@ __global__ void cu_leaky_relu(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA DLEAKY RELU
+// derivative of leaky-relu non-linearity
 __global__ void cu_dleaky_relu(const float* src, float* dst, int n){
 	const float leaky_relu_alpha = 100.0;
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -662,6 +792,8 @@ __global__ void cu_dleaky_relu(const float* src, float* dst, int n){
 	}
 }
 
+// CUDA TANH
+// tanh non-linearity
 __global__ void cu_tanh(const float* src, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
@@ -671,6 +803,8 @@ __global__ void cu_tanh(const float* src, float* dst, const int n){
 	}
 }
 
+// CUDA DTANH
+// derivative of tanh non-linearity
 __global__ void cu_dtanh(const float* src, float* dst, const int n){
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;

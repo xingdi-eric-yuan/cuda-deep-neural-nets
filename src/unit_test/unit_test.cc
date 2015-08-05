@@ -1,6 +1,7 @@
 #include "unit_test.h"
 
-
+// RUN ALL TEST
+// run all unit test function,
 void runAllTest(){
 	int counter = 0;
 	int success = 0;
@@ -56,7 +57,6 @@ void runAllTest(){
 	if(test_equalTo()){ ++ success;} ++ counter;
 	if(test_findMax()){ ++ success;} ++ counter;
 	if(test_sameValuesInMat()){ ++ success;} ++ counter;
-
 
 	if(test_convert_vv()){ ++ success;} ++ counter;
 	if(test_convert_m()){ ++ success;} ++ counter;

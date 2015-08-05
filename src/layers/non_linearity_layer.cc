@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// non-linearity layer
 non_linearity_layer::non_linearity_layer(){
 	method = NL_LEAKY_RELU;
 }
@@ -135,11 +136,4 @@ void non_linearity_layer::backwardPass(int nsamples, network_layer* previous_lay
         std::vector<std::vector<Mat*> >().swap(input);
     }
 }
-/*
-void non_linearity_layer::update(){}
-
-*/
-
-
-
 

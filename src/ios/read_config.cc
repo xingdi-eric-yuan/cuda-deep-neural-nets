@@ -1,8 +1,8 @@
 #include "read_config.h"
 
-
-string
-read_2_string(string File_name){
+// READ TO STRING
+// read file into string
+string read_2_string(string File_name){
     string res = "";
     ifstream infile(File_name);
     string line;
@@ -12,8 +12,9 @@ read_2_string(string File_name){
     return res;
 }
 
-bool
-get_word_bool(string &str, string name){
+// GET WORD BOOL
+// get boolean value
+bool get_word_bool(string &str, string name){
 
     size_t pos = str.find(name);
     int i = pos + 1;
@@ -33,8 +34,9 @@ get_word_bool(string &str, string name){
     return res;
 }
 
-int
-get_word_int(string &str, string name){
+// GET WORD INT
+// get int value
+int get_word_int(string &str, string name){
 
     size_t pos = str.find(name);
     int i = pos + 1;
@@ -53,8 +55,9 @@ get_word_int(string &str, string name){
     return res;
 }
 
-double
-get_word_double(string &str, string name){
+// GET WORD DOUBLE
+// get double value
+double get_word_double(string &str, string name){
 
     size_t pos = str.find(name);
     int i = pos + 1;
@@ -73,8 +76,9 @@ get_word_double(string &str, string name){
     return res;
 }
 
-string
-get_word_string(string &str, string name){
+// GET WORD STRING
+// get string value
+string get_word_string(string &str, string name){
 
     size_t pos = str.find(name);
     int i = pos + 1;
@@ -93,8 +97,9 @@ get_word_string(string &str, string name){
     return res;
 }
 
-int
-get_word_type(string &str, string name){
+// GET WORD TYPE
+// get network layer type
+int get_word_type(string &str, string name){
 
     size_t pos = str.find(name);
     int i = pos + 1;
@@ -123,8 +128,9 @@ get_word_type(string &str, string name){
     return res;
 }
 
-void
-delete_comment(string &str){
+// DELETE COMMENT
+// delete /**/ and comments inside
+void delete_comment(string &str){
     if(str.empty()) return;
     int head = 0;
     int tail = 0;
@@ -142,8 +148,9 @@ delete_comment(string &str){
     }
 }
 
-void
-delete_space(string &str){
+// DELETE SPACE
+// delete spaces
+void delete_space(string &str){
     if(str.empty()) return;
     int i = 0;
     while(1){
@@ -154,8 +161,9 @@ delete_space(string &str){
     }
 }
 
-void
-get_layers_config(string &str, std::vector<network_layer*> &flow){
+// GET LAYERS CONFIG
+// get layer config and build network use layers
+void get_layers_config(string &str, std::vector<network_layer*> &flow){
     vector<string> layers;
     if(str.empty()) return;
     int head = 0;
@@ -284,8 +292,9 @@ get_layers_config(string &str, std::vector<network_layer*> &flow){
     }
 }
 
-void
-buildNetworkFromConfigFile(string filepath, std::vector<network_layer*> &flow){
+// BUILD NETWORK FROM CONFIG FILE
+// build network from config file
+void buildNetworkFromConfigFile(string filepath, std::vector<network_layer*> &flow){
 
     string str = read_2_string(filepath);
     delete_space(str);
@@ -321,6 +330,3 @@ buildNetworkFromConfigFile(string filepath, std::vector<network_layer*> &flow){
     cout<<"********** layers config **********"<<endl;
 
 }
-
-
-//*/

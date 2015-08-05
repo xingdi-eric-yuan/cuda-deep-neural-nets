@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// fully connected layer
 fully_connected_layer::fully_connected_layer(){
     size = 0;
     weight_decay = 0.0;

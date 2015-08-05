@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// softmax layer
 softmax_layer::softmax_layer(){
     network_cost = 0.0;
     output_size = 0;

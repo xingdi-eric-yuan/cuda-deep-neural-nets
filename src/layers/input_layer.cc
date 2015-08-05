@@ -1,5 +1,6 @@
 #include "layer_bank.h"
 
+// input layer
 input_layer::input_layer(){
 	batch_size = 0;
     label = new Mat();
@@ -23,7 +24,7 @@ void input_layer::getSample(const std::vector<cpuMat*>& src1, std::vector<std::v
 	releaseVector(dst1);
 	dst1.clear();
 	dst2->zeros();
-
+	// if is gradient checking, just get the 1st and 2nd sample data
     if(is_gradient_checking){
         for(int i = 0; i < 0 + batch_size; i++){
         	std::vector<Mat*> tmp;
@@ -65,7 +66,6 @@ void input_layer::getSample(const std::vector<cpuMat*>& src1, std::vector<std::v
         tmp.clear();
         std::vector<Mat*>().swap(tmp);
     }
-
 }
 
 void input_layer::forwardPassTest(int nsamples, const std::vector<cpuMat*>& input_data, const cpuMat* input_label){
@@ -84,5 +84,3 @@ void input_layer::forwardPassTest(int nsamples, const std::vector<cpuMat*>& inpu
 void input_layer::backwardPass(){
     ;
 }
-//*/
-
