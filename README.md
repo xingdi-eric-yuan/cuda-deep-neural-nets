@@ -14,13 +14,16 @@ add this project into nVidia nsight, add **curand** and **cufft** into path.
 * **NEW**: Aug.5 ,the first version, 0.1.0 released.
 
 ##Data Structures
-#### Mat
+####Mat
 * Similar with Mat in OpenCV, has memory in both CPU and GPU, use it to do most of the calculations.
-#### cpuMat
+
+####cpuMat
 * Has memory only in CPU, use it to read dataset, and do pre-processing (unless your GPU memory is huge...).
-#### vector3f
+
+####vector3f
 * Similar with Scalar in OpenCV, has 3 float space, which corresponses 3 channels. For example, the sum of a 3-channal Mat is a vector3f.
-#### vector2i
+
+####vector2i
 * Similar with vector3f, but has 2 int space, use it to represent 2-d position, or size. 
 
 ##Layer Config Description 
