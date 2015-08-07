@@ -54,9 +54,28 @@ int main(void){
 
 //	showGpuProperty();
 
-//	runAllTest();
+    cout.precision(16);
+//    runAllTest();
 
 	run();
 
+
+/*
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    1"<<endl;
+    Mat *a = new Mat(5000, 5000, 1);
+    a -> randn();
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    2"<<endl;
+    Mat *b = new Mat(1, 1, 1);
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    2.5"<<endl;
+    safeGetPt(b, getRange(a, 500, 500, 500, 500));
+
+    b -> printHost("B");
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    3"<<endl;
+    a -> release();
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    4"<<endl;
+    b -> release();
+
+    cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    5"<<endl;
+//*/
 	return 0;
 }

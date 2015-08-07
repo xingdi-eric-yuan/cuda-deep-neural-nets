@@ -1160,8 +1160,8 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 	memset(loc_tmp2, 0, sizeof(int) * num_blocks);
 	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
-	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
@@ -1263,8 +1263,8 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 	memset(loc_tmp4, 0, sizeof(int) * num_blocks);
 	checkCudaErrors(cudaMalloc((void**)&dev_maxVal_partial, sizeof(float) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&dev_minVal_partial, sizeof(float) * (num_blocks)));
-	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&dev_maxLoc_partial, sizeof(int) * (num_blocks)));
+	checkCudaErrors(cudaMalloc((void**)&dev_minLoc_partial, sizeof(int) * (num_blocks)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxVal, sizeof(float) * (block_size)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_minVal, sizeof(float) * (block_size)));
 	checkCudaErrors(cudaMalloc((void**)&glob_mem_maxLoc, sizeof(int) * (block_size)));
@@ -1450,7 +1450,8 @@ void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
     res -> hostToDevice();
     Mat *tmp = NULL;
     safeGetPt(tmp, t(res));
-    tmp -> moveTo(*M);
+    tmp -> copyTo(*M);
+    tmp -> release();
     res -> release();
 }
 
@@ -1776,28 +1777,32 @@ Mat* reduce(const Mat* src, int direction, int mode){
 		exit(0);
 	}
 	Mat *tmp = new Mat();
-	Mat *dst = new Mat();
+	Mat *dst = NULL;
+	vector3f *tmpvec = new vector3f();
 	if(REDUCE_TO_SINGLE_ROW == direction){
-		dst -> setSize(1, src -> cols, src -> channels);
+		dst = new Mat(1, src -> cols, src -> channels);
 		for(int i = 0; i < src -> cols; ++i){
 			safeGetPt(tmp, getRange(src, i, i, 0, src -> rows - 1));
 			if(REDUCE_SUM == mode){
-				dst -> set(i, *(sum(tmp)));
+				safeGetPt(tmpvec, sum(tmp));
 			}elif(REDUCE_MAX == mode){
-				dst -> set(i, *(max(tmp)));
+				safeGetPt(tmpvec, max(tmp));
 			}
+			dst -> set(i, *(tmpvec));
 		}
 	}else{ // REDUCE_TO_SINGLE_COL == direction
-		dst -> setSize(src -> rows, 1, src -> channels);
+		dst = new Mat(src -> rows, 1, src -> channels);
 		for(int i = 0; i < src -> rows; ++i){
 			safeGetPt(tmp, getRange(src, 0, src -> cols - 1, i, i));
 			if(REDUCE_SUM == mode){
-				dst -> set(i, *(sum(tmp)));
+				safeGetPt(tmpvec, sum(tmp));
 			}elif(REDUCE_MAX == mode){
-				dst -> set(i, *(max(tmp)));
+				safeGetPt(tmpvec, max(tmp));
 			}
+			dst -> set(i, *(tmpvec));
 		}
 	}
+	tmpvec -> release();
 	tmp -> release();
 	return dst;
 }
@@ -1997,6 +2002,7 @@ Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 // similar with OpenCV getRange function.
 // BE CAREFUL, xend/yend are last element in the range, but not first element outside range.
 Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
+    //cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    inside 1"<<endl;
 	if(NULL == src -> hostData || NULL == src -> devData){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -2016,6 +2022,7 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
         checkCudaErrors(cudaDeviceSynchronize());
 	}
 	dst -> deviceToHost();
+    //cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    inside 2"<<endl;
 	return dst;
 }
 

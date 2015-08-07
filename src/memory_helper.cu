@@ -27,7 +27,7 @@ cudaError_t MemoryMonitor::gpuMalloc(void** devPtr, int size){
 	cudaError_t error = cudaMalloc(devPtr, size);
 	checkCudaErrors(error);
 	gpuMemory += size;
-	gpuPoint[*devPtr] = (float)size;
+	gpuPoint[*devPtr] = (double)size;
 	return error;
 }
 
@@ -43,12 +43,12 @@ void MemoryMonitor::freeGpuMemory(void* ptr){
 
 // GET CPU MEMORY
 // returns size of cpu memory which currently using
-float MemoryMonitor::getCpuMemory() const{
+double MemoryMonitor::getCpuMemory() const{
 	return cpuMemory;
 }
 
 // GET GPU MEMORY
 // returns size of gpu memory which currently using
-float MemoryMonitor::getGpuMemory() const{
+double MemoryMonitor::getGpuMemory() const{
 	return gpuMemory;
 }

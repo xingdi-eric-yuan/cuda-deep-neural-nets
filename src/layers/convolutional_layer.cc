@@ -316,7 +316,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	tmpgradb[m] = new vector3f();
     	tmpbd2[m] = new vector3f();
     }
-    Mat *c_weight = NULL;
+	Mat *c_weight = NULL;
     Mat *c_weightgrad = NULL;
     Mat *c_weightd2 = NULL;
     Mat *tmpinput = new Mat();
@@ -330,18 +330,17 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	safeGetPt(tmp, repmat(tmp, c_weight -> rows, 1));
     	safeGetPt(c_weight, divide(c_weight, tmp));
     }
+	Mat *tmp_delta = new Mat();
+    Mat *tmp_d2 = new Mat();
     for(int i = 0; i < nsamples; i++){
         for(int j = 0; j < input[i].size(); j++){
-            Mat *tmp_delta = new Mat();
-            Mat *tmp_d2 = new Mat();
             if(padding > 0){ safeGetPt(tmpinput, dopadding(input[i][j], padding)); }
             else{ input[i][j] -> copyTo(*tmpinput); }
 
             for(int m = 0; m < kernels.size(); m++) {
             	sensi[m] -> zeros();
             	sensid2[m] -> zeros();
-
-                if(combine_feature_map > 0){
+            	if(combine_feature_map > 0){
                     for(int n = 0; n < combine_feature_map; n++){
                     	tmpvec3_1 -> setAll(c_weight -> get(m, n, 0));
                     	float tmpfloat = powf(c_weight -> get(m, n, 0), 2);
@@ -355,8 +354,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
                 	derivative[i][j * kernels.size() + m] -> copyTo(*(sensi[m]));
                 	deriv2[i][j * kernels.size() + m] -> copyTo(*(sensid2[m]));
                 }
-
-                if(stride > 1){
+            	if(stride > 1){
                     int len = input[0][0] -> rows + padding * 2 - kernels[0] -> w -> rows + 1;
                 	safeGetPt(sensi[m], interpolation(sensi[m], len));
                 	safeGetPt(sensid2[m], interpolation(sensid2[m], len));
@@ -366,25 +364,25 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
             	safeGetPt(tmp3, square(kernels[m] -> w));
             	safeGetPt(tmp, conv2(sensi[m], kernels[m] -> w, CONV_FULL, 0, 1));
             	safeGetPt(tmp2, conv2(sensid2[m], tmp3, CONV_FULL, 0, 1));
-                if(0 == m){
+            	if(0 == m){
                 	tmp -> copyTo(*tmp_delta);
                 	tmp2 -> copyTo(*tmp_d2);
                 }else{
                 	safeGetPt(tmp_delta, add(tmp_delta, tmp));
                 	safeGetPt(tmp_d2, add(tmp_d2, tmp2));
                 }
-                // calculate kernel[m]'s gradient
+            	// calculate kernel[m]'s gradient
                 safeGetPt(tmp, square(tmpinput));
-                safeGetPt(tmp2, rot90(sensi[m], 2));
-                safeGetPt(tmp3, rot90(sensid2[m], 2));
-                safeGetPt(tmpvec3_1, sum(tmp2));
-                safeGetPt(tmpvec3_2, sum(tmp3));
-                safeGetPt(tmpgradb[m], add(tmpgradb[m], tmpvec3_1));
-                safeGetPt(tmpbd2[m], add(tmpbd2[m], tmpvec3_2));
-                safeGetPt(tmp2, conv2(tmpinput, tmp2, CONV_VALID, 0, 1));
-                safeGetPt(tmp3, conv2(tmp, tmp3, CONV_VALID, 0, 1));
-                safeGetPt(tmp_wgrad[m], add(tmp_wgrad[m], tmp2));
-                safeGetPt(tmp_wd2[m], add(tmp_wd2[m], tmp3));
+            	safeGetPt(tmp2, rot90(sensi[m], 2));
+            	safeGetPt(tmp3, rot90(sensid2[m], 2));
+            	safeGetPt(tmpvec3_1, sum(tmp2));
+            	safeGetPt(tmpvec3_2, sum(tmp3));
+            	safeGetPt(tmpgradb[m], add(tmpgradb[m], tmpvec3_1));
+            	safeGetPt(tmpbd2[m], add(tmpbd2[m], tmpvec3_2));
+            	safeGetPt(tmp2, conv2(tmpinput, tmp2, CONV_VALID, 0, 1));
+            	safeGetPt(tmp3, conv2(tmp, tmp3, CONV_VALID, 0, 1));
+            	safeGetPt(tmp_wgrad[m], add(tmp_wgrad[m], tmp2));
+            	safeGetPt(tmp_wd2[m], add(tmp_wd2[m], tmp3));
 
                 if(combine_feature_map > 0){
                     // combine feature map weight matrix (after softmax)
@@ -408,11 +406,11 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
             	safeGetPt(tmp_d2, depadding(tmp_d2, padding));
             }
             tmp_delta -> copyTo(*(delta_vector[i][j]));
-            tmp_d2 -> copyTo(*(d2_vector[i][j]));
-            tmp_delta -> release();
-            tmp_d2 -> release();
+        	tmp_d2 -> copyTo(*(d2_vector[i][j]));
         }
     }
+	tmp_delta -> release();
+	tmp_d2 -> release();
     for(int i = 0; i < kernels.size(); i++){
     	safeGetPt(kernels[i] -> wgrad, divide(tmp_wgrad[i], (float)nsamples));
     	safeGetPt(tmp, multiply_elem(kernels[i] -> w, kernels[i] -> weight_decay));
@@ -422,7 +420,6 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	safeGetPt(kernels[i] -> bgrad, divide(tmpgradb[i], (float)nsamples));
     	safeGetPt(kernels[i] -> bd2, divide(tmpbd2[i], (float)nsamples));
     }
-
     if(combine_feature_map > 0){
     	safeGetPt(tmp2, multiply_elem(c_weightgrad, c_weight));
     	safeGetPt(tmp2, reduce(tmp2, REDUCE_TO_SINGLE_ROW, REDUCE_SUM));
@@ -438,7 +435,7 @@ void convolutional_layer::backwardPass(int nsamples, network_layer* previous_lay
     	safeGetPt(tmp, multiply_elem(c_weight, tmp));
     	safeGetPt(combine_weight_d2, divide(tmp, (float)nsamples));
     }
-    // release
+	// release
     tmpinput -> release();
     tmp -> release();
     tmp2 -> release();

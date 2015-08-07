@@ -9,11 +9,11 @@
 *******************************************************/
 
 IS_GRADIENT_CHECKING = false;
-USE_LOG = true;
+USE_LOG = false;
 LEARNING_RATE_W = 1e-3;
 LEARNING_RATE_B = 3e-4;
 TRAINING_EPOCHS = 500;
-ITER_PER_EPO = 2000;
+ITER_PER_EPO = 200;
 MOMENTUM_W_INIT = 0.50;
 MOMENTUM_D2_INIT = 0.50;
 MOMENTUM_W_ADJUST = 0.95;
@@ -36,8 +36,8 @@ $
 LAYER = convolutional;
 NAME = conv1;
 OUTPUT_TYPE = image;
-KERNEL_SIZE = 7;
-KERNEL_AMOUNT = 16;
+KERNEL_SIZE = 15;
+KERNEL_AMOUNT = 32;
 PADDING = 0;
 STRIDE = 1;
 COMBINE_MAP = 0;
@@ -70,43 +70,6 @@ OVERLAP = false;
 STRIDE = 2;
 &
 
-$
-LAYER = convolutional;
-NAME = conv2;
-OUTPUT_TYPE = image;
-KERNEL_SIZE = 8;
-KERNEL_AMOUNT = 16;
-PADDING = 0;
-STRIDE = 1;
-COMBINE_MAP = 0;
-WEIGHT_DECAY = 1e-6;
-&
-
-$
-LAYER = non_linearity;
-NAME = nl2;
-OUTPUT_TYPE = image;
-METHOD = leaky_relu;
-&
-
-$
-LAYER = local_response_normalization;
-NAME = lrn2;
-OUTPUT_TYPE = image;
-ALPHA = 0.000125;
-BETA = 0.75;
-K = 2.0;
-N = 5;
-&
-
-$
-LAYER = pooling;
-NAME = pool2;
-METHOD = max;
-OUTPUT_TYPE = image;
-OVERLAP = false;
-STRIDE = 2;
-&
 
 $
 LAYER = fully_connected;
@@ -119,28 +82,6 @@ WEIGHT_DECAY = 1e-6;
 $
 LAYER = non_linearity;
 NAME = nl3;
-OUTPUT_TYPE = matrix;
-METHOD = leaky_relu;
-&
-
-$
-LAYER = dropout;
-NAME = do1;
-OUTPUT_TYPE = matrix;
-DROPOUT_RATE = 0.5;
-&
-
-$
-LAYER = fully_connected;
-NAME = fc2;
-OUTPUT_TYPE = matrix;
-NUM_HIDDEN_NEURONS = 128;
-WEIGHT_DECAY = 1e-6;
-&
-
-$
-LAYER = non_linearity;
-NAME = nl4;
 OUTPUT_TYPE = matrix;
 METHOD = leaky_relu;
 &

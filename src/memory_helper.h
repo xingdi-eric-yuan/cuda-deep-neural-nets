@@ -16,11 +16,11 @@ public:
 	void printGpuMemory(){printf("total malloc gpu memory %fMb\n", gpuMemory / 1024 / 1024);}
 	void freeGpuMemory(void* ptr);
 	void freeCpuMemory(void* ptr);
-	float getCpuMemory() const;
-	float getGpuMemory() const;
+	double getCpuMemory() const;
+	double getGpuMemory() const;
 private:
-	float cpuMemory;
-	float gpuMemory;
-	std::unordered_map<void*, float>cpuPoint;
-	std::unordered_map<void*, float>gpuPoint;
+	double cpuMemory;
+	double gpuMemory;
+	std::unordered_map<void*, double>cpuPoint;
+	std::unordered_map<void*, double>gpuPoint;
 };

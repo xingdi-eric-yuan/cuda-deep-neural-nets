@@ -186,8 +186,8 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     safeGetPt(wd2, multiply(tmp1, tmp2));
     safeGetPt(wd2, divide(wd2, nsamples));
     safeGetPt(wd2, add(wd2, weight_decay));
-    safeGetPt(bd2, reduce(tmp1, REDUCE_TO_SINGLE_COL, REDUCE_SUM));
-    safeGetPt(bd2, divide(bd2, nsamples));
+    safeGetPt(tmp1, reduce(tmp1, REDUCE_TO_SINGLE_COL, REDUCE_SUM));
+    safeGetPt(bd2, divide(tmp1, nsamples));
 
     safeGetPt(tmp1, t(w));
     safeGetPt(delta_matrix, multiply(tmp1, derivative));
@@ -201,9 +201,7 @@ void softmax_layer::backwardPass(int nsamples, network_layer* previous_layer, co
     input -> release();
     derivative -> release();
 
-
 }
-//*/
 
 
 

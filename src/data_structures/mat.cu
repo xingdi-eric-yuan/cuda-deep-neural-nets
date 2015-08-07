@@ -70,9 +70,6 @@ void Mat::release(){
 }
 
 Mat& Mat::operator=(const Mat &m){
-	cols = m.cols;
-	rows = m.rows;
-	channels = m.channels;
 	if(NULL != hostData){
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
 		hostData = NULL;
@@ -81,6 +78,9 @@ Mat& Mat::operator=(const Mat &m){
 		MemoryMonitor::instance()->freeGpuMemory(devData);
 		devData = NULL;
 	}
+	cols = m.cols;
+	rows = m.rows;
+	channels = m.channels;
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
@@ -89,9 +89,6 @@ Mat& Mat::operator=(const Mat &m){
 }
 
 Mat& Mat::operator<<=(Mat &m){
-	cols = m.cols;
-	rows = m.rows;
-	channels = m.channels;
 	if(NULL != hostData){
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
 		hostData = NULL;
@@ -100,6 +97,9 @@ Mat& Mat::operator<<=(Mat &m){
 		MemoryMonitor::instance()->freeGpuMemory(devData);
 		devData = NULL;
 	}
+	cols = m.cols;
+	rows = m.rows;
+	channels = m.channels;
 	mallocHost();
 	mallocDevice();
 	memcpy(hostData, m.hostData, getLength() * sizeof(float));
@@ -109,9 +109,6 @@ Mat& Mat::operator<<=(Mat &m){
 }
 
 void Mat::setSize(int r, int c, int ch){
-	rows = r;
-	cols = c;
-	channels = ch;
 	if(NULL != hostData){
 		MemoryMonitor::instance()->freeCpuMemory(hostData);
 		hostData = NULL;
@@ -120,6 +117,9 @@ void Mat::setSize(int r, int c, int ch){
 		MemoryMonitor::instance()->freeGpuMemory(devData);
 		devData = NULL;
 	}
+	rows = r;
+	cols = c;
+	channels = ch;
 	mallocHost();
 	mallocDevice();
 	//zeros();
@@ -318,9 +318,6 @@ void Mat::hostToDevice(){
 }
 
 void Mat::copyTo(Mat &m) const{
-	m.rows = rows;
-	m.cols = cols;
-	m.channels = channels;
 	if(NULL != m.hostData){
 		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
 		m.hostData = NULL;
@@ -329,6 +326,9 @@ void Mat::copyTo(Mat &m) const{
 		MemoryMonitor::instance()->freeGpuMemory(m.devData);
 		m.devData = NULL;
 	}
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, hostData, getLength() * sizeof(float));
@@ -336,21 +336,18 @@ void Mat::copyTo(Mat &m) const{
 }
 
 void Mat::copyTo(cpuMat &m) const{
-	m.rows = rows;
-	m.cols = cols;
-	m.channels = channels;
 	if(NULL != m.Data){
 		MemoryMonitor::instance()->freeCpuMemory(m.Data);
 		m.Data = NULL;
 	}
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
 	m.mallocMat();
 	memcpy(m.Data, hostData, getLength() * sizeof(float));
 }
 
 void Mat::moveTo(Mat &m){
-	m.rows = rows;
-	m.cols = cols;
-	m.channels = channels;
 	if(NULL != m.hostData){
 		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
 		m.hostData = NULL;
@@ -359,6 +356,9 @@ void Mat::moveTo(Mat &m){
 		MemoryMonitor::instance()->freeGpuMemory(m.devData);
 		m.devData = NULL;
 	}
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
 	m.mallocHost();
 	m.mallocDevice();
 	memcpy(m.hostData, hostData, getLength() * sizeof(float));
@@ -367,13 +367,13 @@ void Mat::moveTo(Mat &m){
 }
 
 void Mat::moveTo(cpuMat &m){
-	m.rows = rows;
-	m.cols = cols;
-	m.channels = channels;
 	if(NULL != m.Data){
 		MemoryMonitor::instance()->freeCpuMemory(m.Data);
 		m.Data = NULL;
 	}
+	m.rows = rows;
+	m.cols = cols;
+	m.channels = channels;
 	m.mallocMat();
 	memcpy(m.Data, hostData, getLength() * sizeof(float));
 	release();
