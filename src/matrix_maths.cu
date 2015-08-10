@@ -1873,6 +1873,7 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     checkCudaErrors(cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex)));
     checkCudaErrors(cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex)));
+    Mat *res_tmp = new Mat(fftH, fftW, 3);
     // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
     checkCudaErrors(cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C));
     for(int i = 0; i < m -> channels; ++i){
@@ -1897,13 +1898,10 @@ Mat* conv2(const Mat *m, const Mat *kernel){
         checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR));
         checkCudaErrors(cudaDeviceSynchronize());
         // std::cout<<"...reading back GPU FFT results"<<std::endl;
-        for(int y = 0; y < dataH; y++){
-            for(int x = 0; x < dataW; x++){
-				checkCudaErrors(cudaMemcpy(result_tmp + y * dataW + x, d_PaddedData + y * fftW  + x, sizeof(float), cudaMemcpyDeviceToDevice));
-            }
-        }
-		checkCudaErrors(cudaMemcpy(res -> Data + i * res -> rows * res -> cols, result_tmp, res -> rows * res -> cols * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(res_tmp -> Data + res_tmp -> rows * res_tmp -> cols * i, d_PaddedData, res_tmp -> rows * res_tmp -> cols * sizeof(float), cudaMemcpyDeviceToDevice));
     }
+    safeGetPt(res, getRange(res_tmp, 0, dataW - 1, 0, dataH - 1));
+	res_tmp -> release();
     checkCudaErrors(cufftDestroy(fftPlan));
     checkCudaErrors(cudaFree(d_KernelSpectrum0));
     checkCudaErrors(cudaFree(d_DataSpectrum0));
