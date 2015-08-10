@@ -13,6 +13,7 @@ add this project into nVidia nsight, add **curand** and **cufft** into path.
 ##Updates 
 * 0.1.0: Aug.5, the first version released.
 * 0.1.1: Aug.10, remove hostData in Mat, only use device memory, for speed up.
+* 0.1.1: Aug.11, add functions that save matrices and configs into .txt files.
 
 ##Data Structures
 ####Mat
