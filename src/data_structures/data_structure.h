@@ -140,7 +140,6 @@ public:
 	void moveTo(Mat&);
 	void moveTo(cpuMat&);
 
-	// only changes devData (on GPU)
 	Mat operator+(const Mat&) const;
 	Mat operator-(const Mat&) const;
 	Mat operator*(const Mat&) const;

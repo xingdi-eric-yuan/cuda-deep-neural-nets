@@ -15,6 +15,7 @@
 #include "layers/layer_bank.h"
 #include "ios/read_data.h"
 #include "ios/read_config.h"
+#include "ios/save_network.h"
 #include "train_network.h"
 #include "gradient_checking.h"
 #include "cu_matrix_maths.h"
@@ -23,6 +24,9 @@
 #include "helper.h"
 #include "unit_test/unit_test.h"
 #include "convolutionFFT2D/convolutionFFT2D_common.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 class Mat;
 class cpuMat;

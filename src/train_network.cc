@@ -44,7 +44,6 @@ void forwardPassInit(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector
 // do the forward pass using a network, this function also calculates
 // the network cost from output layer.
 void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<network_layer*> &flow){
-
     //cout<<"---------------- forward "<<endl;
     // forward pass
     int batch_size = 0;
@@ -53,7 +52,6 @@ void forwardPass(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
     float J1 = 0, J2 = 0, J3 = 0, J4 = 0;
     for(int i = 0; i < flow.size(); i++){
         //cout<<flow[i] -> layer_name<<endl;
-
         if(flow[i] -> layer_type == "input"){
             batch_size = ((input_layer*)flow[i]) -> batch_size;
             ((input_layer*)flow[i]) -> forwardPass(batch_size, x, y);
@@ -331,6 +329,12 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);
     }else{
+    	string path;
+    	if(use_log){
+			path = "saved_data";
+			mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+			saveNetworkConfig(path + "/saved_config.txt", flow);
+    	}
 		cout<<"****************************************************************************"<<endl
 			<<"**                       TRAINING NETWORK......                             "<<endl
 			<<"****************************************************************************"<<endl<<endl;
@@ -347,10 +351,10 @@ void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vec
             //testNetwork(x, y, flow);
             cout<<"Test testing data: "<<endl;
             testNetwork(tx, ty, flow);
-            // log --- TODO...
-            //if(use_log){
-            //    save2XML("log", i2str(k), flow);
-            //}
+        	if(use_log){
+                string path_iter = path + "/iter_" + std::to_string(k);
+                saveNetwork(path_iter, flow);
+        	}
         }
     }
 }
