@@ -6,121 +6,83 @@ Mat::Mat(){
 	rows = 0;
 	cols = 0;
 	channels = 0;
-	hostData = NULL;
-	devData = NULL;
+	Data = NULL;
 }
 
 Mat::Mat(const Mat &m){
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	hostData = NULL;
-	devData = NULL;
-	mallocHost();
+	Data = NULL;
 	mallocDevice();
-	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
+	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 }
 
 Mat::Mat(const cpuMat &m){
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	hostData = NULL;
-	devData = NULL;
-	mallocHost();
+	Data = NULL;
 	mallocDevice();
-	memcpy(hostData, m.Data, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(devData, m.Data, getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 Mat::Mat(int height, int width, int nchannels){
 	cols = width;
 	rows = height;
 	channels = nchannels;
-	hostData = NULL;
-	devData = NULL;
-	mallocHost();
+	Data = NULL;
 	mallocDevice();
 	//zeros();
 }
 
 Mat::~Mat(){
-	if(NULL != hostData)
-		MemoryMonitor::instance()->freeCpuMemory(hostData);
-	if(NULL != devData)
-		MemoryMonitor::instance()->freeGpuMemory(devData);
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeGpuMemory(Data);
 	rows = 0;
 	cols = 0;
 	channels = 0;
-	hostData = NULL;
-	devData = NULL;
+	Data = NULL;
 }
 
 void Mat::release(){
-	if(NULL != hostData)
-		MemoryMonitor::instance()->freeCpuMemory(hostData);
-	if(NULL != devData)
-		MemoryMonitor::instance()->freeGpuMemory(devData);
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeGpuMemory(Data);
 	rows = 0;
 	cols = 0;
 	channels = 0;
-	hostData = NULL;
-	devData = NULL;
+	Data = NULL;
 }
 
 Mat& Mat::operator=(const Mat &m){
-	if(NULL != hostData){
-		MemoryMonitor::instance()->freeCpuMemory(hostData);
-		hostData = NULL;
-	}
-	if(NULL != devData){
-		MemoryMonitor::instance()->freeGpuMemory(devData);
-		devData = NULL;
-	}
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeGpuMemory(Data);
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	mallocHost();
 	mallocDevice();
-	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
+	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
     return *this;
 }
 
 Mat& Mat::operator<<=(Mat &m){
-	if(NULL != hostData){
-		MemoryMonitor::instance()->freeCpuMemory(hostData);
-		hostData = NULL;
-	}
-	if(NULL != devData){
-		MemoryMonitor::instance()->freeGpuMemory(devData);
-		devData = NULL;
-	}
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeGpuMemory(Data);
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
-	mallocHost();
 	mallocDevice();
-	memcpy(hostData, m.hostData, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(devData, m.devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
+	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 	m.release();
     return *this;
 }
 
 void Mat::setSize(int r, int c, int ch){
-	if(NULL != hostData){
-		MemoryMonitor::instance()->freeCpuMemory(hostData);
-		hostData = NULL;
-	}
-	if(NULL != devData){
-		MemoryMonitor::instance()->freeGpuMemory(devData);
-		devData = NULL;
-	}
+	if(NULL != Data)
+		MemoryMonitor::instance()->freeGpuMemory(Data);
 	rows = r;
 	cols = c;
 	channels = ch;
-	mallocHost();
 	mallocDevice();
 	//zeros();
 }
@@ -134,24 +96,21 @@ void Mat::ones(){
 }
 
 void Mat::randu(){
-	if(NULL == hostData) mallocHost();
-	if(NULL == devData) mallocDevice();
+	if(NULL == Data) mallocDevice();
 	curandGenerator_t gen;
 	// Create pseudo-random number generator
 	checkCudaErrors(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
 	// Set seed
 	checkCudaErrors(curandSetPseudoRandomGeneratorSeed(gen, rand() % 3456));
 	// Generate n floats on device
-	checkCudaErrors(curandGenerateUniform(gen, devData, getLength()));
+	checkCudaErrors(curandGenerateUniform(gen, Data, getLength()));
 	// Cleanup generator
 	checkCudaErrors(curandDestroyGenerator(gen));
-	deviceToHost();
 }
 
 void Mat::randn(){
 
-	if(NULL == hostData) mallocHost();
-	if(NULL == devData) mallocDevice();
+	if(NULL == Data) mallocDevice();
 	int len = cols * rows;
 	curandGenerator_t gen;
 	// Create pseudo-random number generator
@@ -166,129 +125,133 @@ void Mat::randn(){
 			float *tmp = NULL;
 			checkCudaErrors(MemoryMonitor::instance()->gpuMalloc((void**)&tmp, (len + 1) * sizeof(float)));
 			checkCudaErrors(curandGenerateNormal(gen, tmp, len + 1, 0.0, 1.0));
-			checkCudaErrors(cudaMemcpy(devData + len * ch, tmp, len * sizeof(float), cudaMemcpyDeviceToDevice));
+			checkCudaErrors(cudaMemcpy(Data + len * ch, tmp, len * sizeof(float), cudaMemcpyDeviceToDevice));
 			MemoryMonitor::instance()->freeGpuMemory(tmp);
 		}else{
-			checkCudaErrors(curandGenerateNormal(gen, devData + ch * len, len, 0.0, 1.0));
+			checkCudaErrors(curandGenerateNormal(gen, Data + ch * len, len, 0.0, 1.0));
 		}
 	}
 	// Cleanup generator
 	checkCudaErrors(curandDestroyGenerator(gen));
-	deviceToHost();
 }
 
 void Mat::set(int pos_y, int pos_x, int pos_channel, float val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	if(pos_x >= cols || pos_y >= rows || pos_channel >= channels){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	hostData[RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols)] = val;
-	hostToDevice();
+    float *host_data = (float *)malloc(sizeof(float));
+    *host_data = val;
+    checkCudaErrors(cudaMemcpy(Data + RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols), host_data, sizeof(float), cudaMemcpyHostToDevice));
+    free(host_data);
 }
 
 void Mat::set(int pos_y, int pos_x, const vector3f& val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	if(pos_x >= cols || pos_y >= rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
+	float host_data = 0;
 	for(int i = 0; i < channels; ++i){
-		set(pos_y, pos_x, i, val.get(i));
+	    host_data = val.get(i);
+	    checkCudaErrors(cudaMemcpy(Data + RC2IDX(pos_y, pos_x, cols) + i * (rows * cols), &host_data, sizeof(float), cudaMemcpyHostToDevice));
 	}
-	hostToDevice();
 }
 
 void Mat::set(int pos, const vector3f& val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
+	float host_data = 0;
 	for(int i = 0; i < channels; ++i){
-		hostData[pos + i * (rows * cols)] = val.get(i);
+	    host_data = val.get(i);
+	    checkCudaErrors(cudaMemcpy(Data + pos + i * (rows * cols), &host_data, sizeof(float), cudaMemcpyHostToDevice));
 	}
-	hostToDevice();
 }
 
 void Mat::set(int pos, int pos_channel, float val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	if(pos >= cols * rows){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	hostData[pos + pos_channel * (rows * cols)] = val;
-	hostToDevice();
+	float *host_data = (float *)malloc(sizeof(float));
+	*host_data = val;
+	checkCudaErrors(cudaMemcpy(Data + pos + pos_channel * (rows * cols), host_data, sizeof(float), cudaMemcpyHostToDevice));
+	free(host_data);
 }
 
 void Mat::set(int pos, float val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	if(pos >= getLength()){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	hostData[pos] = val;
-	hostToDevice();
+	float *host_data = (float *)malloc(sizeof(float));
+	*host_data = val;
+	checkCudaErrors(cudaMemcpy(Data + pos, host_data, sizeof(float), cudaMemcpyHostToDevice));
+	free(host_data);
 }
 
 void Mat::setAll(float val){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	int len = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_setAll<<<num_blocks, block_size>>>(devData, val, len);
-	deviceToHost();
+	cu_setAll<<<num_blocks, block_size>>>(Data, val, len);
 }
 
 void Mat::setAll(const vector3f &v){
-	if(NULL == hostData) {mallocHost();}
-	if(NULL == devData) {mallocDevice();}
+	if(NULL == Data) {mallocDevice();}
 	int len = rows * cols;
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < channels; ++i){
-		cu_setAll<<<num_blocks, block_size>>>(devData + i * len, v.get(i), len);
+		cu_setAll<<<num_blocks, block_size>>>(Data + i * len, v.get(i), len);
 	}
-	deviceToHost();
 }
 
 float Mat::get(int pos_y, int pos_x, int pos_channel) const{
-	if(NULL == hostData || NULL == devData||
+	if(NULL == Data||
 	   pos_x >= cols || pos_y >= rows || pos_channel >= channels){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
-	return hostData[RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols)];
+	float host_data = 0;
+	checkCudaErrors(cudaMemcpy(&host_data, Data + RC2IDX(pos_y, pos_x, cols) + pos_channel * (rows * cols), sizeof(float), cudaMemcpyDeviceToHost));
+	return host_data;
 }
 
 vector3f Mat::get(int pos_y, int pos_x) const{
-	if(NULL == hostData || NULL == devData||
+	if(NULL == Data||
 	   pos_x >= cols || pos_y >= rows || channels < 3){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
 	vector3f res;
+	float host_data = 0;
 	for(int i = 0; i < 3; ++i){
-		res.set(i, hostData[RC2IDX(pos_y, pos_x, cols) + i * (rows * cols)]);
+		checkCudaErrors(cudaMemcpy(&host_data, Data + RC2IDX(pos_y, pos_x, cols) + i * (rows * cols), sizeof(float), cudaMemcpyDeviceToHost));
+		res.set(i, host_data);
 	}
 	return res;
 }
 
 vector3f Mat::get(int pos) const{
-	if(NULL == hostData || NULL == devData||
+	if(NULL == Data||
 	   pos >= getLength() || channels < 3){
 		std::cout<<"invalid position..."<<std::endl;
 		exit(0);
 	}
 	vector3f res;
+	float host_data = 0;
 	for(int i = 0; i < 3; ++i){
-		res.set(i, hostData[pos + i * (rows * cols)]);
+		checkCudaErrors(cudaMemcpy(&host_data, Data + pos + i * (rows * cols), sizeof(float), cudaMemcpyDeviceToHost));
+		res.set(i, host_data);
 	}
 	return res;
 }
@@ -297,42 +260,16 @@ int Mat::getLength() const{
 	return rows * cols * channels;
 }
 
-void Mat::deviceToHost(){
-	if(NULL == hostData || NULL == devData){
-		if(NULL == hostData) std::cout<<"can't do that, host data is NULL..."<<std::endl;
-		if(NULL == devData) std::cout<<"can't do that, device data is NULL..."<<std::endl;
-		exit(0);
-	}
-	// Copy device memory to host
-	checkCudaErrors(cudaMemcpy(hostData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
-}
-
-void Mat::hostToDevice(){
-	if(NULL == hostData || NULL == devData){
-		if(NULL == hostData) std::cout<<"can't do that, host data is NULL..."<<std::endl;
-		if(NULL == devData) std::cout<<"can't do that, device data is NULL..."<<std::endl;
-		exit(0);
-	}
-	// Copy host memory to device
-	checkCudaErrors(cudaMemcpy(devData, hostData, getLength() * sizeof(float), cudaMemcpyHostToDevice));
-}
-
 void Mat::copyTo(Mat &m) const{
-	if(NULL != m.hostData){
-		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
-		m.hostData = NULL;
-	}
-	if(NULL != m.devData){
-		MemoryMonitor::instance()->freeGpuMemory(m.devData);
-		m.devData = NULL;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeGpuMemory(m.Data);
+		m.Data = NULL;
 	}
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.mallocHost();
 	m.mallocDevice();
-	memcpy(m.hostData, hostData, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
+	checkCudaErrors(cudaMemcpy(m.Data, Data, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 }
 
 void Mat::copyTo(cpuMat &m) const{
@@ -344,25 +281,19 @@ void Mat::copyTo(cpuMat &m) const{
 	m.cols = cols;
 	m.channels = channels;
 	m.mallocMat();
-	memcpy(m.Data, hostData, getLength() * sizeof(float));
+	checkCudaErrors(cudaMemcpy(m.Data, Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 void Mat::moveTo(Mat &m){
-	if(NULL != m.hostData){
-		MemoryMonitor::instance()->freeCpuMemory(m.hostData);
-		m.hostData = NULL;
-	}
-	if(NULL != m.devData){
-		MemoryMonitor::instance()->freeGpuMemory(m.devData);
-		m.devData = NULL;
+	if(NULL != m.Data){
+		MemoryMonitor::instance()->freeGpuMemory(m.Data);
+		m.Data = NULL;
 	}
 	m.rows = rows;
 	m.cols = cols;
 	m.channels = channels;
-	m.mallocHost();
 	m.mallocDevice();
-	memcpy(m.hostData, hostData, getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(m.devData, devData, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
+	checkCudaErrors(cudaMemcpy(m.Data, Data, getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
 	release();
 }
 
@@ -375,13 +306,12 @@ void Mat::moveTo(cpuMat &m){
 	m.cols = cols;
 	m.channels = channels;
 	m.mallocMat();
-	memcpy(m.Data, hostData, getLength() * sizeof(float));
+	checkCudaErrors(cudaMemcpy(m.Data, Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 	release();
 }
 
 Mat Mat::operator+(const Mat &m) const{
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data || NULL == m.Data||
 	   getLength() != m.getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -390,13 +320,12 @@ Mat Mat::operator+(const Mat &m) const{
 	int tmp = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	cu_plus<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
-	tmpmat.deviceToHost();
+	cu_plus<<<num_blocks, block_size>>>(tmpmat.Data, Data, tmp);
 	return tmpmat;
 }
 
 Mat Mat::operator+(float val) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -405,13 +334,12 @@ Mat Mat::operator+(float val) const{
 	int len = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_plus<<<num_blocks, block_size>>>(tmpmat.devData, val, len);
-	tmpmat.deviceToHost();
+	cu_plus<<<num_blocks, block_size>>>(tmpmat.Data, val, len);
 	return tmpmat;
 }
 
 Mat Mat::operator+(const vector3f &v) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -422,15 +350,13 @@ Mat Mat::operator+(const vector3f &v) const{
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < channels; ++i){
 		float tmp = v.get(i);
-		cu_plus<<<num_blocks, block_size>>>(tmpmat.devData + i * len, tmp, len);
+		cu_plus<<<num_blocks, block_size>>>(tmpmat.Data + i * len, tmp, len);
 	}
-	tmpmat.deviceToHost();
 	return tmpmat;
 }
 
 Mat& Mat::operator+=(const Mat &m){
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data || NULL == m.Data||
 	   getLength() != m.getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -438,26 +364,24 @@ Mat& Mat::operator+=(const Mat &m){
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_plus<<<num_blocks, block_size>>>(devData, m.devData, len);
-    deviceToHost();
+    cu_plus<<<num_blocks, block_size>>>(Data, m.Data, len);
 	return *this;
 }
 
 Mat& Mat::operator+=(float val){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
 	int len = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_plus<<<num_blocks, block_size>>>(devData, val, len);
-	deviceToHost();
+	cu_plus<<<num_blocks, block_size>>>(Data, val, len);
 	return *this;
 }
 
 Mat& Mat::operator+=(const vector3f &v){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -465,16 +389,15 @@ Mat& Mat::operator+=(const vector3f &v){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < channels; ++i){
-		cu_plus<<<num_blocks, block_size>>>(devData + i * len, v.get(i), len);
+		cu_plus<<<num_blocks, block_size>>>(Data + i * len, v.get(i), len);
 	}
-	deviceToHost();
 	return *this;
 }
 
 Mat Mat::operator-(const Mat &m) const{
 
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data ||
+	   NULL == m.Data||
 	   getLength() != m.getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -483,13 +406,12 @@ Mat Mat::operator-(const Mat &m) const{
 	int tmp = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	cu_minus<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
-	tmpmat.deviceToHost();
+	cu_minus<<<num_blocks, block_size>>>(tmpmat.Data, Data, tmp);
 	return tmpmat;
 }
 
 Mat Mat::operator-(float val) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -498,13 +420,12 @@ Mat Mat::operator-(float val) const{
 	int tmp = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	cu_minus<<<num_blocks, block_size>>>(tmpmat.devData, val, tmp);
-	tmpmat.deviceToHost();
+	cu_minus<<<num_blocks, block_size>>>(tmpmat.Data, val, tmp);
 	return tmpmat;
 }
 
 Mat Mat::operator-(const vector3f &v) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -514,15 +435,14 @@ Mat Mat::operator-(const vector3f &v) const{
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < channels; ++i){
-		cu_minus<<<num_blocks, block_size>>>(tmpmat.devData + i * len, v.get(i), len);
+		cu_minus<<<num_blocks, block_size>>>(tmpmat.Data + i * len, v.get(i), len);
 	}
-	tmpmat.deviceToHost();
 	return tmpmat;
 }
 
 Mat& Mat::operator-=(const Mat &m){
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data ||
+	   NULL == m.Data||
 	   getLength() != m.getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -530,26 +450,24 @@ Mat& Mat::operator-=(const Mat &m){
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_minus<<<num_blocks, block_size>>>(devData, m.devData, len);
-    deviceToHost();
+    cu_minus<<<num_blocks, block_size>>>(Data, m.Data, len);
 	return *this;
 }
 
 Mat& Mat::operator-=(float val){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
 	int len = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_minus<<<num_blocks, block_size>>>(devData, val, len);
-	deviceToHost();
+	cu_minus<<<num_blocks, block_size>>>(Data, val, len);
 	return *this;
 }
 
 Mat& Mat::operator-=(const vector3f &v){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -557,15 +475,14 @@ Mat& Mat::operator-=(const vector3f &v){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < channels; ++i){
-		cu_minus<<<num_blocks, block_size>>>(devData + i * len, v.get(i), len);
+		cu_minus<<<num_blocks, block_size>>>(Data + i * len, v.get(i), len);
 	}
-	deviceToHost();
 	return *this;
 }
 
 Mat Mat::operator*(const Mat &m) const{
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data ||
+	   NULL == m.Data||
 	   cols != m.rows || channels != m.channels){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -578,16 +495,15 @@ Mat Mat::operator*(const Mat &m) const{
     dim3 dimGrid((res.cols - 1) / TILE_WIDTH + 1, (res.rows - 1) / TILE_WIDTH + 1, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
 	for(int ch = 0; ch < channels; ++ch){
-		cu_multiply<<<dimGrid, dimBlock>>>(devData + ch * lena , m.devData + ch * lenb, res.devData + ch * lenres,
+		cu_multiply<<<dimGrid, dimBlock>>>(Data + ch * lena , m.Data + ch * lenb, res.Data + ch * lenres,
 													rows, cols, m.rows, m.cols, res.rows, res.cols);
 		checkCudaErrors(cudaThreadSynchronize());
 	}
-	res.deviceToHost();
 	return res;
 }
 
 Mat Mat::operator*(float val) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -595,13 +511,12 @@ Mat Mat::operator*(float val) const{
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, res.devData, len);
-    res.deviceToHost();
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data, val, res.Data, len);
     return res;
 }
 
 Mat Mat::operator*(const vector3f &v) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -611,27 +526,25 @@ Mat Mat::operator*(const vector3f &v) const{
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
     for(int ch = 0; ch < channels; ++ch){
         float val = v.get(ch);
-        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, res.devData + ch * len, len);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data + ch * len, val, res.Data + ch * len, len);
     }
-    res.deviceToHost();
     return res;
 }
 
 Mat& Mat::operator*=(float val){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, len);
-    deviceToHost();
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data, val, len);
 	return *this;
 }
 
 Mat& Mat::operator*=(const vector3f &v){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -640,13 +553,13 @@ Mat& Mat::operator*=(const vector3f &v){
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
     for(int ch = 0; ch < channels; ++ch){
         float val = v.get(ch);
-        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, len);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data + ch * len, val, len);
     }
 	return *this;
 }
 
 Mat Mat::operator/(float val) const{
-	if(NULL == hostData || NULL == devData || 0 == val){
+	if(NULL == Data || 0 == val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -654,13 +567,12 @@ Mat Mat::operator/(float val) const{
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_divide<<<num_blocks, block_size>>>(devData, res.devData, val, len);
-    res.deviceToHost();
+    cu_divide<<<num_blocks, block_size>>>(Data, res.Data, val, len);
     return res;
 }
 
 Mat Mat::operator/(const vector3f &v) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -670,27 +582,25 @@ Mat Mat::operator/(const vector3f &v) const{
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
     for(int ch = 0; ch < channels; ++ch){
         float val = v.get(ch);
-        cu_divide<<<num_blocks, block_size>>>(devData + ch * len, res.devData + ch * len, val, len);
+        cu_divide<<<num_blocks, block_size>>>(Data + ch * len, res.Data + ch * len, val, len);
     }
-    res.deviceToHost();
     return res;
 }
 
 Mat& Mat::operator/=(float val){
-	if(NULL == hostData || NULL == devData || 0 == val){
+	if(NULL == Data || 0 == val){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_divide<<<num_blocks, block_size>>>(devData, val, len);
-    deviceToHost();
+    cu_divide<<<num_blocks, block_size>>>(Data, val, len);
 	return *this;
 }
 
 Mat& Mat::operator/=(const vector3f &v){
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -699,14 +609,14 @@ Mat& Mat::operator/=(const vector3f &v){
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
     for(int ch = 0; ch < channels; ++ch){
         float val = v.get(ch);
-        cu_divide<<<num_blocks, block_size>>>(devData + ch * len, val, len);
+        cu_divide<<<num_blocks, block_size>>>(Data + ch * len, val, len);
     }
 	return *this;
 }
 
 Mat Mat::mul(const Mat &m) const{
-	if(NULL == hostData || NULL == devData ||
-	   NULL == m.hostData || NULL == m.devData||
+	if(NULL == Data ||
+	   NULL == m.Data||
 	   getLength()!= m.getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -715,13 +625,12 @@ Mat Mat::mul(const Mat &m) const{
 	int tmp = getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (tmp / block_size) + ((tmp % block_size) ? 1 : 0);
-	cu_elementWiseMultiply<<<num_blocks, block_size>>>(tmpmat.devData, devData, tmp);
-	tmpmat.deviceToHost();
+	cu_elementWiseMultiply<<<num_blocks, block_size>>>(tmpmat.Data, Data, tmp);
 	return tmpmat;
 }
 
 Mat Mat::mul(float val) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -729,13 +638,12 @@ Mat Mat::mul(float val) const{
     int len = getLength();
     const size_t block_size = threadsPerBlock;
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-    cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData, val, res.devData, len);
-    res.deviceToHost();
+    cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data, val, res.Data, len);
     return res;
 }
 
 Mat Mat::mul(const vector3f &v) const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -745,14 +653,13 @@ Mat Mat::mul(const vector3f &v) const{
     const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
     for(int ch = 0; ch < channels; ++ch){
         float val = v.get(ch);
-        cu_elementWiseMultiply<<<num_blocks, block_size>>>(devData + ch * len, val, res.devData + ch * len, len);
+        cu_elementWiseMultiply<<<num_blocks, block_size>>>(Data + ch * len, val, res.Data + ch * len, len);
     }
-    res.deviceToHost();
     return res;
 }
 
 Mat Mat::t() const{
-	if(NULL == hostData || NULL == devData){
+	if(NULL == Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -761,69 +668,34 @@ Mat Mat::t() const{
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < channels; ++ch){
-		cu_transpose<<<num_blocks, block_size>>>(devData + ch * len, res.devData + ch * len, cols, res.cols, len);
+		cu_transpose<<<num_blocks, block_size>>>(Data + ch * len, res.Data + ch * len, cols, res.cols, len);
 	}
-	res.deviceToHost();
 	return res;
 }
 
 // memory
-void Mat::mallocHost(){
-	if(NULL == hostData){
-		// malloc host data
-		hostData = (float*)MemoryMonitor::instance()->cpuMalloc(cols * rows * channels * sizeof(float));
-		if(NULL == hostData) {
-			std::cout<<"host memory allocation failed..."<<std::endl;
-			exit(0);
-		}
-		memset(hostData, 0, cols * rows * channels * sizeof(float));
-	}
-}
-
 void Mat::mallocDevice(){
-	if(NULL == devData){
+	if(NULL == Data){
 		cudaError_t cudaStat;
 		// malloc device data
-		cudaStat = MemoryMonitor::instance()->gpuMalloc((void**)&devData, cols * rows * channels * sizeof(float));
+		cudaStat = MemoryMonitor::instance()->gpuMalloc((void**)&Data, cols * rows * channels * sizeof(float));
 		if(cudaStat != cudaSuccess) {
 			std::cout<<"device memory allocation failed... because of error number : "<<(int)cudaStat<<std::endl;
 			exit(0);
 		}
-		checkCudaErrors(cudaMemset(devData, 0, sizeof(float) * cols * rows * channels));
+		checkCudaErrors(cudaMemset(Data, 0, sizeof(float) * cols * rows * channels));
 	}
 }
 
-void Mat::printHost(const std::string &str) const{
+void Mat::print(const std::string &str) const{
 	std::cout<<str<<std::endl;
-	if(NULL == hostData || NULL == devData){
-		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
-		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
-		exit(0);
-	}
-	int counter = 0;
-	std::cout<<"Matrix with "<<channels<<" channels, "<<rows<<" rows, "<<cols<<"columns."<<std::endl;
-	for(int i = 0; i < channels; ++i){
-		std::cout<<"Channel "<<i<<" : "<<std::endl;
-		for(int j = 0; j < rows; ++j){
-			for(int k = 0; k < cols; ++k){
-				std::cout<<hostData[counter]<<" ";
-				++ counter;
-			}
-			std::cout<<std::endl;
-		}
-	}
-}
-
-void Mat::printDevice(const std::string &str) const{
-	std::cout<<str<<std::endl;
-	if(NULL == hostData || NULL == devData){
-		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
-		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
+	if(NULL == Data){
+		if(NULL == Data) std::cout<<"device data is NULL..."<<std::endl;
 		exit(0);
 	}
 	float *host_data = 0;
 	host_data = (float*)MemoryMonitor::instance()->cpuMalloc(getLength() * sizeof(float));
-	checkCudaErrors(cudaMemcpy(host_data, devData, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(host_data, Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 	int counter = 0;
 	std::cout<<"Matrix with "<<channels<<" channels, "<<rows<<" rows, "<<cols<<"columns."<<std::endl;
 	for(int i = 0; i < channels; ++i){
@@ -842,9 +714,8 @@ void Mat::printDevice(const std::string &str) const{
 void Mat::printDim(const std::string &str) const{
 
 	std::cout<<str<<std::endl;
-	if(NULL == hostData || NULL == devData){
-		if(NULL == hostData) std::cout<<"host data is NULL..."<<std::endl;
-		if(NULL == devData) std::cout<<"device data is NULL..."<<std::endl;
+	if(NULL == Data){
+		if(NULL == Data) std::cout<<"device data is NULL..."<<std::endl;
 		exit(0);
 	}
 	cout<<"Matrix Dimension = ["<<rows<<", "<<cols<<", "<<channels<<"]"<<endl;

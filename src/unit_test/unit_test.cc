@@ -120,8 +120,7 @@ Mat *getTestMatrix_3_rand(){
 			 0.2157, -1.9330,  0.4900,
 			-1.1658, -0.4390,  0.7394};
 	Mat *res = new Mat(3, 3, 3);
-	memcpy(res -> hostData, array_data, res -> getLength() * sizeof(float));
-	res -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(res -> Data, array_data, res -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	return res;
 }
 
@@ -143,8 +142,7 @@ Mat *getTestMatrix_5_rand(){
 		-0.2437,  0.1001, -1.9609, -1.5771, -0.5336, 
 		 0.2157, -0.5445, -0.1977,  0.5080, -2.0026};
 	Mat *res = new Mat(5, 5, 3);
-	memcpy(res -> hostData, array_data, res -> getLength() * sizeof(float));
-	res -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(res -> Data, array_data, res -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	return res;
 }
 
@@ -181,8 +179,7 @@ Mat *getTestMatrix_10_rand(){
 			 0.2939, -0.2256,  0.2157, -0.1977, -2.0026, -0.4762, -0.1623, -0.4570,  0.0662, -2.1924,
 			-0.7873,  1.1174, -1.1658, -1.2078,  0.9642,  0.8620, -0.1461,  1.2424,  0.6524, -2.3193};
 	Mat *res = new Mat(10, 10, 3);
-	memcpy(res -> hostData, array_data, res -> getLength() * sizeof(float));
-	res -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(res -> Data, array_data, res -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	return res;
 }
 
@@ -231,15 +228,6 @@ int getTestInt(){
 	return 2;
 }
 
-bool hostEqualToDevice(const Mat* a){
-	if(NULL == a -> hostData || NULL == a -> devData) return false;
-	float *tmpMemory = (float*)MemoryMonitor::instance()->cpuMalloc(a -> getLength() * sizeof(float));
-	cudaMemcpy(tmpMemory, a -> devData, a -> getLength() * sizeof(float), cudaMemcpyDeviceToHost);
-	int n = memcmp(tmpMemory, a -> hostData, a -> getLength() * sizeof(float));
-	free(tmpMemory);
-	return 0 == n ? true : false;
-}
-
 bool areIdentical(const std::vector<std::vector<Mat*> >& a, const std::vector<std::vector<Mat*> >& b){
 	if(a.size() != b.size()) return false;
 	for(int i = 0; i < a.size(); ++i){
@@ -261,15 +249,20 @@ bool areIdentical(const std::vector<vector3f*>& a, const std::vector<vector3f*>&
 
 bool areIdentical(const Mat* a, const Mat* b){
 	if(NULL == a || NULL == b) return false;
-	if(NULL == a -> hostData && NULL == a -> devData && NULL == b -> hostData && NULL == b -> devData){
+	if(NULL == a -> Data && NULL == b -> Data){
 		return true;
 	}
-	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData){
+	if(NULL == a -> Data || NULL == b -> Data){
 		return false;
 	}
 	if(a -> getLength() != b -> getLength()) return false;
-	if(!hostEqualToDevice(a) || !hostEqualToDevice(b)) return false;
-	int n = memcmp(b -> hostData, a -> hostData, a -> getLength() * sizeof(float));
+	float *host_a = (float*)malloc(a -> getLength() * sizeof(float));
+	float *host_b = (float*)malloc(b -> getLength() * sizeof(float));
+	checkCudaErrors(cudaMemcpy(host_a, a -> Data, a -> getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(host_b, b -> Data, b -> getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	int n = memcmp(host_a, host_b, a -> getLength() * sizeof(float));
+	free(host_a);
+	free(host_b);
 	return 0 == n ? true : false;
 }
 
@@ -329,18 +322,23 @@ bool areApproximatelyIdentical(const std::vector<vector3f*>& a, const std::vecto
 
 bool areApproximatelyIdentical(const Mat* a, const Mat* b){
 	if(NULL == a || NULL == b) return false;
-	if(NULL == a -> hostData && NULL == a -> devData && NULL == b -> hostData && NULL == b -> devData){
+	if(NULL == a -> Data && NULL == b -> Data){
 		return true;
 	}
-	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData){
+	if(NULL == a -> Data || NULL == b -> Data){
 		return false;
 	}
 	if(a -> getLength() != b -> getLength()) return false;
-	if(!hostEqualToDevice(a) || !hostEqualToDevice(b)) return false;
+	float *host_a = (float*)malloc(a -> getLength() * sizeof(float));
+	float *host_b = (float*)malloc(b -> getLength() * sizeof(float));
+	checkCudaErrors(cudaMemcpy(host_a, a -> Data, a -> getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(host_b, b -> Data, b -> getLength() * sizeof(float), cudaMemcpyDeviceToHost));
 	for(int i = 0; i < a -> getLength(); ++i){
-		float n = b -> hostData[i] - a -> hostData[i];
+		float n = host_a[i] - host_b[i];
 		if(fabsf(n) > test_tolerance) return false;
 	}
+	free(host_a);
+	free(host_b);
 	return true;
 }
 
@@ -420,8 +418,7 @@ bool test_add_m_f(){
 	Mat *res = NULL;
 	safeGetPt(res, add(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_add_m_f, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_add_m_f, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -441,8 +438,7 @@ bool test_add_m_v(){
 	Mat *res = NULL;
 	safeGetPt(res, add(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_add_m_v, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_add_m_v, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -463,8 +459,7 @@ bool test_add_m_m(){
 	Mat *res = NULL;
 	safeGetPt(res, add(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_add_m_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_add_m_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -516,8 +511,7 @@ bool test_subtract_m_f(){
 	Mat *res = NULL;
 	safeGetPt(res, subtract(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_subtract_m_f, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_subtract_m_f, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -537,8 +531,7 @@ bool test_subtract_m_v(){
 	Mat *res = NULL;
 	safeGetPt(res, subtract(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_subtract_m_v, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_subtract_m_v, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -559,8 +552,7 @@ bool test_subtract_m_m(){
 	Mat *res = NULL;
 	safeGetPt(res, subtract(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_subtract_m_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_subtract_m_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -612,8 +604,7 @@ bool test_multiply_elem_m_f(){
 	Mat *res = NULL;
 	safeGetPt(res, multiply_elem(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_multiply_elem_m_f, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_multiply_elem_m_f, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -633,8 +624,7 @@ bool test_multiply_elem_m_v(){
 	Mat *res = NULL;
 	safeGetPt(res, multiply_elem(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_multiply_elem_m_v, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_multiply_elem_m_v, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -655,8 +645,7 @@ bool test_multiply_elem_m_m(){
 	Mat *res = NULL;
 	safeGetPt(res, multiply_elem(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_multiply_elem_m_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_multiply_elem_m_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -685,8 +674,7 @@ bool test_multiply(){
 	Mat *res = NULL;
 	safeGetPt(res, multiply(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_multiply, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_multiply, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 
 //	a ->printHost("A");
@@ -712,8 +700,7 @@ bool test_t(){
 	Mat *res = NULL;
 	safeGetPt(res, t(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_t, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_t, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -763,8 +750,7 @@ bool test_divide_m_f(){
 	Mat *res = NULL;
 	safeGetPt(res, divide(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_divide_m_f, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_divide_m_f, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -786,8 +772,7 @@ bool test_divide_f_m(){
 	Mat *res = NULL;
 	safeGetPt(res, divide(b, a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_divide_f_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_divide_f_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -837,8 +822,7 @@ bool test_divide_m_v(){
 	Mat *res = NULL;
 	safeGetPt(res, divide(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_divide_m_v, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_divide_m_v, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -861,8 +845,7 @@ bool test_divide_v_m(){
 	Mat *res = NULL;
 	safeGetPt(res, divide(b, a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_divide_v_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_divide_v_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -886,8 +869,7 @@ bool test_divide_m_m(){
 	Mat *res = NULL;
 	safeGetPt(res, divide(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_divide_m_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_divide_m_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -929,8 +911,7 @@ bool test_exp(){
 	Mat *res = NULL;
 	safeGetPt(res, exp(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_exp, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_exp, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -951,8 +932,7 @@ bool test_log(){
 	Mat *res = NULL;
 	safeGetPt(res, log(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_log, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_log, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -972,8 +952,7 @@ bool test_pow(){
 	Mat *res = NULL;
 	safeGetPt(res, pow(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_pow, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_pow, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -998,8 +977,7 @@ bool test_square_m(){
 	Mat *res = NULL;
 	safeGetPt(res, square(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_square_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_square_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1032,8 +1010,7 @@ bool test_sqrt_m(){
 	Mat *res = NULL;
 	safeGetPt(res, sqrt(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_sqrt_m, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_sqrt_m, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1236,8 +1213,7 @@ bool test_greaterThan(){
 	Mat *res = NULL;
 	safeGetPt(res, greaterThan(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_greaterThan, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_greaterThan, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1257,8 +1233,7 @@ bool test_lessThan(){
 	Mat *res = NULL;
 	safeGetPt(res, lessThan(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_lessThan, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_lessThan, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1278,8 +1253,7 @@ bool test_equalTo(){
 	Mat *res = NULL;
 	safeGetPt(res, equalTo(a, b));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_equalTo, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_equalTo, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1350,8 +1324,7 @@ bool test_convert_vv(){
 	Mat *res = new Mat();
 	convert(vec, res);
 	Mat *expect = new Mat(vec[0].size() * vec[0][0] -> getLength(), vec.size(), 1);
-	memcpy(expect -> hostData, array_convert_vv, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_convert_vv, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	releaseVector(vec);
 	res -> release();
@@ -1421,8 +1394,7 @@ bool test_convert_m(){
 	std::vector<std::vector<Mat*> > res;
 	getTestVectorVectorMat(expect);
 	Mat *a = new Mat(2 * 27, 3, 1);
-	memcpy(a -> hostData, array_convert_m, a -> getLength() * sizeof(float));
-	a -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(a -> Data, array_convert_m, a -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	convert(a, res, 3, 3);
 	bool result = areApproximatelyIdentical(res, expect);
 	releaseVector(res);
@@ -1448,8 +1420,7 @@ bool test_Tanh(){
 	Mat *res = NULL;
 	safeGetPt(res, Tanh(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_Tanh, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_Tanh, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1474,8 +1445,7 @@ bool test_dTanh(){
 	Mat *res = NULL;
 	safeGetPt(res, dTanh(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_dTanh, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dTanh, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1500,8 +1470,7 @@ bool test_sigmoid(){
 	Mat *res = NULL;
 	safeGetPt(res, sigmoid(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_sigmoid, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_sigmoid, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1526,8 +1495,7 @@ bool test_dsigmoid(){
 	Mat *res = NULL;
 	safeGetPt(res, dsigmoid(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_dsigmoid, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dsigmoid, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1552,8 +1520,7 @@ bool test_dsigmoid_a(){
 	Mat *res = NULL;
 	safeGetPt(res, dsigmoid_a(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_dsigmoid_a, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dsigmoid_a, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1579,8 +1546,7 @@ bool test_ReLU(){
 	Mat *res = NULL;
 	safeGetPt(res, ReLU(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_ReLU, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_ReLU, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1605,8 +1571,7 @@ bool test_dReLU(){
 	Mat *res = NULL;
 	safeGetPt(res, dReLU(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_dReLU, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dReLU, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1631,8 +1596,7 @@ bool test_LeakyReLU(){
 	Mat *res = NULL;
 	safeGetPt(res, LeakyReLU(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_LeakyReLU, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_LeakyReLU, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1657,8 +1621,7 @@ bool test_dLeakyReLU(){
 	Mat *res = NULL;
 	safeGetPt(res, dLeakyReLU(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_dLeakyReLU, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dLeakyReLU, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1683,8 +1646,7 @@ bool test_fliplr(){
 	Mat *res = NULL;
 	safeGetPt(res, fliplr(a));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_fliplr, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_fliplr, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1703,8 +1665,7 @@ bool test_rot90(){
 	Mat *res = NULL;
 	safeGetPt(res, rot90(a, 2));
 	Mat *expect = new Mat(a -> rows, a -> cols, a -> channels);
-	memcpy(expect -> hostData, array_rot90, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_rot90, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1723,8 +1684,7 @@ bool test_dopadding(){
 	Mat *res = NULL;
 	safeGetPt(res, dopadding(a, 1));
 	Mat *expect = new Mat(a -> rows + 2, a -> cols + 2, a -> channels);
-	memcpy(expect -> hostData, array_dopadding, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_dopadding, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1743,8 +1703,7 @@ bool test_depadding(){
 	Mat *res = NULL;
 	safeGetPt(res, depadding(a, 1));
 	Mat *expect = new Mat(a -> rows - 2, a -> cols - 2, a -> channels);
-	memcpy(expect -> hostData, array_depadding, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_depadding, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1772,14 +1731,10 @@ bool test_reduce(){
 	Mat *expect_col_sum = new Mat(a -> rows, 1, a -> channels);
 	Mat *expect_row_max = new Mat(1, a -> cols, a -> channels);
 	Mat *expect_col_max = new Mat(a -> rows, 1, a -> channels);
-	memcpy(expect_row_sum -> hostData, array_reduce_row_sum, expect_row_sum -> getLength() * sizeof(float));
-	memcpy(expect_col_sum -> hostData, array_reduce_col_sum, expect_col_sum -> getLength() * sizeof(float));
-	memcpy(expect_row_max -> hostData, array_reduce_row_max, expect_row_max -> getLength() * sizeof(float));
-	memcpy(expect_col_max -> hostData, array_reduce_col_max, expect_col_max -> getLength() * sizeof(float));
-	expect_row_sum -> hostToDevice();
-	expect_col_sum -> hostToDevice();
-	expect_row_max -> hostToDevice();
-	expect_col_max -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_row_sum -> Data, array_reduce_row_sum, expect_row_sum -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_col_sum -> Data, array_reduce_col_sum, expect_col_sum -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_row_max -> Data, array_reduce_row_max, expect_row_max -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_col_max -> Data, array_reduce_col_max, expect_col_max -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = 	areApproximatelyIdentical(res_row_sum, expect_row_sum) &&
 					areApproximatelyIdentical(res_col_sum, expect_col_sum) &&
 					areApproximatelyIdentical(res_row_max, expect_row_max) &&
@@ -1807,8 +1762,7 @@ bool test_getRange(){
 	Mat *res = NULL;
 	safeGetPt(res, getRange(a, 1, 4, 1, 2));
 	Mat *expect = new Mat(2, 4, a -> channels);
-	memcpy(expect -> hostData, array_getRange, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_getRange, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1827,8 +1781,7 @@ bool test_interpolation(){
 	Mat *res = NULL;
 	safeGetPt(res, interpolation(a, 5));
 	Mat *expect = new Mat(5, 5, a -> channels);
-	memcpy(expect -> hostData, array_interpolation, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_interpolation, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1862,8 +1815,7 @@ bool test_repmat(){
 	Mat *res = NULL;
 	safeGetPt(res, repmat(a, 2, 3));
 	Mat *expect = new Mat(6, 9, a -> channels);
-	memcpy(expect -> hostData, array_repmat, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_repmat, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1882,8 +1834,7 @@ bool test_downSample(){
 	Mat *res = NULL;
 	safeGetPt(res, downSample(a, 2, 2));
 	Mat *expect = new Mat(3, 3, a -> channels);
-	memcpy(expect -> hostData, array_downsample, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_downsample, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1918,8 +1869,7 @@ bool test_copyMakeBorder(){
 	vector3f *v = getTestVector3f_0();
 	safeGetPt(res, copyMakeBorder(a, 1, 2, 3, 4, v));
 	Mat *expect = new Mat(6, 10, a -> channels);
-	memcpy(expect -> hostData, array_copyMakeBorder, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_copyMakeBorder, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -1959,8 +1909,7 @@ bool test_kron(){
 	Mat *res = NULL;
 	safeGetPt(res, kron(a, b));
 	Mat *expect = new Mat(6, 6, a -> channels);
-	memcpy(expect -> hostData, array_kron, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_kron, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -1993,8 +1942,7 @@ bool test_conv2_kernel(){
 	Mat *res = NULL;
 	safeGetPt(res, conv2(a, b));
 	Mat *expect = new Mat(5, 5, a -> channels);
-	memcpy(expect -> hostData, array_conv2_kernel, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_conv2_kernel, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	b -> release();
@@ -2069,12 +2017,9 @@ bool test_conv2(){
 	Mat *expect_valid = new Mat(3, 3, a -> channels);
 	Mat *expect_same = new Mat(5, 5, a -> channels);
 	Mat *expect_full = new Mat(7, 7, a -> channels);
-	memcpy(expect_valid -> hostData, array_conv2_valid, expect_valid -> getLength() * sizeof(float));
-	memcpy(expect_same -> hostData, array_conv2_same, expect_same -> getLength() * sizeof(float));
-	memcpy(expect_full -> hostData, array_conv2_full, expect_full -> getLength() * sizeof(float));
-	expect_valid -> hostToDevice();
-	expect_same -> hostToDevice();
-	expect_full -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_valid -> Data, array_conv2_valid, expect_valid -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_same -> Data, array_conv2_same, expect_same -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_full -> Data, array_conv2_full, expect_full -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = 	areApproximatelyIdentical(res_valid, expect_valid) &&
 					areApproximatelyIdentical(res_same, expect_same) &&
 					areApproximatelyIdentical(res_full, expect_full);
@@ -2142,12 +2087,9 @@ bool test_conv2_pad_stride(){
 	Mat *expect_valid = new Mat(3, 3, a -> channels);
 	Mat *expect_same = new Mat(4, 4, a -> channels);
 	Mat *expect_full = new Mat(5, 5, a -> channels);
-	memcpy(expect_valid -> hostData, array_conv2_valid, expect_valid -> getLength() * sizeof(float));
-	memcpy(expect_same -> hostData, array_conv2_same, expect_same -> getLength() * sizeof(float));
-	memcpy(expect_full -> hostData, array_conv2_full, expect_full -> getLength() * sizeof(float));
-	expect_valid -> hostToDevice();
-	expect_same -> hostToDevice();
-	expect_full -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_valid -> Data, array_conv2_valid, expect_valid -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_same -> Data, array_conv2_same, expect_same -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_full -> Data, array_conv2_full, expect_full -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = 	areApproximatelyIdentical(res_valid, expect_valid) &&
 					areApproximatelyIdentical(res_same, expect_same) &&
 					areApproximatelyIdentical(res_full, expect_full);
@@ -2204,10 +2146,8 @@ bool test_pooling_max(){
 	safeGetPt(res_max, pooling(a, 3, POOL_MAX, res_loc_max));
 	Mat *expect_max = new Mat(4, 4, a -> channels);
 	Mat *expect_loc = new Mat(4, 4, a -> channels);
-	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
-	memcpy(expect_loc -> hostData, array_pooling_max_loc, expect_loc -> getLength() * sizeof(float));
-	expect_max -> hostToDevice();
-	expect_loc -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_max -> Data, array_pooling_max, expect_max -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_loc -> Data, array_pooling_max_loc, expect_loc -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_loc);
 
 //	expect_max -> printHost("EXP");
@@ -2269,11 +2209,9 @@ bool test_pooling_mean(){
 	Mat *res_loc_mean = new Mat();
 	safeGetPt(res_mean, pooling(a, 3, POOL_MEAN, res_loc_mean));
 	Mat *expect_mean = new Mat(4, 4, a -> channels);
-	memcpy(expect_mean -> hostData, array_pooling_mean, expect_mean -> getLength() * sizeof(float));
-	expect_mean -> hostToDevice();
 	Mat *expect_loc = new Mat(4, 4, a -> channels);
-	memcpy(expect_loc -> hostData, array_pooling_mean_loc, expect_loc -> getLength() * sizeof(float));
-	expect_loc -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_mean -> Data, array_pooling_mean, expect_mean -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_loc -> Data, array_pooling_mean_loc, expect_loc -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res_mean, expect_mean) && areApproximatelyIdentical(res_loc_mean, expect_loc);
 
 //	expect_mean -> printHost("EXP");
@@ -2321,11 +2259,9 @@ bool test_pooling_overlap_max(){
 	vector2i *window_size = new vector2i(3, 4);
 	safeGetPt(res_max, pooling_with_overlap(a, window_size, 1, POOL_MAX, res_loc_max));
 	Mat *expect_max = new Mat(2, 3, a -> channels);
-	memcpy(expect_max -> hostData, array_pooling_max, expect_max -> getLength() * sizeof(float));
-	expect_max -> hostToDevice();
 	Mat *expect_max_loc = new Mat(2, 3, a -> channels);
-	memcpy(expect_max_loc -> hostData, array_pooling_max_loc, expect_max_loc -> getLength() * sizeof(float));
-	expect_max_loc -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect_max -> Data, array_pooling_max, expect_max -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(expect_max_loc -> Data, array_pooling_max_loc, expect_max_loc -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res_max, expect_max) && areApproximatelyIdentical(res_loc_max, expect_max_loc);
 //	expect_max -> printHost("EXP");
 //	res_max -> printHost("RES");
@@ -2354,8 +2290,7 @@ bool test_findMax(){
 	Mat *res = NULL;
 	safeGetPt(res, findMax(a));
 	Mat *expect = new Mat(1, a -> cols, 1);
-	memcpy(expect -> hostData, array_findMax, expect -> getLength() * sizeof(float));
-	expect -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(expect -> Data, array_findMax, expect -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	bool result = areApproximatelyIdentical(res, expect);
 	a -> release();
 	res -> release();
@@ -2378,8 +2313,7 @@ bool test_sameValuesInMat(){
            -1.1658, -0.4390,  0.7394};
 	cout<<"testing sameValuesInMat --- ";
 	Mat *sameMat = new Mat(3, 3, 3);
-	memcpy(sameMat -> hostData, array_sameValuesInMat, sameMat -> getLength() * sizeof(float));
-	sameMat -> hostToDevice();
+	checkCudaErrors(cudaMemcpy(sameMat -> Data, array_sameValuesInMat, sameMat -> getLength() * sizeof(float), cudaMemcpyHostToDevice));
 	Mat *a = getTestMatrix_3_rand();
 	int res = sameValuesInMat(a, sameMat);
 	bool result = (res == 6);

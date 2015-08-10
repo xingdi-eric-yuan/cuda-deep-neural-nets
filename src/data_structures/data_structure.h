@@ -116,8 +116,7 @@ public:
 	int rows;
 	int channels;
 
-	float *hostData;
-	float *devData;
+	float *Data;
 
 	void setSize(int, int, int);
 	void zeros();
@@ -136,8 +135,6 @@ public:
 	vector3f get(int) const;
 	int getLength() const;
 
-	void deviceToHost();
-	void hostToDevice();
 	void copyTo(Mat&) const;
 	void copyTo(cpuMat&) const;
 	void moveTo(Mat&);
@@ -172,11 +169,9 @@ public:
 	Mat mul(const vector3f&) const;
 	Mat t() const;
 	// memory
-	void mallocHost();
 	void mallocDevice();
 	//
-	void printHost(const std::string&) const;
-	void printDevice(const std::string&) const;
+	void print(const std::string&) const;
 	void printDim(const std::string&) const;
 };
 

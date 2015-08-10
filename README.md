@@ -1,4 +1,4 @@
-#cuda-deep-neural-net-0.1.0
+#cuda-deep-neural-net-0.1.1
 =====================
 ##UNFINISHED
 Deep neural network framework (C/C++/CUDA).
@@ -11,7 +11,8 @@ To run this code, you should have
 add this project into nVidia nsight, add **curand** and **cufft** into path. 
 
 ##Updates 
-* **NEW**: Aug.5 ,the first version, 0.1.0 released.
+* 0.1.0: Aug.5, the first version released.
+* 0.1.1: Aug.10, remove hostData in Mat, only use device memory, for speed up.
 
 ##Data Structures
 ####Mat

@@ -21,7 +21,6 @@ float getTestFloat();
 int getTestInt();
 void getTestVectorVectorMat(std::vector<std::vector<Mat*> >&);
 
-bool hostEqualToDevice(const Mat*);
 bool areIdentical(const std::vector<std::vector<Mat*> >&, const std::vector<std::vector<Mat*> >&);
 bool areIdentical(const std::vector<vector3f*>&, const std::vector<vector3f*>&);
 bool areIdentical(const Mat*, const Mat*);

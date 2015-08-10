@@ -58,7 +58,7 @@ vector3f* add(const vector3f* src1, const vector3f* src2){
 // ADD
 // returns src + a
 Mat* add(const Mat* src, float a){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -66,17 +66,16 @@ Mat* add(const Mat* src, float a){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_plus<<<num_blocks, block_size>>>(src -> devData, tmp -> devData, a, len);
+	cu_plus<<<num_blocks, block_size>>>(src -> Data, tmp -> Data, a, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	tmp -> deviceToHost();
 	return tmp;
 }
 
 // ADD
 // returns src + val
 Mat* add(const Mat* src, const vector3f *val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -85,19 +84,18 @@ Mat* add(const Mat* src, const vector3f *val){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < src -> channels; ++ch){
-		cu_plus<<<num_blocks, block_size>>>(src -> devData + len * ch, tmp -> devData + len * ch, val -> get(ch), len);
+		cu_plus<<<num_blocks, block_size>>>(src -> Data + len * ch, tmp -> Data + len * ch, val -> get(ch), len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	tmp -> deviceToHost();
 	return tmp;
 }
 
 // ADD
 // returns a + b
 Mat* add(const Mat* a, const Mat* b){
-	if(NULL == a -> hostData || NULL == a -> devData ||
-	   NULL == b -> hostData || NULL == b -> devData ||
+	if(NULL == a -> Data ||
+	   NULL == b -> Data ||
 	   a -> getLength() != b -> getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -106,10 +104,9 @@ Mat* add(const Mat* a, const Mat* b){
 	int len = a -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_plus<<<num_blocks, block_size>>>(a -> devData, b -> devData, tmp -> devData, len);
+	cu_plus<<<num_blocks, block_size>>>(a -> Data, b -> Data, tmp -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	tmp -> deviceToHost();
 	return tmp;
 }
 
@@ -144,7 +141,7 @@ vector3f* subtract(const vector3f* src1, const vector3f* src2){
 // SUBTRACT
 // returns src - a
 Mat* subtract(const Mat* src, float a){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -152,17 +149,16 @@ Mat* subtract(const Mat* src, float a){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_minus<<<num_blocks, block_size>>>(src -> devData, tmp -> devData, a, len);
+	cu_minus<<<num_blocks, block_size>>>(src -> Data, tmp -> Data, a, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	tmp -> deviceToHost();
 	return tmp;
 }
 
 // SUBTRACT
 // returns src - val
 Mat* subtract(const Mat* src, const vector3f *val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -171,19 +167,18 @@ Mat* subtract(const Mat* src, const vector3f *val){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < src -> channels; ++ch){
-		cu_minus<<<num_blocks, block_size>>>(src -> devData + len * ch, tmp -> devData + len * ch, val -> get(ch), len);
+		cu_minus<<<num_blocks, block_size>>>(src -> Data + len * ch, tmp -> Data + len * ch, val -> get(ch), len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	tmp -> deviceToHost();
 	return tmp;
 }
 
 // SUBTRACT
 // returns a - b
 Mat* subtract(const Mat* a, const Mat* b){
-	if(NULL == a -> hostData || NULL == a -> devData ||
-	   NULL == b -> hostData || NULL == b -> devData ||
+	if(NULL == a -> Data ||
+	   NULL == b -> Data ||
 	   a -> getLength() != b -> getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -192,10 +187,9 @@ Mat* subtract(const Mat* a, const Mat* b){
 	int len = a -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_minus<<<num_blocks, block_size>>>(a -> devData, b -> devData, tmp -> devData, len);
+	cu_minus<<<num_blocks, block_size>>>(a -> Data, b -> Data, tmp -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	tmp -> deviceToHost();
 	return tmp;
 }
 
@@ -230,7 +224,7 @@ vector3f* multiply_elem(const vector3f* src1, const vector3f* src2){
 // MULTIPLY ELEMENT WISE
 // return src(i) * a
 Mat* multiply_elem(const Mat* src, float a){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -238,17 +232,16 @@ Mat* multiply_elem(const Mat* src, float a){
 	int len = res -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> devData, a, res -> devData, len);
+	cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> Data, a, res -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	res -> deviceToHost();
 	return res;
 }
 
 // MULTIPLY ELEMENT WISE
 // return src(i) * a
 Mat* multiply_elem(const Mat* src, const vector3f *a){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -258,11 +251,10 @@ Mat* multiply_elem(const Mat* src, const vector3f *a){
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < src -> channels; ++ch){
 		float val = a -> get(ch);
-		cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> devData + ch * len, val, res -> devData + ch * len, len);
+		cu_elementWiseMultiply<<<num_blocks, block_size>>>(src -> Data + ch * len, val, res -> Data + ch * len, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
 	return res;
 }
 
@@ -270,8 +262,8 @@ Mat* multiply_elem(const Mat* src, const vector3f *a){
 // matrix multiplication
 // result size should be (rowsa, colsb)
 Mat* multiply(const Mat* a, const Mat* b){
-	if(NULL == a -> hostData || NULL == a -> devData ||
-	   NULL == b -> hostData || NULL == b -> devData||
+	if(NULL == a -> Data ||
+	   NULL == b -> Data||
 	   a -> cols != b -> rows || a -> channels != b -> channels){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -284,20 +276,19 @@ Mat* multiply(const Mat* a, const Mat* b){
     dim3 dimGrid((res -> cols - 1) / TILE_WIDTH + 1, (res -> rows - 1) / TILE_WIDTH + 1, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
 	for(int ch = 0; ch < a -> channels; ++ch){
-		cu_multiply<<<dimGrid, dimBlock>>>(a -> devData + ch * lena , b -> devData + ch * lenb, res -> devData + ch * lenres,
+		cu_multiply<<<dimGrid, dimBlock>>>(a -> Data + ch * lena , b -> Data + ch * lenb, res -> Data + ch * lenres,
 													a -> rows, a -> cols, b -> rows, b -> cols, res -> rows, res -> cols);
 	    getLastCudaError("kernel execution failed\n");
 	    checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
 	return res;
 }
 
 // MULTIPLY ELEMENT WISE
 // return a(i) * b(i)
 Mat* multiply_elem(const Mat* a, const Mat* b){
-	if(NULL == a -> hostData || NULL == a -> devData ||
-	   NULL == b -> hostData || NULL == b -> devData||
+	if(NULL == a -> Data ||
+	   NULL == b -> Data||
 	   a -> getLength() != b -> getLength()){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
@@ -306,17 +297,16 @@ Mat* multiply_elem(const Mat* a, const Mat* b){
 	int len = res -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_elementWiseMultiply<<<num_blocks, block_size>>>(a -> devData, b -> devData, res -> devData, len);
+	cu_elementWiseMultiply<<<num_blocks, block_size>>>(a -> Data, b -> Data, res -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	res -> deviceToHost();
 	return res;
 }
 
 // TRANSPOSE
 // return matrix transpose
 Mat* t(const Mat* a){
-	if(NULL == a -> hostData || NULL == a -> devData){
+	if(NULL == a -> Data){
 		std::cout<<"invalid vectors..."<<std::endl;
 		exit(0);
 	}
@@ -325,11 +315,10 @@ Mat* t(const Mat* a){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int ch = 0; ch < a -> channels; ++ch){
-		cu_transpose<<<num_blocks, block_size>>>(a -> devData + ch * len, res -> devData + ch * len, a -> cols, res -> cols, len);
+		cu_transpose<<<num_blocks, block_size>>>(a -> Data + ch * len, res -> Data + ch * len, a -> cols, res -> cols, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
 	return res;
 }
 
@@ -364,7 +353,7 @@ vector3f* div_no_rem(vector3f* src, int a){
 // EXP
 // returns exp(src)
 Mat* exp(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -372,17 +361,16 @@ Mat* exp(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_exp<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_exp<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // LOG
 // returns log(src)
 Mat* log(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -390,17 +378,16 @@ Mat* log(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_log<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_log<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // POW
 // returns pow(src, power)
 Mat* pow(const Mat* src, float power){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -412,17 +399,16 @@ Mat* pow(const Mat* src, float power){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_pow<<<num_blocks, block_size>>>(src -> devData, dst -> devData, power, len);
+	cu_pow<<<num_blocks, block_size>>>(src -> Data, dst -> Data, power, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // SQUARE
 // returns square
 Mat* square(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -430,17 +416,16 @@ Mat* square(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_square<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_square<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // SQRT
 // returns square root
 Mat* sqrt(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -448,10 +433,9 @@ Mat* sqrt(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_sqrt<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_sqrt<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -478,7 +462,7 @@ vector3f* sqrt(const vector3f* src){
 // DIVIDE
 // returns numerator / denominator
 Mat* divide(const Mat* numerator, float denominator){
-	if(NULL == numerator -> hostData || NULL == numerator -> devData){
+	if(NULL == numerator -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
 		exit(0);
 	}
@@ -490,17 +474,16 @@ Mat* divide(const Mat* numerator, float denominator){
 	int len = numerator -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_divide<<<num_blocks, block_size>>>(numerator -> devData, dst -> devData, denominator, len);
+	cu_divide<<<num_blocks, block_size>>>(numerator -> Data, dst -> Data, denominator, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DIVIDE
 // returns numerator / denominator
 Mat* divide(float numerator, const Mat* denominator){
-	if(NULL == denominator -> hostData || NULL == denominator -> devData){
+	if(NULL == denominator -> Data){
 		std::cout<<"invalid denominator..."<<std::endl;
 		exit(0);
 	}
@@ -511,10 +494,9 @@ Mat* divide(float numerator, const Mat* denominator){
 	int len = denominator -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_divide<<<num_blocks, block_size>>>(numerator, denominator -> devData, dst -> devData, len);
+	cu_divide<<<num_blocks, block_size>>>(numerator, denominator -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -552,7 +534,7 @@ vector3f* divide(float numerator, const vector3f* denominator){
 // DIVIDE
 // returns numerator / denominator
 Mat* divide(const Mat* numerator, const vector3f* denominator){
-	if(NULL == numerator -> hostData || NULL == numerator -> devData){
+	if(NULL == numerator -> Data){
 		std::cout<<"invalid numerator..."<<std::endl;
 		exit(0);
 	}
@@ -561,18 +543,17 @@ Mat* divide(const Mat* numerator, const vector3f* denominator){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < numerator -> channels; ++i){
-		cu_divide<<<num_blocks, block_size>>>(numerator -> devData + i * len, dst -> devData + i * len, denominator -> get(i), len);
+		cu_divide<<<num_blocks, block_size>>>(numerator -> Data + i * len, dst -> Data + i * len, denominator -> get(i), len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DIVIDE
 // returns numerator / denominator
 Mat* divide(const vector3f* numerator, const Mat* denominator){
-	if(NULL == denominator -> hostData || NULL == denominator -> devData){
+	if(NULL == denominator -> Data){
 		std::cout<<"invalid denominator..."<<std::endl;
 		exit(0);
 	}
@@ -581,19 +562,18 @@ Mat* divide(const vector3f* numerator, const Mat* denominator){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < denominator -> channels; ++i){
-		cu_divide<<<num_blocks, block_size>>>(numerator -> get(i), denominator -> devData + i * len, dst -> devData + i * len, len);
+		cu_divide<<<num_blocks, block_size>>>(numerator -> get(i), denominator -> Data + i * len, dst -> Data + i * len, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DIVIDE
 // returns numerator / denominator
 Mat* divide(const Mat* numerator, const Mat* denominator){
-	if(NULL == denominator -> hostData || NULL == denominator -> devData ||
-	   NULL == numerator -> hostData || NULL == numerator -> devData || numerator -> getLength() != denominator -> getLength()){
+	if(NULL == denominator -> Data ||
+	   NULL == numerator -> Data || numerator -> getLength() != denominator -> getLength()){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -601,10 +581,9 @@ Mat* divide(const Mat* numerator, const Mat* denominator){
 	int len = numerator -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_divide<<<num_blocks, block_size>>>(numerator -> devData, denominator -> devData, dst -> devData, len);
+	cu_divide<<<num_blocks, block_size>>>(numerator -> Data, denominator -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -725,7 +704,7 @@ float sum(const vector3f* src){
 // it calculates the partial sum for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 vector3f* sum(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -745,7 +724,7 @@ vector3f* sum(const Mat* src){
 		int tmp_block_size = block_size;
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
-		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(global_mem, 0, sizeof(float) * tmp_block_size));
 			cu_sum<<<tmp_num_blocks, tmp_block_size>>>(data, d_partial_sums, global_mem, data_len);
@@ -778,7 +757,7 @@ vector3f* sum(const Mat* src){
 // AVERAGE
 // returns mean of a matrix
 vector3f* average(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -831,7 +810,7 @@ vector3f* stddev(const cpuMat* src, const vector3f* avg){
 // STDDEV
 // returns standard deviation of a matrix
 vector3f* stddev(const Mat* src, const vector3f* avg){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -863,7 +842,7 @@ float max(const vector3f* src){
 // it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 vector3f* max(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -896,7 +875,7 @@ vector3f* max(const Mat* src){
 		int tmp_block_size = block_size;
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
-		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
@@ -946,7 +925,7 @@ vector3f* max(const Mat* src){
 // it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
-	if(NULL == src -> hostData || NULL == src -> devData ||
+	if(NULL == src -> Data ||
 	   NULL == max_val || NULL == max_loc){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -983,7 +962,7 @@ void max(const Mat* src, vector3f* max_val, vector3f* max_loc){
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
 		int counter = 0;
-		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
@@ -1053,7 +1032,7 @@ float min(const vector3f* src){
 // it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 vector3f* min(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1086,7 +1065,7 @@ vector3f* min(const Mat* src){
 		int tmp_block_size = block_size;
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
-		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
@@ -1136,7 +1115,7 @@ vector3f* min(const Mat* src){
 // it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
-	if(NULL == src -> hostData || NULL == src -> devData ||
+	if(NULL == src -> Data ||
 	   NULL == min_val || NULL == min_loc){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
@@ -1173,7 +1152,7 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
 		int counter = 0;
-		checkCudaErrors(cudaMemcpy(data, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
@@ -1233,7 +1212,7 @@ void min(const Mat* src, vector3f* min_val, vector3f* min_loc){
 // it calculates the minMaxLoc for each block, and re-calling the kernel function to the partial result,
 // until data size is less than threadsPerBlock.
 void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* min_val, vector3f* min_loc){
-	if(NULL == src -> hostData || NULL == src -> devData ||
+	if(NULL == src -> Data ||
 	   NULL == min_val || NULL == min_loc ||
 	   NULL == max_val || NULL == max_loc){
 		std::cout<<"invalid input..."<<std::endl;
@@ -1277,7 +1256,7 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 		int tmp_num_blocks = num_blocks;
 		int data_len = len;
 		int counter = 0;
-		checkCudaErrors(cudaMemcpy(data_max, src -> devData + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
+		checkCudaErrors(cudaMemcpy(data_max, src -> Data + ch * len, data_len * sizeof(float), cudaMemcpyDeviceToDevice));
 		while(true){
 			checkCudaErrors(cudaMemset(glob_mem_maxVal, 0, sizeof(float) * tmp_block_size));
 			checkCudaErrors(cudaMemset(glob_mem_minVal, 0, sizeof(float) * tmp_block_size));
@@ -1367,7 +1346,7 @@ void minMaxLoc(const Mat* src, vector3f* max_val, vector3f* max_loc, vector3f* m
 // EQUAL TO
 // res = src > val
 Mat* greaterThan(const Mat *src, float val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1375,17 +1354,16 @@ Mat* greaterThan(const Mat *src, float val){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_greaterThan<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+	cu_greaterThan<<<num_blocks, block_size>>>(src -> Data, dst -> Data, val, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // EQUAL TO
 // res = src < val
 Mat* lessThan(const Mat *src, float val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1393,17 +1371,16 @@ Mat* lessThan(const Mat *src, float val){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_lessThan<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+	cu_lessThan<<<num_blocks, block_size>>>(src -> Data, dst -> Data, val, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // EQUAL TO
 // res = src == val
 Mat* equalTo(const Mat *src, float val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1411,10 +1388,9 @@ Mat* equalTo(const Mat *src, float val){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_equalTo<<<num_blocks, block_size>>>(src -> devData, dst -> devData, val, len);
+	cu_equalTo<<<num_blocks, block_size>>>(src -> Data, dst -> Data, val, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -1444,10 +1420,9 @@ void convert(std::vector<std::vector<Mat*> >& vec, Mat *M){
     Mat *res = new Mat(vec.size(), vec[0].size() * vec[0][0] -> getLength(), 1);
     for(int i = 0; i < vec.size(); i++){
         for(int m = 0; m < vec[i].size(); m++){
-			memcpy(res -> hostData + vec[i][m] -> getLength() * (m + i * vec[i].size()), vec[i][m] -> hostData, vec[i][m] -> getLength() * sizeof(float));
+			checkCudaErrors(cudaMemcpy(res -> Data + vec[i][m] -> getLength() * (m + i * vec[i].size()), vec[i][m] -> Data, vec[i][m] -> getLength() * sizeof(float), cudaMemcpyDeviceToDevice));
         }
     }
-    res -> hostToDevice();
     Mat *tmp = NULL;
     safeGetPt(tmp, t(res));
     tmp -> copyTo(*M);
@@ -1472,8 +1447,7 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
     	vec[i].resize(Mt -> cols / dim);
     	for(int j = 0; j < vec[i].size(); ++j){
     		vec[i][j] = new Mat(imagesize, imagesize, 3);
-        	memcpy(vec[i][j] -> hostData, Mt -> hostData + i * Mt -> cols + j * dim, dim * sizeof(float));
-        	vec[i][j] -> hostToDevice();
+			checkCudaErrors(cudaMemcpy(vec[i][j] -> Data, Mt -> Data + i * Mt -> cols + j * dim, dim * sizeof(float), cudaMemcpyDeviceToDevice));
     	}
     }
     Mt -> release();
@@ -1482,7 +1456,7 @@ void convert(Mat *M, std::vector<std::vector<Mat*> >& vec, int nsamples, int ima
 // SIGMOID
 // sigmoid non-linearity
 Mat *sigmoid(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid src..."<<std::endl;
 		exit(0);
 	}
@@ -1490,17 +1464,16 @@ Mat *sigmoid(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_sigmoid<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_sigmoid<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DSIGMOID
 // get derivatives of sigmoid non-linearity function
 Mat* dsigmoid(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1508,17 +1481,16 @@ Mat* dsigmoid(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_dsigmoid<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_dsigmoid<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DSIGMOID A
 // get derivatives of sigmoid non-linearity function using cache of forward passing matrix
 Mat* dsigmoid_a(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1526,17 +1498,16 @@ Mat* dsigmoid_a(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_dsigmoid_a<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_dsigmoid_a<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // RELU
 // relu non-linearity
 Mat* ReLU(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1544,17 +1515,16 @@ Mat* ReLU(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_relu<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DRELU
 // get derivatives of relu non-linearity function
 Mat* dReLU(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1562,17 +1532,16 @@ Mat* dReLU(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_drelu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_drelu<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // LEAKY RELU
 // leaky-relu non-linearity
 Mat* LeakyReLU(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1580,17 +1549,16 @@ Mat* LeakyReLU(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_leaky_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_leaky_relu<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DLEAKYRELU
 // get derivatives of leaky-relu non-linearity function
 Mat* dLeakyReLU(const Mat* src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1598,17 +1566,16 @@ Mat* dLeakyReLU(const Mat* src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_dleaky_relu<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_dleaky_relu<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // TANH
 // tanh non-linearity
 Mat* Tanh(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1616,17 +1583,16 @@ Mat* Tanh(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_tanh<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_tanh<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DTANH
 // get derivatives of tanh non-linearity function
 Mat* dTanh(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1634,17 +1600,16 @@ Mat* dTanh(const Mat *src){
 	int len = src -> getLength();
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
-	cu_dtanh<<<num_blocks, block_size>>>(src -> devData, dst -> devData, len);
+	cu_dtanh<<<num_blocks, block_size>>>(src -> Data, dst -> Data, len);
     getLastCudaError("kernel execution failed\n");
     checkCudaErrors(cudaDeviceSynchronize());
-	dst -> deviceToHost();
 	return dst;
 }
 
 // NONLINEARITY
 // non-linearity
 Mat* nonLinearity(const Mat *M, int method){
-	if(NULL == M -> hostData || NULL == M -> devData){
+	if(NULL == M -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1662,7 +1627,7 @@ Mat* nonLinearity(const Mat *M, int method){
 // DNONLINEARITY
 // get derivatives of non-linearity function
 Mat* dnonLinearity(const Mat *M, int method){
-	if(NULL == M -> hostData || NULL == M -> devData){
+	if(NULL == M -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1682,7 +1647,7 @@ Mat* dnonLinearity(const Mat *M, int method){
 // [a, b]				 [b, a]
 // [c, d]   turns into   [d, c]
 Mat* fliplr(const Mat *src){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1691,18 +1656,17 @@ Mat* fliplr(const Mat *src){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_fliplr<<<num_blocks, block_size>>>(src -> devData + i * len, dst -> devData + i * len, src -> rows, src -> cols, len);
+		cu_fliplr<<<num_blocks, block_size>>>(src -> Data + i * len, dst -> Data + i * len, src -> rows, src -> cols, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // ROT90
 // rotate 90
 Mat* rot90(const Mat *src, int k){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1720,7 +1684,7 @@ Mat* rot90(const Mat *src, int k){
 // DOPADDING
 // do zero padding around matrix
 Mat* dopadding(const Mat *src, int pad){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1735,18 +1699,17 @@ Mat* dopadding(const Mat *src, int pad){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_padding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lensrc);
+		cu_padding<<<num_blocks, block_size>>>(src -> Data + i * lensrc, dst -> Data + i * lendst, src -> rows, src -> cols, dst -> cols, lensrc);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // DEPADDING
 // delete padding around matrix
 Mat* depadding(const Mat *src, int pad){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1761,18 +1724,17 @@ Mat* depadding(const Mat *src, int pad){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_depadding<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> cols, lendst);
+		cu_depadding<<<num_blocks, block_size>>>(src -> Data + i * lensrc, dst -> Data + i * lendst, src -> rows, src -> cols, dst -> cols, lendst);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // REDUCE
 // similar with OpenCV reduce function, only support max reduce and sum reduce
 Mat* reduce(const Mat* src, int direction, int mode){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1810,7 +1772,7 @@ Mat* reduce(const Mat* src, int direction, int mode){
 // INTERPOLATION
 // interpolation with zeros
 Mat* interpolation(const Mat* src, int _size){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1827,12 +1789,11 @@ Mat* interpolation(const Mat* src, int _size){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_interpolation<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> cols, dst -> cols, stride, lensrc);
+		cu_interpolation<<<num_blocks, block_size>>>(src -> Data + i * lensrc, dst -> Data + i * lendst, src -> cols, dst -> cols, stride, lensrc);
 	    getLastCudaError("kernel execution failed\n");
 	    getLastCudaError("kernel execution failed\n");
 		checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -1840,7 +1801,7 @@ Mat* interpolation(const Mat* src, int _size){
 // repeat matrix, for example, repmat(a, 2, 3) turns into:	[a, a, a]
 // 															[a, a, a]
 Mat* repmat(const Mat *src, int vert, int hori){
-	if(NULL == src -> hostData || NULL == src -> devData || 0 == vert || 0 == hori){
+	if(NULL == src -> Data || 0 == vert || 0 == hori){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1855,19 +1816,18 @@ Mat* repmat(const Mat *src, int vert, int hori){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_repmat<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, dst -> rows, dst -> cols, lendst);
+		cu_repmat<<<num_blocks, block_size>>>(src -> Data + i * lensrc, dst -> Data + i * lendst, src -> rows, src -> cols, dst -> rows, dst -> cols, lendst);
 	    getLastCudaError("kernel execution failed\n");
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
 // KRON
 // calculates kronecker product, can be used in unpooling mean pooling
 Mat* kron(const Mat *a, const Mat *b){
-	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData){
+	if(NULL == a -> Data || NULL == b -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1877,12 +1837,11 @@ Mat* kron(const Mat *a, const Mat *b){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lendst / block_size) + ((lendst % block_size) ? 1 : 0);
 	for(int i = 0; i < a -> channels; ++i){
-		cu_kron<<<num_blocks, block_size>>>(a -> devData + i * lensrc, b -> devData, dst -> devData + i * lendst, a -> rows, a -> cols, dst -> rows, dst -> cols, lendst);
+		cu_kron<<<num_blocks, block_size>>>(a -> Data + i * lensrc, b -> Data, dst -> Data + i * lendst, a -> rows, a -> cols, dst -> rows, dst -> cols, lendst);
 	    getLastCudaError("kernel execution failed\n");
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -1890,7 +1849,7 @@ Mat* kron(const Mat *a, const Mat *b){
 // using nVidia convolution FFT2D,
 // this is actually conv2 with 'same' type
 Mat* conv2(const Mat *m, const Mat *kernel){
-	if(NULL == m -> hostData || NULL == m -> devData || NULL == kernel -> hostData || NULL == kernel -> devData){
+	if(NULL == m -> Data || NULL == kernel -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -1898,7 +1857,7 @@ Mat* conv2(const Mat *m, const Mat *kernel){
 	float *d_Data, *d_Kernel, *d_PaddedData, *d_PaddedKernel;
     fComplex *d_DataSpectrum0, *d_KernelSpectrum0;
     cufftHandle fftPlan;
-    float *host_result_tmp, *host_result;
+    float *result_tmp;
     const int kernelH = kernel -> rows;
     const int kernelW = kernel -> cols;
     const int kernelY = kernel -> rows / 2;
@@ -1907,9 +1866,8 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     const int dataW = m -> cols;
     const int fftH = snapTransformSize(dataH + kernelH - 1);
     const int fftW = snapTransformSize(dataW + kernelW - 1);
-    host_result = (float *)malloc(dataH * dataW * sizeof(float));
-    host_result_tmp = (float *)malloc(fftH * fftW * sizeof(float));
     checkCudaErrors(cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&result_tmp,   dataH   * dataW   * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_Kernel, kernelH * kernelW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_PaddedData,   fftH * fftW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float)));
@@ -1918,8 +1876,8 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
     checkCudaErrors(cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C));
     for(int i = 0; i < m -> channels; ++i){
-    	checkCudaErrors(cudaMemcpy(d_Data, m -> devData + dataH * dataW * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice));
-    	checkCudaErrors(cudaMemcpy(d_Kernel, kernel -> devData + kernelH * kernelW * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice));
+    	checkCudaErrors(cudaMemcpy(d_Data, m -> Data + dataH * dataW * i, dataH * dataW * sizeof(float), cudaMemcpyDeviceToDevice));
+    	checkCudaErrors(cudaMemcpy(d_Kernel, kernel -> Data + kernelH * kernelW * i, kernelH * kernelW * sizeof(float), cudaMemcpyDeviceToDevice));
     	checkCudaErrors(cudaMemset(d_PaddedData,   0, fftH * fftW * sizeof(float)));
     	checkCudaErrors(cudaMemset(d_PaddedKernel, 0, fftH * fftW * sizeof(float)));
         padDataClampToBorder(d_PaddedData, d_Data, fftH, fftW,
@@ -1939,15 +1897,13 @@ Mat* conv2(const Mat *m, const Mat *kernel){
         checkCudaErrors(cufftExecC2C(fftPlan, (cufftComplex *)d_DataSpectrum0, (cufftComplex *)d_PaddedData, -FFT_DIR));
         checkCudaErrors(cudaDeviceSynchronize());
         // std::cout<<"...reading back GPU FFT results"<<std::endl;
-        checkCudaErrors(cudaMemcpy(host_result_tmp, d_PaddedData, fftH * fftW * sizeof(float), cudaMemcpyDeviceToHost));
         for(int y = 0; y < dataH; y++){
             for(int x = 0; x < dataW; x++){
-                host_result[y * dataW + x] = host_result_tmp[y * fftW  + x];
+				checkCudaErrors(cudaMemcpy(result_tmp + y * dataW + x, d_PaddedData + y * fftW  + x, sizeof(float), cudaMemcpyDeviceToDevice));
             }
         }
-        memcpy(res -> hostData + i * res -> rows * res -> cols, host_result, res -> rows * res -> cols * sizeof(float));
+		checkCudaErrors(cudaMemcpy(res -> Data + i * res -> rows * res -> cols, result_tmp, res -> rows * res -> cols * sizeof(float), cudaMemcpyDeviceToDevice));
     }
-    res -> hostToDevice();
     checkCudaErrors(cufftDestroy(fftPlan));
     checkCudaErrors(cudaFree(d_KernelSpectrum0));
     checkCudaErrors(cudaFree(d_DataSpectrum0));
@@ -1955,8 +1911,6 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     checkCudaErrors(cudaFree(d_PaddedData));
     checkCudaErrors(cudaFree(d_Kernel));
     checkCudaErrors(cudaFree(d_Data));
-    free(host_result);
-    free(host_result_tmp);
     return res;
 }
 
@@ -1965,7 +1919,7 @@ Mat* conv2(const Mat *m, const Mat *kernel){
 // also supports zero padding and stride.
 // if using valid type, result size = (m_size + 2 * pad - kernel_size) / stride + 1
 Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
-	if(NULL == m -> hostData || NULL == m -> devData || NULL == kernel -> hostData || NULL == kernel -> devData){
+	if(NULL == m -> Data || NULL == kernel -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2003,7 +1957,7 @@ Mat* conv2(const Mat *m, const Mat *kernel, int convtype, int pad, int stride){
 // BE CAREFUL, xend/yend are last element in the range, but not first element outside range.
 Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
     //cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    inside 1"<<endl;
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2017,11 +1971,10 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_getRange<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, dst -> devData + i * len, xstart, xend, ystart, yend, src -> cols, len);
+		cu_getRange<<<num_blocks, block_size>>>(src -> Data + i * src -> rows * src -> cols, dst -> Data + i * len, xstart, xend, ystart, yend, src -> cols, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
     //cout<<" --- using gpu memory "<<MemoryMonitor::instance() -> getGpuMemory() <<"    inside 2"<<endl;
 	return dst;
 }
@@ -2029,7 +1982,7 @@ Mat* getRange(const Mat* src, int xstart, int xend, int ystart, int yend){
 // DOWN SAMPLE
 // simply down sample
 Mat* downSample(const Mat* src, int y_stride, int x_stride){
-	if(NULL == src -> hostData || NULL == src -> devData || y_stride < 1 || x_stride < 1){
+	if(NULL == src -> Data || y_stride < 1 || x_stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2047,11 +2000,10 @@ Mat* downSample(const Mat* src, int y_stride, int x_stride){
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (len / block_size) + ((len % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_downSample<<<num_blocks, block_size>>>(src -> devData + i * src -> rows * src -> cols, res -> devData + i * len, y_stride, x_stride, src -> cols, len);
+		cu_downSample<<<num_blocks, block_size>>>(src -> Data + i * src -> rows * src -> cols, res -> Data + i * len, y_stride, x_stride, src -> cols, len);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
 	return res;
 }
 
@@ -2061,7 +2013,7 @@ Mat* downSample(const Mat* src, int y_stride, int x_stride){
 //		[d, e]													[x, b, c]
 //																[x, d, e]
 Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const vector3f* val){
-	if(NULL == src -> hostData || NULL == src -> devData){
+	if(NULL == src -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2077,11 +2029,10 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_copyMakeBorder<<<num_blocks, block_size>>>(src -> devData + i * lensrc, dst -> devData + i * lendst, src -> rows, src -> cols, up, down, left, right, lensrc);
+		cu_copyMakeBorder<<<num_blocks, block_size>>>(src -> Data + i * lensrc, dst -> Data + i * lendst, src -> rows, src -> cols, up, down, left, right, lensrc);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	dst -> deviceToHost();
 	return dst;
 }
 
@@ -2091,7 +2042,7 @@ Mat* copyMakeBorder(const Mat* src, int up, int down, int left, int right, const
 // output size = (input size - window size) / stride + 1
 // TODO: stochastic pooling
 Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int poolingMethod, Mat*& locat){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+	if(NULL == src -> Data || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2105,12 +2056,10 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_pooling_overlap_max<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  loc -> devData + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, window_size -> get(0), window_size -> get(1), lenres);
+		cu_pooling_overlap_max<<<num_blocks, block_size>>>(src -> Data + i * lensrc, res -> Data + i * lenres,  loc -> Data + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, window_size -> get(0), window_size -> get(1), lenres);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
-	loc -> deviceToHost();
     Mat *dst = new Mat();
     safeGetPt(dst, downSample(res, stride, stride));
     safeGetPt(locat, downSample(loc, stride, stride));
@@ -2122,7 +2071,7 @@ Mat* pooling_with_overlap(const Mat *src, vector2i *window_size, int stride, int
 // UNPOOLING WITH OVERLAP
 // unpooling with overlap
 Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+	if(NULL == src -> Data || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2137,11 +2086,10 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
 	const size_t block_size = threadsPerBlock;
 	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
-		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+		cu_unpooling<<<num_blocks, block_size>>>(src -> Data + i * lensrc, locat -> Data + i * lensrc, res -> Data + i * lenres, res -> cols, lensrc);
 	    getLastCudaError("kernel execution failed\n");
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
 	return res;
 }
 
@@ -2149,7 +2097,7 @@ Mat* unpooling_with_overlap(const Mat* src, vector2i* window_size, int stride, i
 // pooling without overlap
 // TODO: stochastic pooling
 Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+	if(NULL == src -> Data || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2177,16 +2125,14 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
 	const size_t num_blocks = (lenres / block_size) + ((lenres % block_size) ? 1 : 0);
 	for(int i = 0; i < src -> channels; ++i){
 		if(POOL_MAX == poolingMethod){
-			cu_pooling_max<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  loc -> devData + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
+			cu_pooling_max<<<num_blocks, block_size>>>(src -> Data + i * lensrc, res -> Data + i * lenres,  loc -> Data + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
 		    getLastCudaError("kernel execution failed\n");
 		}elif(POOL_MEAN == poolingMethod){
-			cu_pooling_mean<<<num_blocks, block_size>>>(src -> devData + i * lensrc, res -> devData + i * lenres,  loc -> devData + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
+			cu_pooling_mean<<<num_blocks, block_size>>>(src -> Data + i * lensrc, res -> Data + i * lenres,  loc -> Data + i * lenres, src -> rows, src -> cols, res -> rows, res -> cols, stride, stride, lenres);
 		    getLastCudaError("kernel execution failed\n");
 		}
         checkCudaErrors(cudaDeviceSynchronize());
 	}
-	res -> deviceToHost();
-	loc -> deviceToHost();
 	loc -> copyTo(*locat);
 	loc -> release();
     return res;
@@ -2195,7 +2141,7 @@ Mat* pooling(const Mat* src, int stride, int poolingMethod, Mat*& locat){
 // UNPOOLING
 // unpooling
 Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, vector2i* up_size){
-	if(NULL == src -> hostData || NULL == src -> devData || stride < 1){
+	if(NULL == src -> Data || stride < 1){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2221,11 +2167,10 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, 
     	const size_t block_size = threadsPerBlock;
     	const size_t num_blocks = (lensrc / block_size) + ((lensrc % block_size) ? 1 : 0);
     	for(int i = 0; i < src -> channels; ++i){
-    		cu_unpooling<<<num_blocks, block_size>>>(src -> devData + i * lensrc, locat -> devData + i * lensrc, res -> devData + i * lenres, res -> cols, lensrc);
+    		cu_unpooling<<<num_blocks, block_size>>>(src -> Data + i * lensrc, locat -> Data + i * lensrc, res -> Data + i * lenres, res -> cols, lensrc);
     	    getLastCudaError("kernel execution failed\n");
             checkCudaErrors(cudaDeviceSynchronize());
     	}
-    	res -> deviceToHost();
     	return res;
     }
 }
@@ -2233,7 +2178,7 @@ Mat* unpooling(const Mat* src, int stride, int poolingMethod, const Mat* locat, 
 // FIND MAX
 // use during testing, find which has max val in each column
 Mat* findMax(const Mat* m){
-	if(NULL == m -> hostData || NULL == m -> devData){
+	if(NULL == m -> Data){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
 	}
@@ -2256,7 +2201,7 @@ Mat* findMax(const Mat* m){
 // use during testing, only calculates first channel,
 // and find how many values are same between two matrices.
 int sameValuesInMat(const Mat* a, const Mat* b){
-	if(NULL == a -> hostData || NULL == a -> devData || NULL == b -> hostData || NULL == b -> devData ||
+	if(NULL == a -> Data || NULL == b -> Data ||
 			a -> getLength() != b -> getLength()){
 		std::cout<<"invalid input..."<<std::endl;
 		exit(0);
