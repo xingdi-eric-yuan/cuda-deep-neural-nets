@@ -55,8 +55,10 @@ void Mat::release(){
 }
 
 Mat& Mat::operator=(const Mat &m){
-	if(NULL != Data)
+	if(NULL != Data){
 		MemoryMonitor::instance()->freeGpuMemory(Data);
+		Data = NULL;
+	}
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
@@ -66,8 +68,10 @@ Mat& Mat::operator=(const Mat &m){
 }
 
 Mat& Mat::operator<<=(Mat &m){
-	if(NULL != Data)
+	if(NULL != Data){
 		MemoryMonitor::instance()->freeGpuMemory(Data);
+		Data = NULL;
+	}
 	cols = m.cols;
 	rows = m.rows;
 	channels = m.channels;
@@ -78,13 +82,14 @@ Mat& Mat::operator<<=(Mat &m){
 }
 
 void Mat::setSize(int r, int c, int ch){
-	if(NULL != Data)
+	if(NULL != Data){
 		MemoryMonitor::instance()->freeGpuMemory(Data);
+		Data = NULL;
+	}
 	rows = r;
 	cols = c;
 	channels = ch;
 	mallocDevice();
-	//zeros();
 }
 
 void Mat::zeros(){

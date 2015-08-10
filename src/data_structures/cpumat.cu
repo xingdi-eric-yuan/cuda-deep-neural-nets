@@ -15,7 +15,7 @@ cpuMat::cpuMat(const cpuMat &m){
 	channels = m.channels;
 	Data = NULL;
 	mallocMat();
-	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	memcpy(Data, m.Data, getLength() * sizeof(float));
 }
 
 cpuMat::cpuMat(const Mat &m){
@@ -33,7 +33,6 @@ cpuMat::cpuMat(int height, int width, int nchannels){
 	channels = nchannels;
 	Data = NULL;
 	mallocMat();
-	zeros();
 }
 cpuMat::~cpuMat(){
 	if(NULL != Data)
@@ -58,7 +57,7 @@ cpuMat& cpuMat::operator=(const cpuMat &m){
 		Data = NULL;
 	}
 	mallocMat();
-	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	memcpy(Data, m.Data, getLength() * sizeof(float));
     return *this;
 }
 
@@ -71,7 +70,7 @@ cpuMat& cpuMat::operator<<=(cpuMat &m){
 		Data = NULL;
 	}
 	mallocMat();
-	checkCudaErrors(cudaMemcpy(Data, m.Data, getLength() * sizeof(float), cudaMemcpyDeviceToHost));
+	memcpy(Data, m.Data, getLength() * sizeof(float));
 	m.release();
     return *this;
 }
