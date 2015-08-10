@@ -1857,7 +1857,6 @@ Mat* conv2(const Mat *m, const Mat *kernel){
 	float *d_Data, *d_Kernel, *d_PaddedData, *d_PaddedKernel;
     fComplex *d_DataSpectrum0, *d_KernelSpectrum0;
     cufftHandle fftPlan;
-    float *result_tmp;
     const int kernelH = kernel -> rows;
     const int kernelW = kernel -> cols;
     const int kernelY = kernel -> rows / 2;
@@ -1867,13 +1866,12 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     const int fftH = snapTransformSize(dataH + kernelH - 1);
     const int fftW = snapTransformSize(dataW + kernelW - 1);
     checkCudaErrors(cudaMalloc((void **)&d_Data,   dataH   * dataW   * sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)&result_tmp,   dataH   * dataW   * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_Kernel, kernelH * kernelW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_PaddedData,   fftH * fftW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_PaddedKernel, fftH * fftW * sizeof(float)));
     checkCudaErrors(cudaMalloc((void **)&d_DataSpectrum0,   fftH * (fftW / 2) * sizeof(fComplex)));
     checkCudaErrors(cudaMalloc((void **)&d_KernelSpectrum0, fftH * (fftW / 2) * sizeof(fComplex)));
-    Mat *res_tmp = new Mat(fftH, fftW, 3);
+    Mat *res_tmp = new Mat(fftH, fftW, m -> channels);
     // std::cout<<"...creating C2C FFT plan for "<<fftH<<" x "<<fftW/2<<std::endl;
     checkCudaErrors(cufftPlan2d(&fftPlan, fftH, fftW / 2, CUFFT_C2C));
     for(int i = 0; i < m -> channels; ++i){
@@ -1900,8 +1898,6 @@ Mat* conv2(const Mat *m, const Mat *kernel){
         // std::cout<<"...reading back GPU FFT results"<<std::endl;
 		checkCudaErrors(cudaMemcpy(res_tmp -> Data + res_tmp -> rows * res_tmp -> cols * i, d_PaddedData, res_tmp -> rows * res_tmp -> cols * sizeof(float), cudaMemcpyDeviceToDevice));
     }
-    safeGetPt(res, getRange(res_tmp, 0, dataW - 1, 0, dataH - 1));
-	res_tmp -> release();
     checkCudaErrors(cufftDestroy(fftPlan));
     checkCudaErrors(cudaFree(d_KernelSpectrum0));
     checkCudaErrors(cudaFree(d_DataSpectrum0));
@@ -1909,6 +1905,8 @@ Mat* conv2(const Mat *m, const Mat *kernel){
     checkCudaErrors(cudaFree(d_PaddedData));
     checkCudaErrors(cudaFree(d_Kernel));
     checkCudaErrors(cudaFree(d_Data));
+    safeGetPt(res, getRange(res_tmp, 0, dataW - 1, 0, dataH - 1));
+	res_tmp -> release();
     return res;
 }
 
