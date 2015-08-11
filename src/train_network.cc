@@ -323,9 +323,6 @@ void testNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, std::vector<net
 // backward pass, and a update.
 void trainNetwork(const std::vector<cpuMat*> &x, const cpuMat *y, const std::vector<cpuMat*> &tx, const cpuMat *ty, std::vector<network_layer*> &flow){
 
-    forwardPassInit(x, y, flow);
-    printNetwork(flow);
-
     if (is_gradient_checking){
         gradient_checking_network_layers(flow, x, y);
     }else{

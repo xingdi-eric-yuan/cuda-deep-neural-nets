@@ -9,7 +9,7 @@
 *******************************************************/
 
 IS_GRADIENT_CHECKING = false;
-USE_LOG = false;
+USE_LOG = true;
 LEARNING_RATE_W = 1e-3;
 LEARNING_RATE_B = 3e-4;
 TRAINING_EPOCHS = 500;

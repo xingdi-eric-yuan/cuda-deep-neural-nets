@@ -1,4 +1,4 @@
-#include "read_data.h"
+#include "io_data.h"
 
 // READ BATCH
 // read cifar-10 single batch

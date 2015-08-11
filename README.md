@@ -6,6 +6,7 @@ Deep neural network framework (C/C++/CUDA).
 To run this code, you should have 
 * a cifar-10 dataset( put "cifar-10-batches-bin" where this .md file is, you can get it from [HERE](http://www.cs.toronto.edu/~kriz/cifar.html), make sure to download the binary version which suitable for C programs);
 * nVidia graphic card which supports nVidia CUDA
+* for running network with pre-trained network, you should put pre-trained files into "config" folder, there is a demo config folder which is named "pre-trained-conf", you can rename it to "config" and replace the current "config" folder.
 
 ##Compile & Run
 add this project into nVidia nsight, add **curand** and **cufft** into path. 
@@ -14,6 +15,7 @@ add this project into nVidia nsight, add **curand** and **cufft** into path.
 * 0.1.0: Aug.5, the first version released.
 * 0.1.1: Aug.10, remove hostData in Mat, only use device memory, for speed up.
 * 0.1.1: Aug.11, add functions that save matrices and configs into .txt files.
+* 0.1.1: Aug.12, add functions that read network from .txt files.
 
 ##Data Structures
 ####Mat

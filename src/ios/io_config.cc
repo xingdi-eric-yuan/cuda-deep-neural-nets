@@ -1,4 +1,4 @@
-#include "read_config.h"
+#include "io_config.h"
 
 // READ TO STRING
 // read file into string
@@ -294,13 +294,12 @@ void get_layers_config(string &str, std::vector<network_layer*> &flow){
 
 // BUILD NETWORK FROM CONFIG FILE
 // build network from config file
-void buildNetworkFromConfigFile(string filepath, std::vector<network_layer*> &flow){
+void buildNetworkFromConfigFile(const string &filepath, std::vector<network_layer*> &flow, const std::vector<cpuMat*> &x, const cpuMat *y){
 
     string str = read_2_string(filepath);
     delete_space(str);
     delete_comment(str);
     get_layers_config(str, flow);
-
     is_gradient_checking = get_word_bool(str, "IS_GRADIENT_CHECKING");
     use_log = get_word_bool(str, "USE_LOG");
     training_epochs = get_word_int(str, "TRAINING_EPOCHS");
@@ -329,4 +328,119 @@ void buildNetworkFromConfigFile(string filepath, std::vector<network_layer*> &fl
     cout<<"learning rate for bias = "<<lrate_b<<endl;
     cout<<"********** layers config **********"<<endl;
 
+    forwardPassInit(x, y, flow);
+    printNetwork(flow);
 }
+
+// BUILD NETWORK FROM SAVED DATA
+// build network from saved data
+void buildNetworkFromSavedData(const string &folder, std::vector<network_layer*> &flow, const std::vector<cpuMat*> &x, const cpuMat *y){
+    string path = folder + "/saved_config.txt";
+    buildNetworkFromConfigFile(path, flow, x, y);
+    readNetwork(folder, flow);
+}
+
+void saveNetworkConfig(const std::string &path, const std::vector<network_layer*> &flow){
+
+    ofstream outfile(path.c_str(), ios::out);
+    outfile.precision(16);
+    if (outfile.is_open()){
+
+        outfile<<"/*\nSaved Network Config File\n*/\n";
+        outfile<<"/*******************************************************\n";
+        outfile<<"*\n";
+        outfile<<"* General Parameters Config\n";
+        outfile<<"*\n";
+        outfile<<"*******************************************************/\n\n";
+        outfile<<"IS_GRADIENT_CHECKING = "<<(is_gradient_checking == true ? "true" : "false")<<";\n";
+        outfile<<"USE_LOG = "<<(use_log == true ? "true" : "false")<<";\n";
+        outfile<<"LEARNING_RATE_W = "<<std::to_string(lrate_w)<<";\n";
+        outfile<<"LEARNING_RATE_B = "<<std::to_string(lrate_b)<<";\n";
+        outfile<<"TRAINING_EPOCHS = "<<std::to_string(training_epochs)<<";\n";
+        outfile<<"ITER_PER_EPO = "<<std::to_string(iter_per_epo)<<";\n";
+        outfile<<"MOMENTUM_W_INIT = "<<std::to_string(momentum_w_init)<<";\n";
+        outfile<<"MOMENTUM_D2_INIT = "<<std::to_string(momentum_d2_init)<<";\n";
+        outfile<<"MOMENTUM_W_ADJUST = "<<std::to_string(momentum_w_adjust)<<";\n";
+        outfile<<"MOMENTUM_D2_ADJUST = "<<std::to_string(momentum_d2_adjust)<<";\n\n";
+
+        outfile<<"/*******************************************************\n";
+        outfile<<"*\n";
+        outfile<<"* Layers Config\n";
+        outfile<<"*\n";
+        outfile<<"*******************************************************/\n\n";
+
+        for(int i = 0; i < flow.size(); ++i){
+            outfile<<"$\n";
+
+            outfile<<"LAYER = "<<flow[i] ->layer_type<<";\n";
+            outfile<<"NAME = "<<flow[i] ->layer_name<<";\n";
+            outfile<<"OUTPUT_TYPE = "<<flow[i] -> output_format<<";\n";
+            if(flow[i] -> layer_type == "input"){
+                outfile<<"BATCH_SIZE = "<<std::to_string(((input_layer*)flow[i]) -> batch_size)<<";\n";
+            }elif(flow[i] -> layer_type == "convolutional"){
+                outfile<<"KERNEL_SIZE = "<<std::to_string(((convolutional_layer*)flow[i]) -> kernels[0] -> w -> rows)<<";\n";
+                outfile<<"KERNEL_AMOUNT = "<<std::to_string(((convolutional_layer*)flow[i]) -> kernels.size())<<";\n";
+                outfile<<"PADDING = "<<std::to_string(((convolutional_layer*)flow[i]) -> padding)<<";\n";
+                outfile<<"STRIDE = "<<std::to_string(((convolutional_layer*)flow[i]) -> stride)<<";\n";
+                outfile<<"COMBINE_MAP = "<<std::to_string(((convolutional_layer*)flow[i]) -> combine_feature_map)<<";\n";
+                outfile<<"WEIGHT_DECAY = "<<std::to_string(((convolutional_layer*)flow[i]) -> kernels[0] -> weight_decay)<<";\n";
+            }elif(flow[i] -> layer_type == "fully_connected"){
+                outfile<<"NUM_HIDDEN_NEURONS = "<<std::to_string(((fully_connected_layer*)flow[i]) -> size)<<";\n";
+                outfile<<"WEIGHT_DECAY = "<<std::to_string(((fully_connected_layer*)flow[i]) -> weight_decay)<<";\n";
+            }elif(flow[i] -> layer_type == "softmax"){
+                outfile<<"NUM_CLASSES = "<<std::to_string(((softmax_layer*)flow[i]) -> output_size)<<";\n";
+                outfile<<"WEIGHT_DECAY = "<<std::to_string(((softmax_layer*)flow[i]) -> weight_decay)<<";\n";
+            }elif(flow[i] -> layer_type == "combine"){
+                ;
+            }elif(flow[i] -> layer_type == "branch"){
+                ;
+            }elif(flow[i] -> layer_type == "non_linearity"){
+                outfile<<"METHOD = ";
+                string tmp ="";
+                if(NL_SIGMOID == ((non_linearity_layer*)flow[i]) -> method){
+                    tmp += "sigmoid";
+                }elif(NL_TANH == ((non_linearity_layer*)flow[i]) -> method){
+                    tmp += "tanh";
+                }elif(NL_RELU == ((non_linearity_layer*)flow[i]) -> method){
+                    tmp += "relu";
+                }elif(NL_LEAKY_RELU == ((non_linearity_layer*)flow[i]) -> method){
+                    tmp += "leaky_relu";
+                }
+                outfile<<tmp<<";\n";
+            }elif(flow[i] -> layer_type == "pooling"){
+                outfile<<"METHOD = ";
+                string tmp ="";
+                if(POOL_MAX == ((pooling_layer*)flow[i]) -> method){
+                    tmp += "max";
+                }elif(POOL_MEAN == ((pooling_layer*)flow[i]) -> method){
+                    tmp += "mean";
+                }elif(POOL_STOCHASTIC == ((pooling_layer*)flow[i]) -> method){
+                    tmp += "stochastic";
+                }
+                outfile<<tmp<<";\n";
+                outfile<<"OVERLAP = "<<(((pooling_layer*)flow[i]) -> overlap ? "true" : "false")<<";\n";
+                outfile<<"STRIDE = "<<std::to_string(((pooling_layer*)flow[i]) -> stride)<<";\n";
+                if(((pooling_layer*)flow[i]) -> overlap){
+                    outfile<<"WINDOW_SIZE = "<<std::to_string(((pooling_layer*)flow[i]) -> window_size)<<";\n";
+                }
+            }elif(flow[i] -> layer_type == "local_response_normalization"){
+                outfile<<"ALPHA = "<<std::to_string(((local_response_normalization_layer*)flow[i]) -> alpha)<<";\n";
+                outfile<<"BETA = "<<std::to_string(((local_response_normalization_layer*)flow[i]) -> beta)<<";\n";
+                outfile<<"K = "<<std::to_string(((local_response_normalization_layer*)flow[i]) -> k)<<";\n";
+                outfile<<"N = "<<std::to_string(((local_response_normalization_layer*)flow[i]) -> n)<<";\n";
+            }elif(flow[i] -> layer_type == "dropout"){
+                outfile<<"DROPOUT_RATE = "<<std::to_string(((dropout_layer*)flow[i]) -> dropout_rate)<<";\n";
+            }
+            outfile<<"&\n\n";
+        }
+        outfile.close();
+
+    }else {
+        std::cout<<"unable to open file..."<<std::endl;
+        exit(0);
+    }
+}
+
+
+
+

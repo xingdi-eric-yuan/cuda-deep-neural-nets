@@ -32,10 +32,10 @@ void run(){
     read_CIFAR10_data(trainX, testX, trainY, testY);
 
     std::vector<network_layer*> flow;
-    buildNetworkFromConfigFile("config.txt", flow);
+    buildNetworkFromConfigFile("config/config.txt", flow, trainX, trainY);
+    //buildNetworkFromSavedData("config", flow, trainX, trainY);
 
     trainNetwork(trainX, trainY, testX, testY, flow);
-
     flow.clear();
     std::vector<network_layer*>().swap(flow);
     releaseVector(trainX);
@@ -47,8 +47,6 @@ void run(){
     testX.clear();
     std::vector<cpuMat*>().swap(testX);
 }
-
-
 
 int main(void){
 
